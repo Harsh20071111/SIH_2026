@@ -1,0 +1,420 @@
+Build the "Create New Case" page for my SecureDocs project.
+
+PROJECT:
+SecureDocs — Secure Digital Document Management System for Legal and Investigation Documents.
+
+TECH STACK:
+- React
+- Node.js
+- Express
+- MongoDB
+- Firebase Authentication
+- Tailwind CSS
+- Lucide React icons
+
+ROUTE:
+/cases/new
+
+IMPORTANT:
+Do not modify or break the existing Dashboard or Case List pages.
+Reuse the existing SecureDocs sidebar, navbar, colors, typography, buttons, cards, and layout components.
+Keep the design consistent with the existing application.
+
+PURPOSE:
+This page allows an authorized officer/admin to create a new legal or investigation case and assign the case to an appropriate officer.
+
+DESIGN:
+Use a professional government/legal document-management design.
+
+Use:
+- Clean white/light gray background
+- Dark navy/blue primary elements
+- Red only for critical warnings
+- Amber for warnings
+- Green for successful states
+- Rounded cards
+- Subtle borders and shadows
+- Professional typography
+- Responsive desktop/tablet/mobile design
+- No flashy gradients
+- No unnecessary animations
+
+PAGE HEADER:
+
+Title:
+"Create New Case"
+
+Subtitle:
+"Create and assign a new legal or investigation case"
+
+Add a breadcrumb:
+
+Cases > Create New Case
+
+Add a back button:
+
+[← Back to Cases]
+
+FORM LAYOUT:
+
+Create a centered form card with sections.
+
+SECTION 1 — CASE INFORMATION
+
+Field 1:
+Case ID
+
+Input:
+[ C-1029 ]
+
+Label:
+"Case ID"
+
+Helper text:
+"Enter a unique case identification number."
+
+Validation:
+- Required
+- Must be unique
+- Do not allow duplicate Case IDs
+
+Field 2:
+Case Title
+
+Input:
+[____________________________]
+
+Placeholder:
+"Enter case title"
+
+Validation:
+- Required
+- Minimum 3 characters
+
+Field 3:
+Case Type
+
+Dropdown:
+
+- Theft
+- Fraud
+- Cyber Crime
+- Investigation
+- Missing Person
+- Financial Crime
+- Other
+
+Allow "Other" if necessary.
+
+Field 4:
+Description
+
+Large textarea:
+
+[____________________________________
+ ____________________________________
+ ____________________________________]
+
+Placeholder:
+"Provide a brief description of the case..."
+
+Validation:
+- Required
+- Reasonable character limit
+
+SECTION 2 — CASE ASSIGNMENT
+
+Field 5:
+Department
+
+Dropdown:
+
+- Investigation
+- Cyber Crime
+- Financial Crime
+- Legal Department
+- Forensic Department
+- Other
+
+Field 6:
+Assigned Officer
+
+Dropdown showing authorized officers.
+
+Example:
+
+Officer A — Investigation
+Officer B — Investigation
+Officer C — Cyber Crime
+Officer D — Financial Crime
+
+Only active officers should be selectable.
+
+When a department is selected, filter the officer list to officers from that department where possible.
+
+SECTION 3 — CASE PRIORITY
+
+Field 7:
+Priority
+
+Use radio buttons or selectable cards:
+
+LOW
+Normal priority
+
+MEDIUM
+Requires regular attention
+
+HIGH
+Requires urgent attention
+
+Default:
+MEDIUM
+
+Make the selected priority visually obvious.
+
+SECTION 4 — CASE START DATE
+
+Field 8:
+Start Date
+
+Use a date picker.
+
+Default to today's date.
+
+Do not allow invalid future dates unless the application specifically allows scheduled cases.
+
+SECTION 5 — CONFIDENTIALITY
+
+Add an additional field because SecureDocs handles sensitive legal/investigation documents.
+
+Confidentiality Level:
+
+- Public/Internal
+- Confidential
+- Restricted
+- Highly Restricted
+
+Default:
+Confidential
+
+Show a small explanation:
+
+"Access to documents associated with this case will be controlled according to the confidentiality level and user role."
+
+SECTION 6 — CASE CREATION SUMMARY
+
+Before submission show a small summary:
+
+Case ID:
+C-1029
+
+Title:
+Financial Fraud Investigation
+
+Type:
+Financial Crime
+
+Department:
+Financial Crime
+
+Assigned Officer:
+Officer B
+
+Priority:
+HIGH
+
+Start Date:
+01 Sep 2026
+
+Confidentiality:
+Restricted
+
+BUTTONS:
+
+[Cancel]
+
+[Create Case]
+
+The Create Case button should be the primary button.
+
+FORM VALIDATION:
+
+Validate:
+
+- Case ID required
+- Case ID unique
+- Case title required
+- Case type required
+- Description required
+- Department required
+- Assigned officer required
+- Priority required
+- Start date required
+- Confidentiality required
+
+Display validation errors beside the relevant fields.
+
+Do not submit if required fields are missing.
+
+SUBMISSION FLOW:
+
+When user clicks "Create Case":
+
+Show:
+
+Creating Case...
+
+Then:
+
+✓ Case Created Successfully
+
+Example:
+
+"Case C-1029 has been successfully created and assigned to Officer B."
+
+After successful creation:
+
+Navigate to:
+
+/cases/C-1029
+
+or use the actual generated case ID.
+
+The Case Details page should display the newly created case.
+
+DATABASE/API:
+
+Do not permanently store the case only in frontend state.
+
+Prepare the page to connect with the Node.js/Express/MongoDB backend.
+
+Create or reuse:
+
+/services/caseService.js
+
+Prepare:
+
+createCase(data)
+
+checkCaseIdExists(caseId)
+
+getOfficersByDepartment(department)
+
+If backend endpoints are not ready, use mock service functions temporarily but structure the code so MongoDB can be connected later.
+
+EXPECTED CASE OBJECT:
+
+{
+  caseId: "C-1029",
+  title: "Financial Fraud Investigation",
+  type: "Financial Crime",
+  description: "Investigation related to suspected financial fraud.",
+  department: "Financial Crime",
+  assignedOfficer: "Officer B",
+  priority: "High",
+  startDate: "2026-09-01",
+  confidentiality: "Restricted",
+  status: "Active",
+  createdAt: "2026-09-01T10:30:00",
+  createdBy: "Admin"
+}
+
+IMPORTANT:
+When a case is created, its initial status should automatically be:
+
+"Active"
+
+Do not ask the user to manually enter the status.
+
+AUDIT LOG:
+
+Case creation must eventually generate an audit event:
+
+Action:
+CASE_CREATED
+
+User:
+Current logged-in user
+
+Case:
+C-1029
+
+Timestamp:
+Current timestamp
+
+This should be prepared for integration with the existing SecureDocs audit-log system.
+
+SECURITY:
+
+Only authorized roles should be able to create cases.
+
+ADMIN:
+Can create cases.
+
+OFFICER:
+Can create cases if authorized.
+
+LEGAL REVIEWER:
+Normally cannot create cases unless permission is granted.
+
+CLERK:
+Normally cannot create cases unless permission is granted.
+
+AUDITOR:
+Read-only.
+
+If an unauthorized user visits /cases/new, show:
+
+403 Access Denied
+
+Do not expose unauthorized case information.
+
+RESPONSIVE DESIGN:
+
+Desktop:
+Use a two-column layout where appropriate.
+
+Tablet:
+Reduce to one/two columns depending on screen size.
+
+Mobile:
+Use a single-column form.
+
+All fields must remain easy to use on mobile.
+
+UX:
+
+- Clear labels
+- Helpful placeholders
+- Required-field indicators
+- Keyboard-friendly inputs
+- Accessible dropdowns
+- Clear error messages
+- Disable Create Case while submitting
+- Prevent accidental duplicate submissions
+- Confirmation after successful creation
+
+FINAL RESULT:
+
+The page should provide a complete flow:
+
+Cases
+   ↓
++ Create New Case
+   ↓
+Create Case Form
+   ↓
+Validation
+   ↓
+Create Case
+   ↓
+Audit Event
+   ↓
+✓ Case Created
+   ↓
+Case Details
+
+Do not modify existing pages unnecessarily.
+Do not add unrelated features.
+Keep all code modular and production-quality.

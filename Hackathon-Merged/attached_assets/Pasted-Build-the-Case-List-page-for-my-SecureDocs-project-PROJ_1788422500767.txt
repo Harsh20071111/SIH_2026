@@ -1,0 +1,536 @@
+Build the Case List page for my SecureDocs project.
+
+PROJECT:
+SecureDocs — Secure Digital Document Management System for Legal and Investigation Documents.
+
+TECH STACK:
+- React
+- Node.js
+- Express
+- MongoDB
+- Firebase Authentication
+- Tailwind CSS
+- Lucide React icons
+
+IMPORTANT:
+Do not modify my existing Login or Dashboard pages.
+Do not change the existing overall theme, sidebar, navbar, authentication, or backend architecture.
+Reuse the existing DashboardLayout, Sidebar, TopNavbar, buttons, cards, and UI components wherever possible.
+
+PAGE:
+Case List
+
+ROUTE:
+/cases
+
+PURPOSE:
+This page allows authorized users to view, search, filter, sort, and manage investigation/legal cases.
+
+DESIGN:
+Use the same professional SecureDocs government/legal-security design as the Dashboard.
+
+Style:
+- Clean professional interface
+- White/light gray background
+- Dark navy/blue primary color
+- Red for high-risk/critical information
+- Yellow/amber for medium-risk/warnings
+- Green for low-risk/safe states
+- Rounded cards
+- Subtle borders and shadows
+- Professional typography
+- Responsive design
+- No excessive animations
+- No flashy gradients
+
+PAGE STRUCTURE:
+
+1. SIDEBAR
+
+Reuse the existing SecureDocs sidebar.
+
+Navigation:
+
+Dashboard
+Cases
+Documents
+Upload Document
+Review Queue
+Security / Risk Center
+Integrity Check
+Audit Logs
+Reports
+
+Admin:
+User Management
+Compliance
+Settings
+
+Bottom:
+Notifications
+My Profile
+Logout
+
+Highlight "Cases" as active.
+
+2. TOP NAVBAR
+
+Show:
+
+Title:
+"Cases"
+
+Subtitle:
+"Manage and monitor legal and investigation cases"
+
+Right side:
+- Search icon
+- Notification bell
+- Current user
+- Role
+- Profile avatar
+
+3. SUMMARY CARDS
+
+At the top create four small summary cards:
+
+Total Cases
+128
+
+Active Cases
+58
+
+Under Review
+18
+
+High Risk Cases
+5
+
+Each card should have a suitable Lucide icon.
+
+4. CASE SEARCH
+
+Create a prominent search bar:
+
+"Search by Case ID, case title, officer..."
+
+Example:
+
+[ 🔍 Search cases... ]
+
+Search should work dynamically.
+
+It should search:
+- Case ID
+- Case title
+- Assigned officer
+- Case type
+
+5. FILTERS
+
+Create a filter toolbar.
+
+Filters:
+
+Status:
+- All
+- Active
+- Under Investigation
+- Under Review
+- Closed
+- Archived
+
+Risk:
+- All
+- Low
+- Medium
+- High
+
+Case Type:
+- All
+- Theft
+- Fraud
+- Cyber Crime
+- Investigation
+- Other
+
+Officer:
+- All Officers
+
+Priority:
+- All
+- Low
+- Medium
+- High
+
+Date:
+- Date range
+
+Add:
+[Apply Filters]
+[Clear Filters]
+
+Filters should actually work with the displayed data.
+
+6. CASE TABLE
+
+Create a professional responsive table.
+
+Columns:
+
+Case ID
+Title
+Case Type
+Assigned Officer
+Documents
+Last Activity
+Status
+Risk
+Priority
+Actions
+
+Use realistic demo data.
+
+Example:
+
+C-1024
+Theft Investigation
+Theft
+Officer A
+12
+01 Sep 2026
+Active
+Medium
+High
+
+C-1025
+Financial Fraud
+Fraud
+Officer B
+24
+31 Aug 2026
+Under Review
+High
+High
+
+C-1026
+Evidence Investigation
+Investigation
+Officer C
+8
+30 Aug 2026
+Active
+Low
+Medium
+
+C-1027
+Cyber Crime Case
+Cyber Crime
+Officer D
+31
+29 Aug 2026
+Under Investigation
+High
+High
+
+C-1028
+Property Theft
+Theft
+Officer A
+15
+28 Aug 2026
+Closed
+Low
+Medium
+
+7. STATUS BADGES
+
+Use clear badges.
+
+Active:
+Blue/neutral
+
+Under Investigation:
+Yellow/amber
+
+Under Review:
+Purple/neutral
+
+Closed:
+Green
+
+Archived:
+Gray
+
+Do not use color alone. Include the status text.
+
+8. RISK BADGES
+
+Low:
+🟢 Low
+
+Medium:
+🟡 Medium
+
+High:
+🔴 High
+
+Risk must be visually obvious.
+
+9. PRIORITY
+
+Show:
+
+High
+Medium
+Low
+
+Use appropriate visual indicators.
+
+10. DOCUMENT COUNT
+
+The Documents column should show:
+
+📄 12
+
+Clicking the document count should navigate to:
+
+/documents?caseId=C-1024
+
+11. LAST ACTIVITY
+
+Show relative time where useful:
+
+"10 min ago"
+"2 hours ago"
+"Yesterday"
+
+On hover or click, show exact date/time.
+
+12. ACTIONS
+
+Each row should have an actions menu.
+
+Options:
+
+View Case
+View Documents
+View Timeline
+Edit Case
+
+For authorized users only:
+
+Archive Case
+
+The View Case button should navigate to:
+
+/cases/:id
+
+View Documents should navigate to:
+
+/documents?caseId=:id
+
+View Timeline should navigate to:
+
+/cases/:id/timeline
+
+13. CREATE CASE BUTTON
+
+At the top-right of the page add:
+
+[ + Create New Case ]
+
+Clicking it should navigate to:
+
+/cases/new
+
+14. SORTING
+
+Implement sortable columns:
+
+Case ID
+Title
+Documents
+Last Activity
+Status
+Risk
+Priority
+
+Click the column header to sort.
+
+Show an up/down sort icon.
+
+15. PAGINATION
+
+Add pagination at the bottom.
+
+Example:
+
+Showing 1–10 of 128 cases
+
+[Previous] [1] [2] [3] [4] [5] [Next]
+
+Make pagination functional.
+
+16. EMPTY STATE
+
+If no cases match the filters:
+
+Show:
+
+"No cases found"
+
+"Try changing your search or filters."
+
+Button:
+
+[Clear Filters]
+
+17. LOADING STATE
+
+Add skeleton loaders while case data is loading.
+
+18. ERROR STATE
+
+If case data cannot be loaded:
+
+"Unable to load cases."
+
+[Try Again]
+
+19. ROLE-BASED ACCESS
+
+The page must respect SecureDocs roles.
+
+ADMIN:
+- View all cases
+- Create
+- Edit
+- Archive
+
+OFFICER:
+- View assigned cases
+- Create cases if authorized
+- View related documents
+
+LEGAL REVIEWER:
+- View assigned/relevant cases
+- View documents
+- Review case documents
+
+CLERK:
+- View assigned cases
+- Manage document-related information
+
+AUDITOR:
+- View cases
+- View audit/timeline information
+- Do not edit case information
+
+Do not expose unauthorized cases.
+
+20. CASE DETAILS QUICK PREVIEW
+
+When the user clicks a case row or "View Case", navigate to the Case Details page.
+
+Do not put the entire case detail inside a huge modal.
+
+21. SECURITY INFORMATION
+
+Do not display confidential document contents on this page.
+
+Only show case metadata.
+
+22. API STRUCTURE
+
+Do not permanently hardcode the case data into the UI.
+
+Create a service structure such as:
+
+/services/caseService.js
+
+Prepare functions:
+
+getCases()
+getCaseById(id)
+createCase(data)
+updateCase(id, data)
+archiveCase(id)
+
+If the backend API does not exist yet, use realistic mock data through a separate file/service.
+
+Make it easy to replace mock data with MongoDB API calls later.
+
+23. DATA MODEL
+
+Use a structure similar to:
+
+{
+  id: "C-1024",
+  title: "Theft Investigation",
+  type: "Theft",
+  assignedOfficer: "Officer A",
+  documentsCount: 12,
+  lastActivity: "2026-09-01T10:32:00",
+  status: "Active",
+  risk: "Medium",
+  priority: "High"
+}
+
+Do not store actual sensitive information.
+
+24. RESPONSIVE DESIGN
+
+Desktop:
+Full table with all columns.
+
+Tablet:
+Reduce less-important columns.
+
+Mobile:
+Convert each case into a responsive card/list instead of forcing a very wide table.
+
+Mobile card should show:
+
+Case ID
+Title
+Officer
+Documents
+Status
+Risk
+Priority
+View button
+
+25. VISUAL CASE RISK
+
+Add a small risk indicator near each case.
+
+Example:
+
+C-1025
+Financial Fraud
+
+🔴 HIGH RISK
+
+This should make high-risk cases easy to identify.
+
+26. FINAL UI
+
+The final page should look like a real professional government/legal case-management system.
+
+The user should be able to:
+
+1. Search cases
+2. Filter cases
+3. Sort cases
+4. View cases
+5. Create a case
+6. View associated documents
+7. View case timeline
+8. Identify high-risk cases
+9. See case status
+10. Navigate to Case Details
+
+Keep the implementation clean and modular.
+
+Do not break existing pages or routes.

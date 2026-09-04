@@ -1,0 +1,544 @@
+Build the Documents page for my SecureDocs web application.
+
+Route:
+ /documents
+
+Purpose:
+Show all legal and investigation documents stored in the system. Users should be able to search, filter, sort, view, upload, download, verify integrity, and manage documents according to their role and permissions.
+
+IMPORTANT:
+Reuse the existing SecureDocs layout, sidebar, header, typography, buttons, cards, colors, and responsive design. Do not create a separate design system.
+
+==================================================
+1. PAGE HEADER
+==================================================
+
+Show:
+
+Breadcrumb:
+Dashboard > Documents
+
+Title:
+Documents
+
+Subtitle:
+Manage, search, and verify all case-related documents.
+
+Top-right buttons:
+
+[ + Upload Document ]
+[ Export Report ]
+
+Upload Document should navigate to:
+/documents/upload
+
+==================================================
+2. SUMMARY CARDS
+==================================================
+
+At the top show 5 cards:
+
+Total Documents
+4,820
+
+FIR / Police Reports
+850
+
+Evidence Records
+910
+
+Pending Review
+43
+
+Integrity Issues
+3
+
+Cards should have small icons and clean professional styling.
+
+Clicking a card can automatically apply the corresponding filter.
+
+==================================================
+3. SEARCH
+==================================================
+
+Create a large search bar:
+
+Search by Document Name / Document ID / Case ID
+
+Example:
+[ 🔍 Search documents... ]
+
+Search should update results dynamically.
+
+==================================================
+4. FILTERS
+==================================================
+
+Add filter controls:
+
+Case
+- All Cases
+- C-1024
+- C-1025
+- C-1026
+- C-1027
+- C-1028
+
+Document Type
+- All Types
+- FIR
+- Police Report
+- Investigation Record
+- Witness Statement
+- Evidence
+- Forensic Report
+- Court Filing
+- Court Order
+- Legal Notice
+- Judgment
+- Other
+
+Date
+- All Dates
+- Today
+- Last 7 Days
+- Last 30 Days
+- Custom Date Range
+
+Uploaded By
+- All Users
+- Officer A
+- Officer B
+- Officer C
+- Clerk A
+- Admin
+
+Status
+- All
+- Draft
+- Under Review
+- Approved
+- Rejected
+- Archived
+
+Integrity Status
+- All
+- Verified
+- Verification Pending
+- Integrity Issue
+
+Add:
+
+[ Apply Filters ]
+[ Clear Filters ]
+
+Filters should work together.
+
+==================================================
+5. DOCUMENT TABLE
+==================================================
+
+Display documents in a professional data table.
+
+Columns:
+
+1. Document
+2. Document ID
+3. Case
+4. Document Type
+5. Version
+6. Uploaded By
+7. Upload Date
+8. Status
+9. Integrity
+10. Actions
+
+Example data:
+
+FIR.pdf
+DOC-5001
+C-1024
+FIR
+v1.0
+Officer A
+01 Sep 2026
+Approved
+Verified
+
+Evidence.pdf
+DOC-5002
+C-1024
+Evidence
+v3.0
+Officer B
+01 Sep 2026
+Under Review
+Verified
+
+WitnessStatement.pdf
+DOC-5003
+C-1025
+Witness Statement
+v1.0
+Officer C
+31 Aug 2026
+Approved
+Verified
+
+ForensicReport.pdf
+DOC-5004
+C-1026
+Forensic Report
+v2.0
+Officer A
+30 Aug 2026
+Under Review
+Verification Pending
+
+CourtOrder.pdf
+DOC-5005
+C-1027
+Court Order
+v1.0
+Legal Reviewer
+29 Aug 2026
+Approved
+Integrity Issue
+
+==================================================
+6. DOCUMENT STATUS
+==================================================
+
+Use badges:
+
+Draft
+Under Review
+Approved
+Rejected
+Archived
+
+Do not use colors excessively. Keep the interface professional and security-focused.
+
+==================================================
+7. INTEGRITY STATUS
+==================================================
+
+Display integrity as:
+
+✓ Verified
+
+⏳ Verification Pending
+
+⚠ Integrity Issue
+
+Important:
+
+Integrity status represents whether the current document hash matches the stored expected hash.
+
+Do NOT claim that hashing prevents modification.
+
+If Integrity Issue appears, make it visually noticeable and provide a Verify action.
+
+==================================================
+8. DOCUMENT ACTIONS
+==================================================
+
+For every document provide an Actions menu.
+
+Actions:
+
+View
+Download
+View Versions
+Verify Integrity
+Share
+View Audit Trail
+
+Example:
+
+[⋮]
+
+View
+Download
+Version History
+Verify Integrity
+Share
+Audit Trail
+
+Actions must respect the user's role and permissions.
+
+For example:
+
+Auditor:
+- View
+- Verify Integrity
+- Audit Trail
+
+Officer:
+- View
+- Download
+- Upload new version
+- Share if permitted
+
+Admin:
+- Full authorized management
+
+==================================================
+9. ROW CLICK
+==================================================
+
+Clicking a document should navigate to:
+
+/documents/:id
+
+Example:
+
+/documents/DOC-5001
+
+The document details page should contain:
+
+- Document information
+- Document preview
+- Case information
+- Version
+- Uploaded by
+- Upload date
+- Integrity information
+- SHA-256 hash
+- Audit history
+- Available actions
+
+==================================================
+10. SORTING
+==================================================
+
+Allow sorting by:
+
+- Document Name
+- Document ID
+- Case
+- Document Type
+- Version
+- Upload Date
+- Status
+- Integrity
+
+Use ascending/descending sorting.
+
+==================================================
+11. PAGINATION
+==================================================
+
+Show pagination at the bottom.
+
+Example:
+
+Showing 1–10 of 4,820 documents
+
+[Previous] [1] [2] [3] [4] [5] [Next]
+
+Allow:
+
+10 / 25 / 50 documents per page.
+
+==================================================
+12. BULK ACTIONS
+==================================================
+
+Allow authorized users to select multiple documents.
+
+Checkbox at the beginning of each row.
+
+When documents are selected, show:
+
+Selected: 3
+
+Available actions:
+
+- Verify Integrity
+- Export Metadata
+- Archive
+- Download
+
+Only show actions allowed for the current user's role.
+
+==================================================
+13. SECURITY INFORMATION
+==================================================
+
+At the bottom or side of the page show a small security information panel:
+
+Document Security
+
+✓ Access controlled by role
+✓ Document integrity monitored
+✓ All document activity logged
+✓ Version history maintained
+
+This helps communicate the SecureDocs security model.
+
+==================================================
+14. EMPTY STATE
+==================================================
+
+If no documents match the filters:
+
+"No documents found"
+
+"Try changing your search or filters."
+
+Buttons:
+
+[ Clear Filters ]
+[ Upload Document ]
+
+==================================================
+15. LOADING STATE
+==================================================
+
+Show skeleton loaders while documents are loading.
+
+Do not show a blank page.
+
+==================================================
+16. ERROR STATE
+==================================================
+
+If documents cannot be loaded:
+
+"Unable to load documents."
+
+[ Try Again ]
+
+Do not expose technical errors to normal users.
+
+==================================================
+17. ROLE-BASED ACCESS
+==================================================
+
+Documents must not simply be hidden based on frontend UI.
+
+The backend must also enforce authorization.
+
+Users should only see documents they are authorized to access.
+
+Roles:
+
+Admin
+Officer
+Legal Reviewer
+Clerk
+Auditor
+
+Implement the UI so restricted actions are hidden or disabled according to permissions.
+
+==================================================
+18. API/SERVICE STRUCTURE
+==================================================
+
+Create a document service:
+
+/services/documentService.js
+
+Functions:
+
+getDocuments(filters)
+getDocumentById(documentId)
+uploadDocument(data)
+updateDocument(documentId, data)
+downloadDocument(documentId)
+getDocumentVersions(documentId)
+verifyDocumentIntegrity(documentId)
+shareDocument(documentId, userId)
+getDocumentAuditTrail(documentId)
+
+Keep API logic separate from UI components.
+
+If the backend is not connected yet, use realistic mock data through the service layer so the UI can later connect to Node/Express/MongoDB without rewriting the page.
+
+==================================================
+19. DOCUMENT DATA MODEL
+==================================================
+
+Use a structure similar to:
+
+{
+  documentId: "DOC-5001",
+  fileName: "FIR.pdf",
+  caseId: "C-1024",
+  documentType: "FIR",
+  version: "1.0",
+  uploadedBy: "Officer A",
+  uploadedAt: "2026-09-01",
+  status: "Approved",
+  integrityStatus: "Verified",
+  sha256Hash: "mock-sha256-hash",
+  lastVerifiedAt: "2026-09-01",
+  lastVerifiedBy: "Auditor A"
+}
+
+Do not expose encryption keys in the UI.
+
+==================================================
+20. RESPONSIVE DESIGN
+==================================================
+
+Desktop:
+Use a full data table.
+
+Tablet:
+Allow horizontal table scrolling.
+
+Mobile:
+Convert each document row into a document card.
+
+The page must remain usable on smaller screens.
+
+==================================================
+21. SECURITY PRINCIPLES
+==================================================
+
+The page should reflect three SecureDocs concepts:
+
+PROTECT:
+- Role-based access
+- Secure document storage
+- Authorized downloads
+
+PROVE:
+- SHA-256 integrity verification
+- Version history
+- Audit trail
+
+DETECT:
+- Integrity issues
+- Suspicious document activity
+- Security alerts
+
+Do not falsely claim that SHA-256 itself encrypts or protects the document.
+
+==================================================
+22. FINAL USER FLOW
+==================================================
+
+Dashboard
+   ↓
+Documents
+   ↓
+Search / Filter
+   ↓
+Select Document
+   ↓
+Document Details
+   ↓
+View / Download / Verify / Version History / Audit Trail
+
+Also:
+
+Documents
+   ↓
++ Upload Document
+   ↓
+Upload Page
+   ↓
+Document Details

@@ -1,0 +1,917 @@
+Build the "Case Details" page for my SecureDocs project.
+
+PROJECT:
+SecureDocs — Secure Digital Document Management System for Legal and Investigation Documents.
+
+TECH STACK:
+- React
+- Node.js
+- Express
+- MongoDB
+- Firebase Authentication
+- Tailwind CSS
+- Lucide React icons
+- Recharts if charts are required
+
+ROUTE:
+/cases/:id
+
+IMPORTANT:
+Do not break or redesign my existing Dashboard, Case List, or Create New Case pages.
+
+Reuse the existing:
+- Sidebar
+- Top navbar
+- Colors
+- Typography
+- Buttons
+- Cards
+- Tables
+- Layout components
+
+Keep the entire application visually consistent.
+
+PURPOSE:
+The Case Details page is the central workspace for a single legal/investigation case.
+
+It should provide:
+- Complete case information
+- Assigned officers
+- Case status
+- Document count
+- Security risk
+- Recent activity
+- Documents
+- Reviews
+- Integrity information
+- Security information
+
+PAGE HEADER:
+
+Show breadcrumb:
+
+Cases > C-1024
+
+Page title:
+
+"Case C-1024"
+
+Subtitle:
+
+"Manage and monitor case information, documents, activities, reviews and security."
+
+Top-right buttons:
+
+[ Edit Case ]
+
+[ + Upload Document ]
+
+[ More ⋮ ]
+
+The More menu can contain:
+- Archive Case
+- Generate Case Report
+- Share Case
+- View Audit Trail
+
+Do not allow unauthorized users to see actions they cannot perform.
+
+--------------------------------------------------
+1. CASE SUMMARY HEADER
+--------------------------------------------------
+
+Create a prominent case summary card.
+
+Show:
+
+Case ID:
+C-1024
+
+Case Title:
+Theft Investigation
+
+Case Type:
+Theft
+
+Status:
+ACTIVE
+
+Priority:
+HIGH
+
+Confidentiality:
+RESTRICTED
+
+Assigned Officer:
+Officer A
+
+Department:
+Investigation
+
+Start Date:
+01 September 2026
+
+Created By:
+Admin
+
+Created Date:
+01 September 2026
+
+Use badges for:
+- Status
+- Priority
+- Confidentiality
+
+--------------------------------------------------
+2. KEY METRICS
+--------------------------------------------------
+
+Below the case summary, create metric cards:
+
+Documents
+12
+
+Pending Reviews
+3
+
+Security Risk
+67/100
+
+Recent Activities
+28
+
+Integrity Status
+VERIFIED
+
+Example:
+
+📄 Documents
+12
+
+⏳ Pending Reviews
+3
+
+🛡 Security Risk
+67 / 100
+
+🕒 Activities
+28
+
+✓ Integrity
+Verified
+
+Make the Integrity card green when verified.
+
+If integrity fails, show:
+
+🔴 Integrity Issue
+
+--------------------------------------------------
+3. TABS
+--------------------------------------------------
+
+Create the following tabs:
+
+Overview
+Documents
+Activity
+Reviews
+Integrity
+Security
+
+The Overview tab should be active by default.
+
+Tabs should update the displayed content without requiring a full page reload.
+
+Use URL query parameters or nested routes if appropriate.
+
+--------------------------------------------------
+4. OVERVIEW TAB
+--------------------------------------------------
+
+Display the most important information.
+
+SECTION A — Case Information
+
+Show:
+
+Case ID
+C-1024
+
+Title
+Theft Investigation
+
+Type
+Theft
+
+Description
+"Investigation related to reported theft and collection of supporting evidence."
+
+Department
+Investigation
+
+Priority
+High
+
+Status
+Active
+
+Start Date
+01 September 2026
+
+Confidentiality
+Restricted
+
+SECTION B — Assigned Officers
+
+Show assigned personnel as cards.
+
+Example:
+
+Officer A
+Lead Investigation Officer
+Department: Investigation
+Status: Active
+
+Officer B
+Supporting Officer
+Department: Investigation
+Status: Active
+
+Each officer should show:
+- Name
+- Role
+- Department
+- Active/inactive status
+
+Do not expose unnecessary personal information.
+
+SECTION C — Case Progress
+
+Show a visual progress indicator:
+
+Case Created
+✓
+
+Investigation
+✓
+
+Document Collection
+✓
+
+Review
+In Progress
+
+Finalization
+Pending
+
+This is a visual representation only unless the backend supports actual workflow states.
+
+SECTION D — Recent Activity
+
+Show the latest 5–6 activities.
+
+Example:
+
+10:32 AM
+Officer A uploaded Evidence.pdf
+
+10:18 AM
+Reviewer B viewed FIR.pdf
+
+09:45 AM
+Officer A updated case information
+
+09:30 AM
+Officer C attempted restricted document access
+
+09:12 AM
+Auditor A verified document integrity
+
+Each activity should show:
+- Timestamp
+- User
+- Action
+- Related document if applicable
+- Success/warning/blocked status
+
+Add:
+
+[View All Activity]
+
+which switches to the Activity tab.
+
+--------------------------------------------------
+5. DOCUMENTS TAB
+--------------------------------------------------
+
+Show all documents belonging to this case.
+
+Header:
+
+"Case Documents"
+
+Button:
+
+[ + Upload Document ]
+
+Table columns:
+
+Document
+Type
+Version
+Uploaded By
+Date
+Status
+Integrity
+Actions
+
+Example:
+
+Evidence.pdf
+Evidence Record
+v3
+Officer A
+01 Sep
+Approved
+✓ Verified
+⋮
+
+FIR.pdf
+FIR
+v1
+Officer A
+01 Sep
+Approved
+✓ Verified
+⋮
+
+Forensic_Report.pdf
+Forensic Report
+v2
+Officer B
+31 Aug
+Pending Review
+✓ Verified
+⋮
+
+Actions:
+
+View
+Download
+View Versions
+Verify Integrity
+Share
+
+Only show actions allowed by the user's role.
+
+Clicking a document should navigate to:
+
+/documents/:documentId
+
+--------------------------------------------------
+6. ACTIVITY TAB
+--------------------------------------------------
+
+Show the complete activity history for this case.
+
+Create a timeline/table.
+
+Example:
+
+01 Sep 10:32
+Officer A
+Uploaded Evidence.pdf
+SUCCESS
+
+01 Sep 10:18
+Reviewer B
+Viewed FIR.pdf
+SUCCESS
+
+01 Sep 09:30
+Officer C
+Attempted restricted access
+BLOCKED
+
+31 Aug 17:45
+Officer A
+Downloaded Forensic_Report.pdf
+SUCCESS
+
+Each event should include:
+
+Timestamp
+User
+Role
+Action
+Document
+Result
+IP/device information only if the backend actually provides it
+
+Add filters:
+
+User
+Action
+Date
+Result
+
+Actions:
+
+All
+Upload
+View
+Download
+Edit
+Share
+Approve
+Reject
+Verify
+Login
+Access Denied
+
+Do not invent real IP addresses.
+
+--------------------------------------------------
+7. REVIEWS TAB
+--------------------------------------------------
+
+Show documents requiring review for this case.
+
+Summary:
+
+Pending Reviews: 3
+Approved: 8
+Flagged: 1
+Rejected: 0
+
+Review table:
+
+Document
+Reviewer
+Submitted
+Status
+Action
+
+Evidence.pdf
+Reviewer B
+01 Sep
+Pending
+[Review]
+
+Forensic_Report.pdf
+Reviewer B
+31 Aug
+Approved
+[View]
+
+Allow authorized reviewers to:
+
+Approve
+Flag
+Reject
+Add Comment
+
+Do not allow unauthorized roles to approve documents.
+
+--------------------------------------------------
+8. INTEGRITY TAB
+--------------------------------------------------
+
+This is a major SecureDocs feature.
+
+Show:
+
+DOCUMENT INTEGRITY SUMMARY
+
+Total Documents:
+12
+
+Verified:
+11
+
+Issues:
+1
+
+Create a list:
+
+Evidence.pdf
+✓ VERIFIED
+
+FIR.pdf
+✓ VERIFIED
+
+Forensic_Report.pdf
+🔴 ISSUE DETECTED
+
+For each document show:
+
+Document Name
+Version
+SHA-256 Hash
+Current Hash
+Integrity Status
+Last Verified
+Verified By
+
+Example:
+
+Original SHA-256:
+A7F32C............
+
+Current SHA-256:
+A7F32C............
+
+Result:
+✓ HASH MATCH
+
+Button:
+
+[Verify All Documents]
+
+When verification is performed, show a progress state:
+
+Checking documents...
+Checking hashes...
+Checking audit chain...
+
+Then:
+
+✓ Integrity verification completed.
+
+If mismatch:
+
+🔴 INTEGRITY FAILURE
+
+"Document hash does not match the recorded hash."
+
+Provide:
+
+[View Document History]
+
+Do not claim that hashing itself prevents modification. It detects a mismatch between the recorded and current content.
+
+--------------------------------------------------
+9. SECURITY TAB
+--------------------------------------------------
+
+Create a security overview specifically for this case.
+
+Top metrics:
+
+Security Risk
+67/100
+
+Suspicious Activities
+3
+
+Blocked Attempts
+2
+
+Unauthorized Access
+2
+
+Risk level:
+
+🟡 MEDIUM RISK
+
+Create a risk explanation:
+
+Risk Score Factors:
+
+Unusual access time        +15
+Excessive downloads        +20
+Restricted access attempt  +25
+Multiple failed attempts   +10
+
+Total:
+70/100
+
+Make the scoring configurable through the backend later.
+
+SECURITY ALERTS:
+
+Example:
+
+🔴 HIGH RISK
+Officer C attempted to access a restricted document.
+
+🟡 WARNING
+Officer A downloaded 8 documents within 10 minutes.
+
+🟢 RESOLVED
+Previous suspicious activity was reviewed by Auditor A.
+
+Each alert should have:
+
+Alert type
+User
+Timestamp
+Reason
+Risk score
+Status
+
+Button:
+
+[View Security Details]
+
+Navigate to:
+
+/security/activity/:id
+
+--------------------------------------------------
+10. SECURITY RISK CHART
+--------------------------------------------------
+
+Add a small chart showing case activity risk over time.
+
+Example:
+
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+Saturday
+Sunday
+
+Use realistic mock data.
+
+Title:
+
+"Security Risk Trend"
+
+Also add:
+
+"Risk score is calculated from configured access and activity indicators."
+
+Do not claim that this is machine learning unless an actual ML model is implemented.
+
+--------------------------------------------------
+11. CASE TIMELINE
+--------------------------------------------------
+
+On the Overview page or as part of the Activity section, include a compact timeline.
+
+Example:
+
+01 Sep
+Case Created
+Admin
+
+01 Sep
+FIR Uploaded
+Officer A
+
+01 Sep
+Evidence Added
+Officer A
+
+01 Sep
+Document Reviewed
+Reviewer B
+
+01 Sep
+Integrity Verified
+Auditor A
+
+01 Sep
+Security Alert Generated
+System
+
+Each timeline event should be linked to its relevant object where possible.
+
+--------------------------------------------------
+12. CASE SECURITY INDICATOR
+--------------------------------------------------
+
+At the top of the page display:
+
+SECURITY STATUS
+
+🟢 SECURE
+
+or
+
+🟡 ATTENTION REQUIRED
+
+or
+
+🔴 HIGH RISK
+
+The status should be based on:
+- Integrity issues
+- Suspicious activity
+- Unauthorized access attempts
+- High-risk events
+
+Do not expose sensitive information to unauthorized users.
+
+--------------------------------------------------
+13. CASE ACTIONS
+--------------------------------------------------
+
+Authorized users can:
+
+Edit Case
+Upload Document
+View Documents
+Review Documents
+Verify Integrity
+View Audit Trail
+Generate Report
+Share authorized information
+Archive Case
+
+Each action must respect role-based permissions.
+
+--------------------------------------------------
+14. ROLE-BASED ACCESS
+--------------------------------------------------
+
+ADMIN:
+Can view and manage all case information.
+
+OFFICER:
+Can view assigned cases and perform authorized case/document actions.
+
+LEGAL REVIEWER:
+Can view relevant cases and review documents.
+
+CLERK:
+Can view assigned cases and manage authorized document tasks.
+
+AUDITOR:
+Can view case information, audit logs, integrity information and security events.
+
+Unauthorized users:
+Show:
+
+403 Access Denied
+
+Do not expose restricted case information.
+
+--------------------------------------------------
+15. CASE REPORT
+--------------------------------------------------
+
+Add an option:
+
+"Generate Case Report"
+
+The report should eventually contain:
+
+Case information
+Documents
+Document status
+Review status
+Integrity status
+Security alerts
+Activity summary
+Timeline
+
+Prepare this for future PDF generation.
+
+--------------------------------------------------
+16. API / DATA STRUCTURE
+--------------------------------------------------
+
+Do not permanently hardcode case information inside the component.
+
+Create/use:
+
+/services/caseService.js
+
+Functions:
+
+getCaseById(id)
+updateCase(id, data)
+getCaseDocuments(id)
+getCaseActivities(id)
+getCaseReviews(id)
+getCaseIntegrity(id)
+getCaseSecurity(id)
+
+If backend endpoints are not ready, use realistic mock data through a separate service.
+
+Make the frontend easy to connect to Node/Express/MongoDB later.
+
+--------------------------------------------------
+17. CASE DATA MODEL
+--------------------------------------------------
+
+Use a structure similar to:
+
+{
+  caseId: "C-1024",
+  title: "Theft Investigation",
+  type: "Theft",
+  description: "Investigation related to reported theft.",
+  department: "Investigation",
+  assignedOfficers: [
+    {
+      name: "Officer A",
+      role: "Lead Investigation Officer",
+      department: "Investigation",
+      status: "Active"
+    }
+  ],
+  priority: "High",
+  status: "Active",
+  confidentiality: "Restricted",
+  startDate: "2026-09-01",
+  documentsCount: 12,
+  pendingReviews: 3,
+  securityRisk: 67,
+  integrityStatus: "Verified"
+}
+
+--------------------------------------------------
+18. RESPONSIVE DESIGN
+--------------------------------------------------
+
+Desktop:
+Use a wide professional dashboard layout.
+
+Tablet:
+Stack cards and reduce table columns.
+
+Mobile:
+Tabs should be horizontally scrollable.
+
+Convert large tables into responsive cards where necessary.
+
+Do not allow horizontal page overflow.
+
+--------------------------------------------------
+19. LOADING / ERROR / EMPTY STATES
+--------------------------------------------------
+
+Loading:
+Show skeleton cards and table rows.
+
+Error:
+"Unable to load case information."
+[Try Again]
+
+No documents:
+"No documents have been added to this case yet."
+[Upload Document]
+
+No security alerts:
+"✓ No security alerts for this case."
+
+No reviews:
+"No documents are currently pending review."
+
+--------------------------------------------------
+20. FINAL USER FLOW
+--------------------------------------------------
+
+The Case Details page should connect the entire SecureDocs system:
+
+/cases
+   ↓
+/cases/:id
+   ↓
+Overview
+   ├── Documents
+   │      ↓
+   │   /documents/:id
+   │
+   ├── Activity
+   │      ↓
+   │   Audit Logs
+   │
+   ├── Reviews
+   │      ↓
+   │   Document Review
+   │
+   ├── Integrity
+   │      ↓
+   │   Integrity Verification
+   │
+   └── Security
+          ↓
+      Activity Analysis
+
+FINAL REQUIREMENT:
+
+Make this page feel like the central control center for one investigation case.
+
+The user should be able to understand in a few seconds:
+
+1. What is this case?
+2. Who is handling it?
+3. What is its current status?
+4. How many documents does it contain?
+5. Are the documents intact?
+6. Are any documents waiting for review?
+7. What recent activities occurred?
+8. Is there suspicious activity?
+9. What is the security risk?
+10. What actions can the current user perform?
+
+Do not add unrelated features.
+Do not break existing pages.
+Keep the implementation modular and production-quality.

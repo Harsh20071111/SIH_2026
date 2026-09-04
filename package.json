@@ -1,0 +1,12 @@
+{
+  "name": "hackathon-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix Hackathon-Merged run dev",
+    "dev:dashboard": "npm --prefix Hackathon-Merged run dev:dashboard",
+    "dev:mockup": "npm --prefix Hackathon-Merged run dev:mockup",
+    "dev:api": "npm --prefix Hackathon-Merged run dev:api",
+    "build": "npm --prefix Hackathon-Merged run build"
+  }
+}

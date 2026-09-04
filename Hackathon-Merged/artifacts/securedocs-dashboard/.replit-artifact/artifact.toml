@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SecureDocs Dashboard"
+description = "A professional secure document management dashboard for legal and investigation teams, with case oversight, integrity monitoring, risk intelligence, security alerts, and operational activity."
+version = "1.0.0"
+id = "artifacts/securedocs-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24904
+
+[services.development]
+run = "pnpm --filter @workspace/securedocs-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/securedocs-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/securedocs-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24904"
+BASE_PATH = "/"
