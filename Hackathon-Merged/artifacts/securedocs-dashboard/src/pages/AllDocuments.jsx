@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Download, Eye, FileCheck2, Filter, History, KeyRound, Link2, Loader2, LogOut, MoreHorizontal, Plus, RefreshCw, Search, Share2, Shield, ShieldAlert, SlidersHorizontal, Upload, UserRound, X } from 'lucide-react';
-import { documents as seedDocuments, filterOptions } from '@/data/documents';
+import { filterOptions } from '@/data/documents';
 import { DetailIcon, Dropdown, EmptyState, IconButton, Modal, SkeletonRows, StatusBadge, Toast } from '@/components/SecureDocsComponents';
+import { useAuth } from '@/context/AuthContext';
+import { documentService } from '@/services/documentService';
 
 const formatDate = (date) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(String(date).includes('T') ? date : `${date}T12:00:00`));
 const formatDateTime = (date) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(date));
-const unique = (key) => [...new Set(seedDocuments.map((doc) => doc[key]))];
+
 
 function SelectField({ label, value, onChange, options, testId }) {
   return <label className="min-w-0 flex-1"><span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[.12em] text-slate-500">{label}</span><div className="relative"><select value={value} onChange={(event) => onChange(event.target.value)} data-testid={testId} className="h-9 w-full appearance-none rounded-md border border-slate-300 bg-white px-2.5 pr-7 text-xs font-semibold text-slate-700 outline-none transition focus:border-cyan-500"><option value="">All {label}</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" /></div></label>;
@@ -38,14 +40,14 @@ function UploadModal({ onClose, onUpload }) {
   const [caseId, setCaseId] = useState('');
   const [type, setType] = useState('FIR');
   const [confidentiality, setConfidentiality] = useState('Confidential');
-  const [fileName, setFileName] = useState('');
+  const [file, setFile] = useState(null);
   return <Modal title="Add document to evidence control" eyebrow="Secure intake" onClose={onClose} testId="modal-upload-document">
-    <form onSubmit={(event) => { event.preventDefault(); onUpload({ name: name || 'Untitled case document', caseId: caseId || 'CASE-2026-NEW', type, confidentiality, fileName: fileName || 'secure-document.pdf' }); }} className="space-y-4 px-6 py-5">
+    <form onSubmit={(event) => { event.preventDefault(); onUpload({ name: name || 'Untitled case document', caseId: caseId || 'CASE-2026-NEW', type, confidentiality, file }); }} className="space-y-4 px-6 py-5">
       <div className="rounded-lg border border-cyan-100 bg-cyan-50/60 p-3 text-xs leading-5 text-cyan-900"><ShieldCheckText /> AES-256 Encryption · SHA-256 Integrity Hash · Audit Logging</div>
       <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Document name</span><input value={name} onChange={(event) => setName(event.target.value)} data-testid="input-upload-document-name" placeholder="e.g. Probable Cause Affidavit" className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-500" /></label>
       <div className="grid grid-cols-2 gap-3"><label><span className="mb-1.5 block text-xs font-bold text-slate-700">Case ID</span><input value={caseId} onChange={(event) => setCaseId(event.target.value)} data-testid="input-upload-case-id" placeholder="CASE-2026-0000" className="h-10 w-full rounded-md border border-slate-300 px-3 font-mono-app text-xs outline-none focus:border-cyan-500" /></label><label><span className="mb-1.5 block text-xs font-bold text-slate-700">Document Type</span><select value={type} onChange={(event) => setType(event.target.value)} data-testid="select-upload-document-type" className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-xs outline-none focus:border-cyan-500">{filterOptions.documentType.map((item) => <option key={item}>{item}</option>)}</select></label></div>
       <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Confidentiality Level</span><select value={confidentiality} onChange={(event) => setConfidentiality(event.target.value)} data-testid="select-upload-confidentiality" className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-xs outline-none focus:border-cyan-500">{filterOptions.confidentiality.map((item) => <option key={item}>{item}</option>)}</select></label>
-      <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Source file</span><div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50"><input type="file" onChange={(event) => setFileName(event.target.files?.[0]?.name || '')} data-testid="input-upload-file" className="w-[230px] text-xs text-slate-500 file:mr-2 file:rounded file:border-0 file:bg-[#e2f0f3] file:px-2.5 file:py-1.5 file:text-xs file:font-bold file:text-cyan-800" /></div>{fileName && <span data-testid="text-upload-file-name" className="mt-1 block text-[11px] text-emerald-700">{fileName} ready for secure intake</span>}</label>
+      <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Source file</span><div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50"><input type="file" onChange={(event) => setFile(event.target.files?.[0] || null)} data-testid="input-upload-file" className="w-[230px] text-xs text-slate-500 file:mr-2 file:rounded file:border-0 file:bg-[#e2f0f3] file:px-2.5 file:py-1.5 file:text-xs file:font-bold file:text-cyan-800" /></div>{file && <span data-testid="text-upload-file-name" className="mt-1 block text-[11px] text-emerald-700">{file.name} ready for secure intake</span>}</label>
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={onClose} data-testid="button-cancel-upload" className="rounded-md px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button><button type="submit" data-testid="button-confirm-upload" className="inline-flex items-center gap-2 rounded-md bg-[#1d6883] px-4 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-[#18566d]"><Upload size={14} />Secure upload</button></div>
     </form>
   </Modal>;
@@ -80,28 +82,250 @@ function ProfileMenu({ onClose }) { return <Dropdown className="right-4 top-14 w
 function LogOutIcon() { return <LogOut size={14} />; }
 
 export default function AllDocuments() {
-  const [collapsed, setCollapsed] = useState(false); const [query, setQuery] = useState(''); const [filters, setFilters] = useState({ caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }); const [applied, setApplied] = useState(filters); const [sort, setSort] = useState({ key: 'lastModified', direction: 'desc' }); const [page, setPage] = useState(1); const [menu, setMenu] = useState(null); const [modal, setModal] = useState(null); const [toast, setToast] = useState(''); const [notifications, setNotifications] = useState(false); const [profile, setProfile] = useState(false); const [loading, setLoading] = useState(false); const [docs, setDocs] = useState(seedDocuments); const perPage = 7;
-  const filtered = useMemo(() => docs.filter((doc) => { const q = query.toLowerCase(); const matchesQuery = !q || [doc.documentName, doc.caseId, doc.uploadedBy, doc.documentType, doc.id].some((value) => value.toLowerCase().includes(q)); const inDateRange = (!applied.dateFrom || doc.uploadDate >= applied.dateFrom) && (!applied.dateTo || doc.uploadDate <= applied.dateTo); return matchesQuery && inDateRange && Object.entries(applied).filter(([key]) => !['dateFrom', 'dateTo'].includes(key)).every(([key, value]) => !value || String(doc[key]).toLowerCase().includes(value.toLowerCase())); }), [docs, query, applied]);
-  const sorted = useMemo(() => [...filtered].sort((a, b) => { if (sort.key === 'version') return sort.direction === 'asc' ? a.version - b.version : b.version - a.version; const av = String(a[sort.key]).toLowerCase(); const bv = String(b[sort.key]).toLowerCase(); return sort.direction === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); }), [filtered, sort]);
-  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage)); const pageDocs = sorted.slice((page - 1) * perPage, page * perPage);
+  const { user } = useAuth();
+  const canUpload = user && ['Admin', 'Officer', 'Clerk'].includes(user.role);
+
+  const [docs, setDocs] = useState([]);
+  const [stats, setStats] = useState({ totalDocuments: 0, pendingReview: 0, integrityIssues: 0, restrictedDocuments: 0 });
+  const [caseIdOptions, setCaseIdOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState(''); 
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  
+  const [filters, setFilters] = useState({ caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }); 
+  const [applied, setApplied] = useState(filters); 
+  const [sort, setSort] = useState({ key: 'lastModified', direction: 'desc' }); 
+  const [page, setPage] = useState(1); 
+  const [menu, setMenu] = useState(null); 
+  const [modal, setModal] = useState(null); 
+  const [toast, setToast] = useState(''); 
+  const perPage = 7;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDocs = async () => {
+      setLoading(true);
+      try {
+        const [docsData, statsData, caseIds] = await Promise.all([
+          documentService.getDocuments({ ...applied, query: debouncedQuery }),
+          documentService.getDocumentStats(),
+          documentService.getUniqueCaseIds()
+        ]);
+        if (isMounted) {
+          setDocs(docsData);
+          setStats(statsData);
+          setCaseIdOptions(caseIds);
+        }
+      } catch (err) {
+        console.error(err);
+        if (isMounted) setToast('Error loading documents.');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchDocs();
+    return () => { isMounted = false; };
+  }, [applied, debouncedQuery]);
+
+  const sorted = useMemo(() => [...docs].sort((a, b) => { 
+    if (sort.key === 'version') return sort.direction === 'asc' ? a.version - b.version : b.version - a.version; 
+    const av = String(a[sort.key]).toLowerCase(); 
+    const bv = String(b[sort.key]).toLowerCase(); 
+    return sort.direction === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); 
+  }), [docs, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage)); 
+  const pageDocs = sorted.slice((page - 1) * perPage, page * perPage);
+  
   const changeSort = (key) => { setSort((current) => ({ key, direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc' })); setPage(1); };
-  const clearFilters = () => { const blank = { caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }; setFilters(blank); setApplied(blank); setQuery(''); setPage(1); };
+  
+  const clearFilters = () => { 
+    const blank = { caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }; 
+    setFilters(blank); setApplied(blank); setQuery(''); setPage(1); 
+  };
+  
   const openAction = (doc, action) => { setMenu(null); setModal({ type: action, document: doc }); };
   const menuApi = (id) => { const fn = (doc) => setMenu((current) => current === id ? null : id); fn.activeId = menu; fn.share = (doc) => openAction(doc, 'share'); fn.download = (doc) => openAction(doc, 'download'); fn.verify = (doc) => openAction(doc, 'verify'); return fn; };
-  const handleUpload = (info) => { const newDoc = { ...seedDocuments[0], id: `SD-${Math.floor(26100 + Math.random() * 80)}`, documentName: info.name, caseId: info.caseId, documentType: info.type, confidentiality: info.confidentiality, uploadDate: '2026-09-02', lastModified: '2026-09-02T16:50:00', uploadedBy: 'Officer Raj Patel', hash: 'sha256: 1a6e…9f22', version: 1, totalAccesses: 0, lastAccessed: '2026-09-02T16:50:00', lastAccessedBy: 'Officer Raj Patel', versionHistory: [{ version: 1, date: 'Sep 02, 2026 · 16:50', user: 'Officer Raj Patel', note: 'Secure intake complete' }] }; setDocs((current) => [newDoc, ...current]); setModal(null); setToast('Document uploaded securely.'); };
-  const handleDownload = () => { setModal(null); setToast('Controlled copy prepared for download'); };
+  
+  const handleUpload = async (info) => { 
+    try {
+      if (!info.file) { setToast('Please select a file to upload.'); return; }
+      await documentService.uploadDocument({
+        name: info.name,
+        caseId: info.caseId,
+        type: info.type,
+        confidentiality: info.confidentiality,
+        uploadedBy: user?.name
+      }, info.file);
+      setModal(null); 
+      setToast('Document uploaded securely.');
+      const [docsData, statsData] = await Promise.all([
+        documentService.getDocuments({ ...applied, query: debouncedQuery }),
+        documentService.getDocumentStats()
+      ]);
+      setDocs(docsData);
+      setStats(statsData);
+    } catch (e) {
+      setToast('Upload failed.');
+    }
+  };
+  
+  const handleDownload = async () => { 
+    if (modal?.document) {
+      await documentService.downloadDocument(modal.document.id);
+    }
+    setModal(null); 
+    setToast('Controlled copy prepared for download'); 
+  };
+  
   const activeFilterCount = Object.values(applied).filter(Boolean).length;
   const columns = [['documentName', 'Document Name'], ['caseId', 'Case ID'], ['documentType', 'Document Type'], ['uploadedBy', 'Uploaded By'], ['uploadDate', 'Upload Date'], ['version', 'Version'], ['status', 'Status'], ['integrity', 'Integrity'], ['confidentiality', 'Confidentiality']];
-  return <>
-    <div className="mx-auto max-w-[1600px] py-2 sm:py-4">
-    <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-end"><div><div className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-cyan-700"><span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />Records workspace / control room</div><h1 data-testid="text-page-title" className="text-[28px] font-extrabold tracking-[-.04em] text-[#18263b] sm:text-[32px]">All Documents</h1><p data-testid="text-page-subtitle" className="mt-1 text-sm text-slate-500">Securely manage, search and monitor legal and investigation documents.</p></div><div className="flex items-center gap-2"><div className="hidden items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700 sm:flex" data-testid="status-trust-indicator"><CheckCircle2 size={14} /> Chain of custody operational</div><button type="button" onClick={() => setModal({ type: 'upload' })} data-testid="button-open-upload" className="inline-flex items-center gap-2 rounded-md bg-[#1d6883] px-3.5 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#18566d]"><Plus size={15} /> Upload Document</button></div></div>
-       <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="security-summary"><SummaryCard label="Total Documents" value="1,248" detail="Across all active matters" icon={FileCheck2} tone="navy" testId="summary-total-documents" /><SummaryCard label="Pending Review" value="86" detail="Awaiting officer or legal review" icon={AlertTriangle} tone="amber" testId="summary-pending-review" /><SummaryCard label="Integrity Issues" value="7" detail="Records requiring verification" icon={ShieldAlert} tone="red" testId="summary-integrity-issues" /><SummaryCard label="Restricted Documents" value="142" detail="Highest access controls" icon={Shield} tone="teal" testId="summary-restricted-documents" /></section>
-       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-card" data-testid="documents-workspace"><div className="border-b border-slate-200 px-4 pt-4 sm:px-5"><div className="flex flex-col gap-3 xl:flex-row xl:items-center"><div className="relative min-w-0 flex-1"><Search size={16} className="absolute left-3 top-2.5 text-slate-400" /><input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} data-testid="input-search-documents" placeholder="Search by document name, Case ID, officer..." className="h-9 w-full rounded-md border border-slate-300 pl-9 pr-9 text-xs font-medium outline-none placeholder:text-slate-400 focus:border-cyan-500" />{query && <IconButton label="Clear search" onClick={() => setQuery('')} testId="button-clear-search" className="absolute right-1 top-1 h-7 w-7 text-slate-400"><X size={14} /></IconButton>}</div><div className="flex items-center gap-2"><button type="button" onClick={() => setLoading(true) || setTimeout(() => setLoading(false), 500)} data-testid="button-refresh-documents" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Refresh</button><button type="button" onClick={() => {}} data-testid="button-bulk-actions" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50"><SlidersHorizontal size={14} />Bulk actions</button></div></div><div className="mt-4 grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"><SelectField label="Case ID" value={filters.caseId} onChange={(value) => setFilters({ ...filters, caseId: value })} options={unique('caseId')} testId="select-filter-case-id" /><SelectField label="Document Type" value={filters.documentType} onChange={(value) => setFilters({ ...filters, documentType: value })} options={filterOptions.documentType} testId="select-filter-document-type" /><SelectField label="Uploaded By" value={filters.uploadedBy} onChange={(value) => setFilters({ ...filters, uploadedBy: value })} options={filterOptions.uploadedBy} testId="select-filter-uploader" /><SelectField label="Status" value={filters.status} onChange={(value) => setFilters({ ...filters, status: value })} options={filterOptions.status} testId="select-filter-status" /><SelectField label="Integrity" value={filters.integrity} onChange={(value) => setFilters({ ...filters, integrity: value })} options={filterOptions.integrity} testId="select-filter-integrity" /><SelectField label="Confidentiality" value={filters.confidentiality} onChange={(value) => setFilters({ ...filters, confidentiality: value })} options={filterOptions.confidentiality} testId="select-filter-confidentiality" /></div><div className="flex flex-wrap items-center gap-2 border-t border-slate-100 py-3"><Filter size={14} className="text-slate-400" /><span className="text-[11px] font-bold text-slate-500">Date</span><input type="date" value={filters.dateFrom} onChange={(event) => setFilters({ ...filters, dateFrom: event.target.value })} data-testid="input-filter-date-from" className="h-8 rounded-md border border-slate-300 px-2 text-[11px] text-slate-600 outline-none focus:border-cyan-500" /><span className="text-xs text-slate-400">to</span><input type="date" value={filters.dateTo} onChange={(event) => setFilters({ ...filters, dateTo: event.target.value })} data-testid="input-filter-date-to" className="h-8 rounded-md border border-slate-300 px-2 text-[11px] text-slate-600 outline-none focus:border-cyan-500" /><button type="button" onClick={() => { setApplied(filters); setPage(1); }} data-testid="button-apply-filters" className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[#18263b] px-3 text-[11px] font-extrabold text-white hover:bg-[#253952]">Apply Filters {activeFilterCount > 0 && <span className="rounded bg-white/15 px-1.5">{activeFilterCount}</span>}</button><button type="button" onClick={clearFilters} data-testid="button-clear-filters" className="h-8 rounded-md px-2 text-[11px] font-bold text-slate-500 hover:bg-slate-100">Clear Filters</button></div></div>
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3"><div className="text-xs font-bold text-slate-700"><span data-testid="text-result-count">{sorted.length}</span> records <span className="font-normal text-slate-400">matching current view</span></div><div className="hidden items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-slate-400 sm:flex"><LockIcon /> Restricted workspace</div></div>
-         <div className="scrollbar-thin overflow-x-auto">{loading ? <SkeletonRows /> : pageDocs.length === 0 ? <EmptyState onClear={clearFilters} /> : <table className="w-full min-w-[1420px] border-collapse text-left"><thead><tr className="bg-slate-50/80">{[['', ''], ...columns, ['', 'Actions']].map(([key, label], index) => <th key={`${label}-${index}`} className="whitespace-nowrap px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-[.1em] text-slate-500 first:px-3">{key && ['documentName', 'caseId', 'uploadDate', 'version', 'status'].includes(key) ? <button type="button" onClick={() => changeSort(key)} data-testid={`button-sort-${key}`} className="inline-flex items-center gap-1 hover:text-cyan-700">{label}{sort.key === key ? sort.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} /> : <span className="text-slate-300">↕</span>}</button> : label}</th>)}</tr></thead><tbody>{pageDocs.map((document) => <DocumentRow key={document.id} document={document} onMenu={Object.assign(menuApi(document.id), { activeId: menu, share: (doc) => openAction(doc, 'share'), download: (doc) => openAction(doc, 'download'), verify: (doc) => openAction(doc, 'verify') })} onPreview={(doc) => setModal({ type: 'preview', document: doc })} onDetails={(doc) => { setMenu(null); setModal({ type: 'details', document: doc }); }} />)}</tbody></table>}</div>
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"><div className="text-[11px] text-slate-500">Showing <strong className="text-slate-700">{sorted.length ? (page - 1) * perPage + 1 : 0}–{Math.min(page * perPage, sorted.length)}</strong> of <strong className="text-slate-700">{sorted.length}</strong> records</div><div className="flex items-center gap-1"><button type="button" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))} data-testid="button-pagination-previous" className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft size={14} /></button>{Array.from({ length: totalPages }, (_, index) => index + 1).slice(0, 5).map((number) => <button type="button" key={number} onClick={() => setPage(number)} data-testid={`button-pagination-${number}`} className={`h-7 min-w-7 rounded border px-2 text-[11px] font-bold ${page === number ? 'border-[#1d6883] bg-[#1d6883] text-white' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{number}</button>)}<button type="button" disabled={page === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} data-testid="button-pagination-next" className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"><ChevronRight size={14} /></button></div></div>
-      </section><div className="mt-5 flex items-center gap-2 text-[10px] font-medium text-slate-400"><CircleHelp size={13} /> Every access, version change, and share event is retained in the immutable audit ledger.</div></div>
-    {modal?.type === 'upload' && <UploadModal onClose={() => setModal(null)} onUpload={handleUpload} />}{modal?.type === 'preview' && <PreviewModal document={modal.document} onClose={() => setModal(null)} onDetails={(doc) => setModal({ type: 'details', document: doc })} />}{modal?.type === 'details' && <DetailsDrawer document={modal.document} onClose={() => setModal(null)} onShare={(doc) => setModal({ type: 'share', document: doc })} onDownload={(doc) => setModal({ type: 'download', document: doc })} onVerify={(doc) => setModal({ type: 'verify', document: doc })} />}{modal?.type === 'share' && <ShareModal document={modal.document} onClose={() => setModal(null)} onSuccess={(recipient) => { setModal(null); setToast(`Secure link created for ${recipient}`); }} />}{modal?.type === 'download' && <DownloadModal document={modal.document} onClose={() => setModal(null)} onConfirm={handleDownload} />}{modal?.type === 'verify' && <VerifyModal document={modal.document} onClose={() => setModal(null)} />}{toast && <Toast message={toast} onClose={() => setToast('')} />}</>;
+  
+  return (
+    <>
+      <div className="mx-auto max-w-[1600px] py-2 sm:py-4">
+        <div className="mb-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-cyan-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />Records workspace / control room
+            </div>
+            <h1 data-testid="text-page-title" className="text-[28px] font-extrabold tracking-[-.04em] text-[#18263b] sm:text-[32px]">All Documents</h1>
+            <p data-testid="text-page-subtitle" className="mt-1 text-sm text-slate-500">Securely manage, search and monitor legal and investigation documents.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700 sm:flex" data-testid="status-trust-indicator">
+              <CheckCircle2 size={14} /> Chain of custody operational
+            </div>
+            {canUpload && (
+              <button type="button" onClick={() => setModal({ type: 'upload' })} data-testid="button-open-upload" className="inline-flex items-center gap-2 rounded-md bg-[#1d6883] px-3.5 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#18566d]">
+                <Plus size={15} /> Upload Document
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="security-summary">
+          <SummaryCard label="Total Documents" value={stats.totalDocuments} detail="Across all active matters" icon={FileCheck2} tone="navy" testId="summary-total-documents" />
+          <SummaryCard label="Pending Review" value={stats.pendingReview} detail="Awaiting officer or legal review" icon={AlertTriangle} tone="amber" testId="summary-pending-review" />
+          <SummaryCard label="Integrity Issues" value={stats.integrityIssues} detail="Records requiring verification" icon={ShieldAlert} tone="red" testId="summary-integrity-issues" />
+          <SummaryCard label="Restricted Documents" value={stats.restrictedDocuments} detail="Highest access controls" icon={Shield} tone="teal" testId="summary-restricted-documents" />
+        </section>
+        
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-card" data-testid="documents-workspace">
+          <div className="border-b border-slate-200 px-4 pt-4 sm:px-5">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+              <div className="relative min-w-0 flex-1">
+                <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
+                <input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} data-testid="input-search-documents" placeholder="Search by document name, Case ID, officer..." className="h-9 w-full rounded-md border border-slate-300 pl-9 pr-9 text-xs font-medium outline-none placeholder:text-slate-400 focus:border-cyan-500" />
+                {query && <IconButton label="Clear search" onClick={() => setQuery('')} testId="button-clear-search" className="absolute right-1 top-1 h-7 w-7 text-slate-400"><X size={14} /></IconButton>}
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setApplied({...applied})} data-testid="button-refresh-documents" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Refresh
+                </button>
+                <button type="button" onClick={() => {}} data-testid="button-bulk-actions" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                  <SlidersHorizontal size={14} />Bulk actions
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              <SelectField label="Case ID" value={filters.caseId} onChange={(value) => setFilters({ ...filters, caseId: value })} options={caseIdOptions} testId="select-filter-case-id" />
+              <SelectField label="Document Type" value={filters.documentType} onChange={(value) => setFilters({ ...filters, documentType: value })} options={filterOptions.documentType} testId="select-filter-document-type" />
+              <SelectField label="Uploaded By" value={filters.uploadedBy} onChange={(value) => setFilters({ ...filters, uploadedBy: value })} options={filterOptions.uploadedBy} testId="select-filter-uploader" />
+              <SelectField label="Status" value={filters.status} onChange={(value) => setFilters({ ...filters, status: value })} options={filterOptions.status} testId="select-filter-status" />
+              <SelectField label="Integrity" value={filters.integrity} onChange={(value) => setFilters({ ...filters, integrity: value })} options={filterOptions.integrity} testId="select-filter-integrity" />
+              <SelectField label="Confidentiality" value={filters.confidentiality} onChange={(value) => setFilters({ ...filters, confidentiality: value })} options={filterOptions.confidentiality} testId="select-filter-confidentiality" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 py-3">
+              <Filter size={14} className="text-slate-400" />
+              <span className="text-[11px] font-bold text-slate-500">Date</span>
+              <input type="date" value={filters.dateFrom} onChange={(event) => setFilters({ ...filters, dateFrom: event.target.value })} data-testid="input-filter-date-from" className="h-8 rounded-md border border-slate-300 px-2 text-[11px] text-slate-600 outline-none focus:border-cyan-500" />
+              <span className="text-xs text-slate-400">to</span>
+              <input type="date" value={filters.dateTo} onChange={(event) => setFilters({ ...filters, dateTo: event.target.value })} data-testid="input-filter-date-to" className="h-8 rounded-md border border-slate-300 px-2 text-[11px] text-slate-600 outline-none focus:border-cyan-500" />
+              <button type="button" onClick={() => { setApplied(filters); setPage(1); }} data-testid="button-apply-filters" className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[#18263b] px-3 text-[11px] font-extrabold text-white hover:bg-[#253952]">
+                Apply Filters {activeFilterCount > 0 && <span className="rounded bg-white/15 px-1.5">{activeFilterCount}</span>}
+              </button>
+              <button type="button" onClick={clearFilters} data-testid="button-clear-filters" className="h-8 rounded-md px-2 text-[11px] font-bold text-slate-500 hover:bg-slate-100">Clear Filters</button>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+            <div className="text-xs font-bold text-slate-700">
+              <span data-testid="text-result-count">{sorted.length}</span> records <span className="font-normal text-slate-400">matching current view</span>
+            </div>
+            <div className="hidden items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-slate-400 sm:flex">
+              <LockIcon /> Restricted workspace
+            </div>
+          </div>
+          
+          <div className="scrollbar-thin overflow-x-auto">
+            {loading ? <SkeletonRows /> : pageDocs.length === 0 ? <EmptyState onClear={clearFilters} /> : (
+              <table className="w-full min-w-[1420px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-slate-50/80">
+                    {[['', ''], ...columns, ['', 'Actions']].map(([key, label], index) => (
+                      <th key={`${label}-${index}`} className="whitespace-nowrap px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-[.1em] text-slate-500 first:px-3">
+                        {key && ['documentName', 'caseId', 'uploadDate', 'version', 'status'].includes(key) ? (
+                          <button type="button" onClick={() => changeSort(key)} data-testid={`button-sort-${key}`} className="inline-flex items-center gap-1 hover:text-cyan-700">
+                            {label}
+                            {sort.key === key ? sort.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} /> : <span className="text-slate-300">↕</span>}
+                          </button>
+                        ) : label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageDocs.map((document) => (
+                    <DocumentRow key={document.id} document={document} onMenu={Object.assign(menuApi(document.id), { activeId: menu, share: (doc) => openAction(doc, 'share'), download: (doc) => openAction(doc, 'download'), verify: (doc) => openAction(doc, 'verify') })} onPreview={(doc) => setModal({ type: 'preview', document: doc })} onDetails={(doc) => { setMenu(null); setModal({ type: 'details', document: doc }); }} />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          
+          <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[11px] text-slate-500">
+              Showing <strong className="text-slate-700">{sorted.length ? (page - 1) * perPage + 1 : 0}–{Math.min(page * perPage, sorted.length)}</strong> of <strong className="text-slate-700">{sorted.length}</strong> records
+            </div>
+            <div className="flex items-center gap-1">
+              <button type="button" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))} data-testid="button-pagination-previous" className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                <ChevronLeft size={14} />
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).slice(0, 5).map((number) => (
+                <button type="button" key={number} onClick={() => setPage(number)} data-testid={`button-pagination-${number}`} className={`h-7 min-w-7 rounded border px-2 text-[11px] font-bold ${page === number ? 'border-[#1d6883] bg-[#1d6883] text-white' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                  {number}
+                </button>
+              ))}
+              <button type="button" disabled={page === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} data-testid="button-pagination-next" className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </section>
+        
+        <div className="mt-5 flex items-center gap-2 text-[10px] font-medium text-slate-400">
+          <CircleHelp size={13} /> Every access, version change, and share event is retained in the immutable audit ledger.
+        </div>
+      </div>
+      
+      {modal?.type === 'upload' && <UploadModal onClose={() => setModal(null)} onUpload={handleUpload} />}
+      {modal?.type === 'preview' && <PreviewModal document={modal.document} onClose={() => setModal(null)} onDetails={(doc) => setModal({ type: 'details', document: doc })} />}
+      {modal?.type === 'details' && <DetailsDrawer document={modal.document} onClose={() => setModal(null)} onShare={(doc) => setModal({ type: 'share', document: doc })} onDownload={(doc) => setModal({ type: 'download', document: doc })} onVerify={(doc) => setModal({ type: 'verify', document: doc })} />}
+      {modal?.type === 'share' && <ShareModal document={modal.document} onClose={() => setModal(null)} onSuccess={(recipient) => { setModal(null); setToast(`Secure link created for ${recipient}`); }} />}
+      {modal?.type === 'download' && <DownloadModal document={modal.document} onClose={() => setModal(null)} onConfirm={handleDownload} />}
+      {modal?.type === 'verify' && <VerifyModal document={modal.document} onClose={() => setModal(null)} />}
+      
+      {toast && <Toast message={toast} onClose={() => setToast('')} />}
+    </>
+  );
 }
 
 function LockIcon() { return <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-slate-200 text-slate-500"><Shield size={10} /></span>; }

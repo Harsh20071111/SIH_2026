@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Bell, BriefcaseBusiness, ChartNoAxesCombined, Check, ChevronDown, ClipboardCheck,
-  Files, History, LayoutDashboard, LockKeyhole, Menu, PanelLeftClose,
+  Files, History, LayoutDashboard, LockKeyhole, LogOut, Menu, PanelLeftClose,
   PanelLeftOpen, Search, Settings, ShieldCheck, UploadCloud, UserRound, Users, X,
 } from 'lucide-react';
 import { navGroups, roles, type Role } from '@/lib/mock-data';
@@ -37,7 +37,7 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
         <nav className="flex-1 overflow-y-auto px-3 py-5">
           {visibleGroups.map((group) => <div key={group.label} className="mb-5"><div className={`mb-2 px-3 font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/40 ${collapsed ? 'text-center' : ''}`}>{collapsed ? '···' : group.label}</div>{group.items.map((item) => { const Icon = iconMap[item.icon as keyof typeof iconMap]; const active = location === item.href; const badge = 'badge' in item ? item.badge : undefined; return <Link key={item.href} href={item.href} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} onClick={() => setMobileOpen(false)} className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${active ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white'} ${collapsed ? 'justify-center px-2' : ''}`} title={collapsed ? item.label : undefined}><Icon size={17} strokeWidth={active ? 2.4 : 1.8} /><span className={collapsed ? 'sr-only' : ''}>{item.label}</span>{badge && !collapsed && <span className={`ml-auto rounded px-1.5 py-0.5 font-mono text-[10px] ${active ? 'bg-black/10' : 'bg-sidebar-primary/15 text-sidebar-primary'}`}>{badge}</span>}</Link> })}</div>)}
         </nav>
-        {!collapsed && <div className="border-t border-sidebar-border p-3"><Link href="/profile" data-testid="link-profile-sidebar" className="flex items-center gap-3 rounded-lg p-2.5 hover:bg-sidebar-accent"><div className="grid size-8 place-items-center rounded-full bg-[#d8b68e] text-xs font-bold text-slate-800">AR</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">Ananya Rao</div><div className="truncate text-[10px] text-sidebar-foreground/55">{role}</div></div><ChevronDown size={14} className="text-sidebar-foreground/40" /></Link></div>}
+        {!collapsed && <div className="border-t border-sidebar-border p-3 flex items-center justify-between"><Link href="/profile" data-testid="link-profile-sidebar" className="flex items-center gap-3 rounded-lg p-2.5 hover:bg-sidebar-accent flex-1"><div className="grid size-8 place-items-center rounded-full bg-[#d8b68e] text-xs font-bold text-slate-800">AR</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">Ananya Rao</div><div className="truncate text-[10px] text-sidebar-foreground/55">{role}</div></div></Link><button onClick={() => window.dispatchEvent(new CustomEvent('logout'))} className="p-2.5 text-sidebar-foreground/60 hover:text-white rounded-lg hover:bg-sidebar-accent" title="Log out"><LogOut size={16} /></button></div>}
       </aside>
 
       <div className={`min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? 'md:pl-[76px]' : 'md:pl-[252px]'}`}>

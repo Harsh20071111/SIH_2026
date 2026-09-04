@@ -48,3 +48,16 @@ Thumbs.db
 .cache/
 .local/
 *.zip
+
+# Temporary extraction folders
+SecureDocs-All-Documents*
+
+# Local uploads
+**/uploads/*
+!**/uploads/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
