@@ -20,8 +20,8 @@ export default function Login() {
   const { login, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  // If already logged in, redirect
-  if (user) {
+  // If already logged in (and not using the prototype demo token), redirect
+  if (user && localStorage.getItem('securedocs_token')) {
     setLocation('/dashboard');
     return null;
   }

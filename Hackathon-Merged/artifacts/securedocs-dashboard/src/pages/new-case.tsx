@@ -137,7 +137,7 @@ export default function NewCase({ role }: { role: Role }) {
         documents: 0,
         lastActivity: createdAt,
       });
-      setCreatedCase({ id: created.id, officer: created.assignedOfficer ?? created.officer });
+      setCreatedCase({ id: created.id, officer: created.assignedOfficer ?? created.officer ?? 'Officer A' });
       window.setTimeout(() => setLocation(`/cases/${created.id}`), 1000);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'The case could not be created. Try again.';

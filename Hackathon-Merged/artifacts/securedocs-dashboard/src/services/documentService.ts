@@ -1,3 +1,4 @@
+// @ts-expect-error documents.js is a JS file
 import { documents as seedDocuments, filterOptions } from '../data/documents';
 
 // In a real app, this would be an API call to the backend.

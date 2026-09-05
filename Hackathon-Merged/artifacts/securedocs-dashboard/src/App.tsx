@@ -17,6 +17,7 @@ import ReviewQueue from '@/pages/reviews';
 import AuditLogs from '@/pages/audit-logs';
 import IntegrityVerification from '@/pages/integrity';
 import Reports from '@/pages/reports';
+import Profile from '@/pages/profile';
 import { SecureDocsShell } from '@/components/securedocs-shell';
 import type { Role } from '@/lib/mock-data';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -66,7 +67,8 @@ function AuthenticatedApp() {
         <Route path="/audit-logs" component={() => <AuditLogs />} />
         <Route path="/integrity" component={() => <IntegrityVerification />} />
         <Route path="/reports" component={() => <Reports />} />
-        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/integrity', '/reports'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
+        <Route path="/profile" component={() => <Profile />} />
+        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/integrity', '/reports', '/profile'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
         <Route component={NotFound} />
       </Switch>
     </SecureDocsShell>
