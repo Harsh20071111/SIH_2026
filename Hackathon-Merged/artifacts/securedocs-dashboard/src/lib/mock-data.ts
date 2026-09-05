@@ -93,18 +93,20 @@ export const navGroups = [
     label: 'Workspace',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: 'layout' },
-      { label: 'Cases', href: '/cases', icon: 'briefcase' },
-      { label: 'Documents', href: '/documents', icon: 'files' },
-      { label: 'Reviews', href: '/reviews', icon: 'clipboard', badge: '43' },
+      { label: 'Document Repository', href: '/documents', icon: 'files' },
+      { label: 'Document Review', href: '/reviews/C-1024', icon: 'clipboard', badge: '12' },
+      { label: 'Access Control', href: '/security', icon: 'lock', badge: '11' },
+      { label: 'User Management', href: '/users', icon: 'users' },
     ],
   },
   {
-    label: 'Controls',
+    label: 'Controls & Audits',
     items: [
-      { label: 'Security', href: '/security', icon: 'lock', badge: '11' },
-      { label: 'Integrity', href: '/integrity', icon: 'shield' },
-      { label: 'Audit logs', href: '/audit-logs', icon: 'history' },
+      { label: 'Security Monitoring', href: '/integrity', icon: 'shield' },
+      { label: 'Audit Logs', href: '/audit-logs', icon: 'history' },
+      { label: 'Compliance Dashboard', href: '/compliance', icon: 'check' },
       { label: 'Reports', href: '/reports', icon: 'chart' },
+      { label: 'One-Click Integrity Report', href: '/reports/integrity/C-1024', icon: 'clipboard' },
     ],
   },
   {

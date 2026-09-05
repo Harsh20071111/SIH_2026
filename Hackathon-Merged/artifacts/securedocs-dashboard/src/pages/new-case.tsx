@@ -120,7 +120,6 @@ export default function NewCase({ role }: { role: Role }) {
     try {
       const createdAt = new Date().toISOString();
       const created = await create({
-        id: normalizedId,
         caseId: normalizedId,
         title: values.title.trim(),
         type: values.type,
@@ -134,7 +133,6 @@ export default function NewCase({ role }: { role: Role }) {
         createdAt,
         createdBy: role,
         risk: values.priority,
-        documents: 0,
         lastActivity: createdAt,
       } as any);
       setCreatedCase({ id: created.id, officer: created.assignedOfficer ?? created.officer ?? 'Officer A' });
