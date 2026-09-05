@@ -20,8 +20,15 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       return;
     }
 
-    // Find user by email (case-insensitive)
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const cleanIdentifier = email.trim();
+
+    // Find user by email or employeeId (case-insensitive)
+    const user = await User.findOne({
+      $or: [
+        { email: cleanIdentifier.toLowerCase() },
+        { employeeId: { $regex: new RegExp(`^${cleanIdentifier}$`, "i") } },
+      ],
+    });
 
     if (!user || !user.isActive) {
       // Create audit event for failed login — do not reveal if account exists
