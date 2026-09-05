@@ -114,7 +114,7 @@ function CaseRow({ item, onEdit, onArchive, canEdit, canArchive }: { item: CaseR
     <td className="px-4 py-3.5"><Link href={`/cases/${item.id}`} data-testid={`link-case-id-${item.id}`} className="font-mono text-[11px] font-bold text-primary hover:underline">{item.id}</Link></td>
     <td className="min-w-[190px] px-4 py-3.5"><Link href={`/cases/${item.id}`} data-testid={`link-case-title-${item.id}`} className="block text-xs font-bold hover:text-primary">{item.title}</Link><span className="mt-1 block text-[10px] text-muted-foreground">{item.type}</span></td>
     <td className="px-4 py-3.5 text-xs text-muted-foreground">{item.type}</td>
-    <td className="px-4 py-3.5"><div className="flex items-center gap-2 text-xs font-medium"><span className="grid size-6 place-items-center rounded-full bg-secondary text-[9px] font-bold text-secondary-foreground">{item.officer.replace('Officer ', 'O')}</span>{item.officer}</div></td>
+    <td className="px-4 py-3.5"><div className="flex items-center gap-2 text-xs font-medium"><span className="grid size-6 place-items-center rounded-full bg-secondary text-[9px] font-bold text-secondary-foreground">{(item.officer || item.assignedOfficer || 'Officer A').replace('Officer ', 'O')}</span>{item.officer || item.assignedOfficer || 'Officer A'}</div></td>
     <td className="px-4 py-3.5"><Link href={`/documents?caseId=${item.id}`} data-testid={`link-documents-${item.id}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"><FileText size={13} />{item.documents}</Link></td>
     <td className="px-4 py-3.5" title={new Date(item.lastActivity).toLocaleString()}><div className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-muted-foreground"><Clock3 size={13} />{relativeTime(item.lastActivity)}</div></td>
     <td className="px-4 py-3.5"><StatusBadge status={item.status} /></td>
@@ -160,7 +160,7 @@ export default function Cases({ role, search, setSearch }: CasesProps) {
   const roleCases = useMemo(() => data.filter((item) => isVisibleToRole(item, role)), [data, role]);
   const options = useMemo(() => ({
     types: [...new Set(roleCases.map((item) => item.type))].sort(),
-    officers: [...new Set(roleCases.map((item) => item.officer))].sort(),
+    officers: [...new Set(roleCases.map((item) => item.officer || item.assignedOfficer || 'Officer A'))].sort(),
   }), [roleCases]);
   const filteredCases = useMemo(() => {
     const query = search.trim().toLowerCase();

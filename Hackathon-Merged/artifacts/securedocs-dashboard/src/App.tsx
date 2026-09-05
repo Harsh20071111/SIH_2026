@@ -22,6 +22,7 @@ import ComplianceDashboard from '@/pages/compliance-dashboard';
 import OneClickIntegrityReport from '@/pages/one-click-integrity-report';
 import AccessDenied from '@/pages/access-denied';
 import DocumentReview from '@/pages/document-review';
+import Profile from '@/pages/profile';
 import { SecureDocsShell } from '@/components/securedocs-shell';
 import type { Role } from '@/lib/mock-data';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -77,7 +78,8 @@ function AuthenticatedApp() {
         <Route path="/integrity" component={() => <IntegrityVerification />} />
         <Route path="/reports" component={() => <Reports />} />
         <Route path="/403" component={() => <AccessDenied />} />
-        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/audit-logs/verify', '/integrity', '/reports', '/compliance', '/403'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
+        <Route path="/profile" component={() => <Profile />} />
+        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/audit-logs/verify', '/integrity', '/reports', '/compliance', '/403', '/profile'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
         <Route component={NotFound} />
       </Switch>
     </SecureDocsShell>

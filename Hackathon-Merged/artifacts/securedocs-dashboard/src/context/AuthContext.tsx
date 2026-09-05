@@ -29,6 +29,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         // ignore
       }
+    } else {
+      // Provide a demo user for the hackathon prototype
+      setUser({
+        id: 'demo-1',
+        name: 'Admin User',
+        email: 'admin@securedocs.demo',
+        role: 'Admin'
+      } as User);
+      setToken('demo-token');
     }
     setIsLoading(false);
 

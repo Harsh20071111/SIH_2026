@@ -22,6 +22,7 @@ export type CaseRecord = {
   confidentiality?: ConfidentialityLevel;
   documentsCount?: number;
   documents?: number;
+  activityCount?: number;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -29,6 +30,7 @@ export type CaseRecord = {
 };
 
 export type CaseCreateInput = {
+  id?: string;
   caseId: string;
   title: string;
   type: string;
@@ -38,6 +40,12 @@ export type CaseCreateInput = {
   priority: CasePriority;
   startDate: string;
   confidentiality: ConfidentialityLevel;
+  status?: CaseStatus;
+  createdAt?: string;
+  createdBy?: string;
+  risk?: CaseRisk;
+  documents?: number;
+  lastActivity?: string;
 };
 
 // Not used anymore as backend handles this, but kept for UI compatibility
