@@ -120,7 +120,6 @@ export default function NewCase({ role }: { role: Role }) {
     try {
       const createdAt = new Date().toISOString();
       const created = await create({
-        id: normalizedId,
         caseId: normalizedId,
         title: values.title.trim(),
         type: values.type,
@@ -134,10 +133,9 @@ export default function NewCase({ role }: { role: Role }) {
         createdAt,
         createdBy: role,
         risk: values.priority,
-        documents: 0,
         lastActivity: createdAt,
-      });
-      setCreatedCase({ id: created.id, officer: created.assignedOfficer ?? created.officer ?? 'Officer A' });
+      } as any);
+      setCreatedCase({ id: created.id, officer: created.assignedOfficer ?? created.officer ?? 'Unknown' });
       window.setTimeout(() => setLocation(`/cases/${created.id}`), 1000);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'The case could not be created. Try again.';

@@ -9,6 +9,7 @@ import Cases from '@/pages/cases';
 import CaseDetail from '@/pages/case-detail';
 import NewCase from '@/pages/new-case';
 import EditCase from '@/pages/edit-case';
+// @ts-ignore
 import AllDocuments from '@/pages/AllDocuments';
 import Settings from '@/pages/settings';
 import SecurityDashboard from '@/pages/security';
