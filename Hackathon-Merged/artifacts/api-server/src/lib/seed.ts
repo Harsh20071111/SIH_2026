@@ -133,8 +133,8 @@ async function seed() {
 
   let previousHash: string | null = null;
   for (const event of auditEvents) {
-    const eventData = JSON.stringify({ ...event, previousHash, timestamp: new Date().toISOString() });
-    const eventHash = crypto.createHash("sha256").update(eventData).digest("hex");
+    const eventData: string = JSON.stringify({ ...event, previousHash, timestamp: new Date().toISOString() });
+    const eventHash: string = crypto.createHash("sha256").update(eventData).digest("hex");
     await AuditLog.create({ ...event, previousHash, eventHash, timestamp: new Date(Date.now() - Math.random() * 7 * 86400000) });
     previousHash = eventHash;
   }
