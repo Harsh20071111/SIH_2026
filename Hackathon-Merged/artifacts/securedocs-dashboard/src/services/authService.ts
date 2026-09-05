@@ -1,14 +1,20 @@
 import { api } from './api';
-
-export type UserRole = 'Admin' | 'Officer' | 'Legal Reviewer' | 'Clerk' | 'Auditor';
+import type { OfficerRank } from '../types/roles';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: OfficerRank;
   department?: string;
   employeeId?: string;
+  
+  // ABAC / Jurisdiction
+  policeStationId?: string;
+  districtCode?: string;
+  stateCode?: string;
+  jurisdictionId?: string;
+  forensicTokens?: string[];
 }
 
 export interface AuthResponse {

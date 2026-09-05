@@ -1,10 +1,10 @@
+import "dotenv/config";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { connectDB } from "./lib/db";
 import { initFirebase } from "./lib/firebase";
 
 process.env.NODE_ENV = process.env.NODE_ENV || "development";
-
 const rawPort = process.env["PORT"] || "5001";
 const port = Number(rawPort);
 

@@ -11,43 +11,23 @@ async function getAuditLogModel() {
   return AuditLogModel;
 }
 
-export type AuditAction =
-  | "LOGIN_SUCCESS"
-  | "LOGIN_FAILED"
-  | "LOGOUT"
-  | "CASE_CREATED"
-  | "CASE_VIEWED"
-  | "CASE_UPDATED"
-  | "CASE_ARCHIVED"
-  | "DOCUMENT_UPLOADED"
-  | "DOCUMENT_VIEWED"
-  | "DOCUMENT_DOWNLOADED"
-  | "DOCUMENT_UPDATED"
-  | "DOCUMENT_SHARED"
-  | "DOCUMENT_APPROVED"
-  | "DOCUMENT_REJECTED"
-  | "DOCUMENT_FLAGGED"
-  | "INTEGRITY_VERIFIED"
-  | "INTEGRITY_ISSUE_DETECTED"
-  | "USER_CREATED"
-  | "USER_UPDATED"
-  | "USER_DEACTIVATED"
-  | "REVIEW_SUBMITTED"
-  | "REVIEW_APPROVED"
-  | "REVIEW_REJECTED"
-  | "REVIEW_FLAGGED";
-
 export interface AuditEventInput {
-  action: AuditAction;
+  action: string;
   userId?: string;
   userName?: string;
   userRole?: string;
-  caseId?: string;
+  firId?: string;
+  caseId?: string; // Keep for backward compatibility if needed
   documentId?: string;
   result?: string;
   ipAddress?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
+  isUnauthorized?: boolean;
+  denialReason?: string;
+  wasDownloaded?: boolean;
+  watermarkId?: string;
+  accessedSensitiveFields?: string[];
 }
 
 /**
@@ -57,20 +37,9 @@ function sha256(data: string): string {
   return crypto.createHash("sha256").update(data).digest("hex");
 }
 
-/**
- * Create a tamper-evident audit log entry.
- *
- * Each event stores:
- * - eventHash: SHA-256 of the event data + previousHash
- * - previousHash: eventHash of the most recent prior event (null for first)
- *
- * This creates a hash chain where modifying any past event would
- * break the chain from that point forward, making unauthorized
- * changes detectable (though not mathematically impossible).
- */
 export async function createAuditEvent(
   input: AuditEventInput
-): Promise<void> {
+): Promise<string | undefined> {
   try {
     const AuditLogDoc = await getAuditLogModel();
 
@@ -86,6 +55,7 @@ export async function createAuditEvent(
     const eventData = JSON.stringify({
       action: input.action,
       userId: input.userId,
+      firId: input.firId,
       caseId: input.caseId,
       documentId: input.documentId,
       result: input.result,
@@ -99,8 +69,11 @@ export async function createAuditEvent(
       ...input,
       previousHash,
       eventHash,
+      result: input.result || "Success",
       timestamp: new Date(),
     });
+    
+    return eventHash;
   } catch (err) {
     // Audit logging should never crash the main operation
     logger.error({ err, action: input.action }, "Failed to create audit event");
@@ -121,7 +94,7 @@ export async function verifyAuditChain(): Promise<{
 
   const events = await AuditLogDoc.find()
     .sort({ timestamp: 1 })
-    .select("eventHash previousHash action userId caseId documentId result timestamp")
+    .select("eventHash previousHash action userId firId caseId documentId result timestamp")
     .lean();
 
   const totalEvents = events.length;
@@ -132,12 +105,10 @@ export async function verifyAuditChain(): Promise<{
     checkedEvents++;
 
     if (i === 0) {
-      // First event should have no previousHash
       if (event.previousHash !== null && event.previousHash !== undefined) {
         return { valid: false, totalEvents, checkedEvents, brokenAt: i };
       }
     } else {
-      // Each subsequent event's previousHash should match the prior event's eventHash
       const priorHash = events[i - 1].eventHash;
       if (event.previousHash !== priorHash) {
         return { valid: false, totalEvents, checkedEvents, brokenAt: i };

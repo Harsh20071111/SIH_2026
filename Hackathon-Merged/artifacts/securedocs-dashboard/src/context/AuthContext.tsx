@@ -32,10 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       // Provide a demo user for the hackathon prototype
       setUser({
-        id: 'demo-1',
-        name: 'Admin User',
-        email: 'admin@securedocs.demo',
-        role: 'Admin'
+        id: 'demo-io-1',
+        name: 'Inspector Vikram',
+        email: 'vikram@pol.ka.gov.in',
+        role: 'IO',
+        policeStationId: 'PS-BLR-KOR-001',
+        districtCode: 'BLR-URBAN',
+        stateCode: 'KA',
       } as User);
       setToken('demo-token');
     }

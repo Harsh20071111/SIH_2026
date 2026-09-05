@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import type { UserRole } from "../models/User";
+import type { OfficerRank } from "../models/User";
 
 /**
  * RBAC middleware factory.
@@ -12,14 +12,14 @@ import type { UserRole } from "../models/User";
  *   router.get("/admin-only", requireAuth, requireRole("Admin"), handler);
  *   router.get("/mixed", requireAuth, requireRole("Admin", "Auditor"), handler);
  */
-export function requireRole(...allowedRoles: UserRole[]) {
+export function requireRole(...allowedRoles: OfficerRank[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: "Authentication required." });
       return;
     }
 
-    const userRole = req.user.role as UserRole;
+    const userRole = req.user.role as OfficerRank;
 
     if (!allowedRoles.includes(userRole)) {
       res.status(403).json({

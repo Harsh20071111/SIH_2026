@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { logger } from "../lib/logger";
+import type { OfficerRank } from "../models/User";
 
 const JWT_SECRET = process.env["JWT_SECRET"] || "securedocs-dev-secret-change-in-production";
 
@@ -8,9 +9,18 @@ export interface AuthUser {
   userId: string;
   email: string;
   name: string;
-  role: string;
+  role: OfficerRank;
   department: string;
   employeeId: string;
+  
+  // ── NEW jurisdiction claims ──
+  policeStationId: string;
+  districtCode: string;
+  stateCode: string;
+  jurisdictionId: string;
+  
+  // ── Forensic tokens (if applicable) ──
+  forensicTokens?: string[];
 }
 
 // Extend Express Request to include the authenticated user

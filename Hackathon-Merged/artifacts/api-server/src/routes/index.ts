@@ -8,6 +8,8 @@ import reviewsRouter from "./reviews";
 import auditRouter from "./audit";
 import securityRouter from "./security";
 import dashboardRouter from "./dashboard";
+import firRouter from "./fir";
+import attachmentsRouter from "./attachments";
 
 const router: IRouter = Router();
 
@@ -20,5 +22,7 @@ router.use(reviewsRouter);
 router.use(auditRouter);
 router.use(securityRouter);
 router.use(dashboardRouter);
+router.use("/fir", firRouter);
+router.use("/attachments", attachmentsRouter);
 
 export default router;

@@ -5,7 +5,7 @@ export interface IAuditLog extends Document {
   userId: string;
   userName: string;
   userRole: string;
-  caseId: string;
+  firId: string;
   documentId: string;
   result: string;
   ipAddress: string;
@@ -14,6 +14,17 @@ export interface IAuditLog extends Document {
   previousHash: string | null;
   eventHash: string;
   timestamp: Date;
+  
+  // ── Unauthorized Access Tracking ──
+  isUnauthorized: boolean;
+  denialReason: string;
+  
+  // ── Download Tracking ──
+  wasDownloaded: boolean;
+  watermarkId: string;
+  
+  // ── Sensitive Data Access ──
+  accessedSensitiveFields: string[];
 }
 
 const auditLogSchema = new Schema<IAuditLog>({
@@ -21,7 +32,7 @@ const auditLogSchema = new Schema<IAuditLog>({
   userId: { type: String, default: "" },
   userName: { type: String, default: "" },
   userRole: { type: String, default: "" },
-  caseId: { type: String, default: "" },
+  firId: { type: String, default: "" },
   documentId: { type: String, default: "" },
   result: { type: String, default: "Success" },
   ipAddress: { type: String, default: "" },
@@ -30,9 +41,18 @@ const auditLogSchema = new Schema<IAuditLog>({
   previousHash: { type: String, default: null },
   eventHash: { type: String, required: true },
   timestamp: { type: Date, default: Date.now, index: true },
+  
+  isUnauthorized: { type: Boolean, default: false },
+  denialReason: { type: String, default: "" },
+  
+  wasDownloaded: { type: Boolean, default: false },
+  watermarkId: { type: String, default: "" },
+  
+  accessedSensitiveFields: [{ type: String }],
 });
 
 auditLogSchema.index({ timestamp: -1 });
 auditLogSchema.index({ userId: 1, timestamp: -1 });
+auditLogSchema.index({ firId: 1 });
 
 export const AuditLog = mongoose.model<IAuditLog>("AuditLog", auditLogSchema);
