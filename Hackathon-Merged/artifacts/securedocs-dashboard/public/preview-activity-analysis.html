@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity Analysis Details | SecureDocs Government Security Monitoring</title>
+  
+  <!-- Modern Government Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"DM Sans"', 'sans-serif'],
+            mono: ['"Space Mono"', 'monospace'],
+          },
+          colors: {
+            gov: {
+              navy: '#0f172a',
+              deepBlue: '#1e3a8a',
+              steelBlue: '#334e68',
+              slate: '#475569',
+              teal: '#0e7490',
+              cyan: '#0284c7',
+              lightTeal: '#e0f2fe',
+              bgLight: '#f8fafc',
+              border: '#e2e8f0',
+              card: '#ffffff'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-family: 'DM Sans', sans-serif;
+    }
+    
+    /* Subtle Cybersecurity Grid Background */
+    .cyber-grid-bg {
+      background-image: radial-gradient(rgba(30, 58, 138, 0.08) 1px, transparent 0),
+                        linear-gradient(to right, rgba(14, 116, 144, 0.03) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(14, 116, 144, 0.03) 1px, transparent 1px);
+      background-size: 24px 24px, 48px 48px, 48px 48px;
+    }
+
+    /* Precision Gauge Glow Filter */
+    .gauge-glow {
+      filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.35));
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-screen cyber-grid-bg antialiased text-slate-800">
+
+  <!-- ======================================================== -->
+  <!-- TOP GOVERNMENT CLASSIFICATION & PROTOCOL BANNER          -->
+  <!-- ======================================================== -->
+  <div class="border-b border-blue-950 bg-[#0a1128] text-white px-4 py-2 text-xs">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 font-mono tracking-wider text-[11px]">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+        </span>
+        <span class="text-cyan-400 font-bold">SECUREDOCS //</span>
+        <span class="text-amber-300 font-bold">LAW ENFORCEMENT & INTELLIGENCE MONITORING</span>
+        <span class="hidden sm:inline text-slate-400">| CLASSIFICATION: CONFIDENTIAL</span>
+      </div>
+      <div class="flex items-center gap-4 font-mono text-[11px] text-slate-300">
+        <span class="hidden md:inline">JURISDICTION: <strong class="text-white">NATIONAL CYBER CELL</strong></span>
+        <span class="hidden md:inline text-slate-600">|</span>
+        <span>GATEWAY: <strong class="text-emerald-400">ACTIVE ENCRYPTION (AES-256)</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MAIN NAVIGATION HEADER                                  -->
+  <!-- ======================================================== -->
+  <header class="bg-[#0f172a] text-white shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Shield Emblem -->
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-700 to-cyan-500 p-0.5 shadow-lg flex items-center justify-center">
+          <div class="h-full w-full bg-[#0f172a] rounded-[10px] flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-5 h-5 text-cyan-400"></i>
+          </div>
+        </div>
+        <div>
+          <div class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+            SecureDocs
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">GOV-EDITION</span>
+          </div>
+          <div class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Evidence & Forensic Security Command</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 font-mono text-xs">
+        <div class="hidden sm:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+          <span class="text-slate-300">Active Alert Level:</span>
+          <span class="font-bold text-red-400">ELEVATED</span>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+          <div class="w-6 h-6 rounded-full bg-cyan-600 flex items-center justify-center text-[10px] font-bold">
+            AR
+          </div>
+          <span class="text-slate-200">Admin</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================== -->
+  <!-- MAIN CONTAINER                                           -->
+  <!-- ======================================================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PAGE HEADER & BREADCRUMB -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      <!-- Breadcrumb Navigation -->
+      <nav aria-label="Breadcrumb" class="flex items-center gap-2 font-mono text-xs text-slate-500">
+        <a href="#" class="hover:text-blue-700 transition-colors">Dashboard</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+        <a href="#" class="hover:text-blue-700 transition-colors">Security Monitoring</a>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span class="font-bold text-blue-900">Activity Analysis</span>
+        <span class="ml-2 rounded bg-blue-50 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-800 border border-blue-200">ID: ACT-1024-SEC</span>
+      </nav>
+
+      <!-- Title, Emblem, and Action Controls -->
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <!-- Back Button -->
+          <button onclick="window.history.back()" title="Return to Security Dashboard" class="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-900 hover:text-white hover:border-blue-900 transition-all">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          </button>
+
+          <!-- Government Shield Icon -->
+          <div class="flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-blue-900 to-slate-900 text-cyan-400 shadow-md ring-2 ring-cyan-500/20">
+            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-3">
+              <h1 class="text-2xl font-bold tracking-tight text-slate-900">Activity Analysis</h1>
+              <span class="rounded-full border border-red-200 bg-red-50 px-3 py-0.5 font-mono text-[11px] font-bold text-red-700">
+                CRITICAL ANOMALY
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5 font-medium">
+              Forensic User Behavioral Telemetry & Automated Threat Assessment · Case Target <strong class="text-slate-800">C-1024</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons Top Bar -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button onclick="openModal('investigateModal')" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-blue-600 hover:bg-slate-50 transition-all">
+            <i data-lucide="file-search" class="w-4 h-4 text-blue-700"></i>
+            <span>Investigate Case</span>
+          </button>
+
+          <button onclick="openModal('reportModal')" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-blue-600 hover:bg-slate-50 transition-all">
+            <i data-lucide="printer" class="w-4 h-4 text-blue-700"></i>
+            <span>Generate Report</span>
+          </button>
+
+          <button onclick="openModal('notifyModal')" class="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 shadow-sm hover:bg-red-100 transition-all">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>Notify Administrator</span>
+          </button>
+
+          <button onclick="openModal('reviewedModal')" class="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-800 transition-all">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span>Mark as Reviewed</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MAIN TWO-COLUMN LAYOUT                                   -->
+    <!-- ======================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- ======================================================== -->
+      <!-- LEFT SECTION – User Activity Summary Card (5 Columns)    -->
+      <!-- ======================================================== -->
+      <section class="lg:col-span-5 space-y-6">
+
+        <!-- User Profile Card -->
+        <div class="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+          <!-- Top Cyber Accent Bar -->
+          <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-900 via-cyan-600 to-teal-500"></div>
+
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <!-- Officer Avatar with Badge Indicator -->
+              <div class="relative">
+                <div class="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-950 to-slate-900 text-xl font-bold text-white shadow-md ring-4 ring-cyan-500/15">
+                  OA
+                </div>
+                <span class="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white ring-2 ring-white" title="Security Flagged">
+                  !
+                </span>
+              </div>
+
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-lg font-bold text-slate-900">Officer A</h2>
+                  <span class="font-mono text-xs text-slate-400">#IND-88412</span>
+                </div>
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-600">
+                  <i data-lucide="building-2" class="w-3.5 h-3.5 text-blue-800"></i>
+                  <span>Central Cyber Investigation Division (CCID)</span>
+                </div>
+                <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-600">
+                  <i data-lucide="user" class="w-3.5 h-3.5 text-cyan-600"></i>
+                  <span>Senior Investigating Officer</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="text-right">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">Status</span>
+              <div id="statusBadgeContainer" class="mt-1">
+                <span id="officerStatusBadge" class="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wide text-red-700">
+                  <span class="size-2 rounded-full bg-red-600 animate-ping"></span>
+                  Suspicious
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Officer Clearance & Metadata Strip -->
+          <div class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center font-mono text-xs">
+            <div class="rounded-lg bg-slate-50 p-2 border border-slate-100">
+              <div class="text-[10px] uppercase text-slate-400">Security Clearance</div>
+              <div class="mt-0.5 font-bold text-slate-800">LEVEL TS-03</div>
+            </div>
+            <div class="rounded-lg bg-slate-50 p-2 border border-slate-100">
+              <div class="text-[10px] uppercase text-slate-400">Terminal ID</div>
+              <div class="mt-0.5 font-bold text-slate-800">WS-DEL-402</div>
+            </div>
+            <div class="rounded-lg bg-slate-50 p-2 border border-slate-100">
+              <div class="text-[10px] uppercase text-slate-400">Shift Schedule</div>
+              <div class="mt-0.5 font-bold text-slate-800">08:00 - 18:00</div>
+            </div>
+          </div>
+
+          <!-- Interactive Status Switcher -->
+          <div class="mt-4 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs">
+            <span class="text-slate-600 font-medium">Quick Status Override:</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="changeOfficerStatus('Active')" class="status-btn rounded px-2 py-1 font-mono text-[10px] font-bold text-slate-600 hover:bg-slate-200 transition-colors">Active</button>
+              <button onclick="changeOfficerStatus('Suspicious')" class="status-btn rounded px-2 py-1 font-mono text-[10px] font-bold bg-blue-900 text-white shadow-sm">Suspicious</button>
+              <button onclick="changeOfficerStatus('Under Review')" class="status-btn rounded px-2 py-1 font-mono text-[10px] font-bold text-slate-600 hover:bg-slate-200 transition-colors">Under Review</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- STATISTICS CARDS (5 Modern Information Cards with Icons) -->
+        <!-- ======================================================== -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+              Activity Telemetry Indicators
+            </h3>
+            <span class="font-mono text-[11px] text-slate-400">Last 24 Hours</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Stat 1: Normal Daily Access -->
+            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+              <div class="flex items-start justify-between">
+                <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Normal Daily Access
+                </span>
+                <div class="flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-800">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="mt-2 text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                3–5 <span class="text-xs font-normal text-slate-500 font-sans">Documents</span>
+              </div>
+              <div class="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+                <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                <span>Established 30-day baseline</span>
+              </div>
+            </div>
+
+            <!-- Stat 2: Today's Access -->
+            <div class="rounded-xl border border-red-200 bg-white p-4 shadow-sm hover:border-red-400 hover:shadow-md transition-all">
+              <div class="flex items-start justify-between">
+                <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-red-600">
+                  Today's Access
+                </span>
+                <div class="flex size-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="mt-2 text-2xl font-bold tracking-tight text-red-600 font-mono">
+                37 <span class="text-xs font-normal text-slate-500 font-sans">Documents</span>
+              </div>
+              <div class="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-red-600">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                <span>+740% Surge above threshold</span>
+              </div>
+            </div>
+
+            <!-- Stat 3: Downloads -->
+            <div class="rounded-xl border border-amber-200 bg-white p-4 shadow-sm hover:border-amber-400 hover:shadow-md transition-all">
+              <div class="flex items-start justify-between">
+                <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                  Downloads
+                </span>
+                <div class="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                  <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="mt-2 text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                24 <span class="text-xs font-normal text-slate-500 font-sans">Files</span>
+              </div>
+              <div class="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-amber-700">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                <span>High-volume exfiltration alert</span>
+              </div>
+            </div>
+
+            <!-- Stat 4: Unauthorized Attempts -->
+            <div class="rounded-xl border border-red-200 bg-white p-4 shadow-sm hover:border-red-400 hover:shadow-md transition-all">
+              <div class="flex items-start justify-between">
+                <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-red-600">
+                  Unauthorized Attempts
+                </span>
+                <div class="flex size-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                  <i data-lucide="ban" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div class="mt-2 text-2xl font-bold tracking-tight text-red-600 font-mono">
+                5 <span class="text-xs font-normal text-slate-500 font-sans">Violations</span>
+              </div>
+              <div class="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-red-600">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                <span>All 5 attempts intercepted</span>
+              </div>
+            </div>
+
+            <!-- Stat 5: Activity Time (Spans across 2 columns) -->
+            <div class="sm:col-span-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Abnormal Activity Spike Window
+                  </span>
+                  <div class="mt-1 flex items-baseline gap-2">
+                    <span class="text-2xl font-bold font-mono text-slate-900">02:47 AM</span>
+                    <span class="rounded bg-red-100 px-2.5 py-0.5 font-mono text-[11px] font-bold text-red-800">
+                      OFF-HOURS ANOMALY
+                    </span>
+                  </div>
+                </div>
+                <div class="flex size-10 items-center justify-center rounded-lg bg-purple-50 text-purple-700">
+                  <i data-lucide="clock-3" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <p class="mt-2 text-xs text-slate-500 leading-relaxed">
+                Activity occurred outside designated shift hours (Authorized: 08:00–18:00). Heuristic model flags midnight batch operation as deliberate exfiltration attempt.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Activity vs Normal Activity Bar Chart -->
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Today vs. Normal Activity</h3>
+              <p class="text-[11px] text-slate-500">Comparative metric distribution</p>
+            </div>
+            <div class="flex items-center gap-3 text-[10px] font-mono">
+              <span class="flex items-center gap-1">
+                <span class="size-2 rounded bg-slate-300"></span> Normal
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="size-2 rounded bg-red-500"></span> Today
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-3.5">
+            <!-- Metric 1 -->
+            <div>
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-800">Document Views</span>
+                <span class="font-mono text-xs">
+                  <span class="text-slate-400">4</span> vs <span class="font-bold text-red-600">37 docs</span>
+                </span>
+              </div>
+              <div class="mt-1 flex h-2.5 w-full gap-1 overflow-hidden rounded-full bg-slate-100">
+                <div class="bg-slate-400 rounded-l-full" style="width: 10%"></div>
+                <div class="bg-red-500 rounded-r-full" style="width: 90%"></div>
+              </div>
+            </div>
+
+            <!-- Metric 2 -->
+            <div>
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-800">Bulk Downloads</span>
+                <span class="font-mono text-xs">
+                  <span class="text-slate-400">1</span> vs <span class="font-bold text-red-600">24 files</span>
+                </span>
+              </div>
+              <div class="mt-1 flex h-2.5 w-full gap-1 overflow-hidden rounded-full bg-slate-100">
+                <div class="bg-slate-400 rounded-l-full" style="width: 4%"></div>
+                <div class="bg-red-500 rounded-r-full" style="width: 60%"></div>
+              </div>
+            </div>
+
+            <!-- Metric 3 -->
+            <div>
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-800">Off-Hour Logins</span>
+                <span class="font-mono text-xs">
+                  <span class="text-slate-400">0</span> vs <span class="font-bold text-red-600">5 sessions</span>
+                </span>
+              </div>
+              <div class="mt-1 flex h-2.5 w-full gap-1 overflow-hidden rounded-full bg-slate-100">
+                <div class="bg-red-500 rounded-full" style="width: 50%"></div>
+              </div>
+            </div>
+
+            <!-- Metric 4 -->
+            <div>
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-800">Access Violations</span>
+                <span class="font-mono text-xs">
+                  <span class="text-slate-400">0</span> vs <span class="font-bold text-red-600">5 attempts</span>
+                </span>
+              </div>
+              <div class="mt-1 flex h-2.5 w-full gap-1 overflow-hidden rounded-full bg-slate-100">
+                <div class="bg-red-500 rounded-full" style="width: 50%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- RIGHT SECTION – Risk Assessment Panel (7 Columns)        -->
+      <!-- ======================================================== -->
+      <section class="lg:col-span-7 space-y-6">
+
+        <!-- Main Risk Assessment Panel Card -->
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-blue-800">
+                Automated Security Intelligence
+              </span>
+              <h2 class="text-lg font-bold text-slate-900">Risk Assessment Panel</h2>
+            </div>
+
+            <!-- Color Coding Legend -->
+            <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px]">
+              <span class="flex items-center gap-1 font-semibold text-emerald-700">
+                <span class="size-2 rounded-full bg-emerald-500"></span> Green = Low Risk
+              </span>
+              <span class="text-slate-300">|</span>
+              <span class="flex items-center gap-1 font-semibold text-amber-700">
+                <span class="size-2 rounded-full bg-amber-500"></span> Orange = Medium Risk
+              </span>
+              <span class="text-slate-300">|</span>
+              <span class="flex items-center gap-1 font-semibold text-red-600">
+                <span class="size-2 rounded-full bg-red-600"></span> Red = High Risk
+              </span>
+            </div>
+          </div>
+
+          <!-- Risk Score Gauge Meter -->
+          <div class="mt-6 flex flex-col items-center justify-center text-center">
+            <!-- SVG Semi-Circular Gauge Meter -->
+            <div class="relative flex flex-col items-center">
+              <svg width="250" height="145" viewBox="0 0 200 115" class="overflow-visible">
+                <defs>
+                  <!-- Multi-Zone Threat Gradient -->
+                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#10b981" />
+                    <stop offset="40%" stop-color="#f59e0b" />
+                    <stop offset="80%" stop-color="#ef4444" />
+                  </linearGradient>
+                  <!-- Gauge Glow Filter -->
+                  <filter id="gaugeShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#ef4444" flood-opacity="0.4" />
+                  </filter>
+                </defs>
+
+                <!-- Gauge Background Arc -->
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round" />
+
+                <!-- Gauge Active Progress Arc (Score 95/100 -> ~171 degrees) -->
+                <!-- Circumference of 80 radius half circle = 80 * PI = 251.3 -->
+                <!-- strokeDashoffset for 95% = 251.3 * (1 - 0.95) = 12.56 -->
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"
+                      stroke-dasharray="251.3 251.3" stroke-dashoffset="12.56" filter="url(#gaugeShadow)" />
+
+                <!-- Scale markings -->
+                <text x="18" y="114" class="fill-slate-400 font-mono text-[9px]">0</text>
+                <text x="96" y="24" class="fill-slate-400 font-mono text-[9px]">50</text>
+                <text x="175" y="114" class="fill-slate-400 font-mono text-[9px]">100</text>
+              </svg>
+
+              <!-- Score Number Display -->
+              <div class="mt-[-42px] text-center">
+                <div class="flex items-baseline justify-center font-mono font-bold tracking-tight text-red-600">
+                  <span class="text-5xl">95</span>
+                  <span class="text-lg text-slate-400">/100</span>
+                </div>
+                <div class="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-slate-500 font-bold">
+                  Risk Score Index
+                </div>
+              </div>
+            </div>
+
+            <!-- Red High Risk Activity Badge -->
+            <div class="mt-4 flex items-center justify-center gap-2 rounded-full border border-red-300 bg-red-50 px-5 py-2 text-sm font-extrabold text-red-700 shadow-sm">
+              <span class="size-2.5 rounded-full bg-red-600 animate-ping"></span>
+              <span>🔴 HIGH-RISK ACTIVITY</span>
+            </div>
+          </div>
+
+          <!-- Risk Calculation Table -->
+          <div class="mt-6 rounded-lg border border-slate-200 bg-slate-50/60 p-4 font-mono text-xs">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h4 class="font-bold uppercase tracking-wider text-slate-600 text-[11px]">
+                Risk Calculation Table
+              </h4>
+              <span class="text-slate-400 text-[10px]">Points Added</span>
+            </div>
+
+            <div class="mt-3 space-y-2">
+              <div class="flex items-center justify-between py-1 text-slate-700">
+                <span class="flex-1">Unusual Time .........................................</span>
+                <span class="font-bold text-red-600">+20</span>
+              </div>
+              <div class="flex items-center justify-between py-1 text-slate-700">
+                <span class="flex-1">Excessive Downloads ..................................</span>
+                <span class="font-bold text-red-600">+25</span>
+              </div>
+              <div class="flex items-center justify-between py-1 text-slate-700">
+                <span class="flex-1">Unassigned Cases ....................................</span>
+                <span class="font-bold text-red-600">+30</span>
+              </div>
+              <div class="flex items-center justify-between py-1 text-slate-700">
+                <span class="flex-1">Failed Attempts .....................................</span>
+                <span class="font-bold text-red-600">+20</span>
+              </div>
+
+              <!-- Total Row -->
+              <div class="flex items-center justify-between border-t-2 border-slate-300 pt-2.5 text-sm font-bold text-slate-900">
+                <span class="flex-1">Total Risk Score ....................................</span>
+                <span class="text-red-600 font-extrabold text-base">95</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Explanation Section: AI Security Assessment Card -->
+          <div class="mt-5 rounded-xl border border-red-200 bg-red-50/80 p-4 shadow-sm">
+            <div class="flex items-start gap-3.5">
+              <div class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-700">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h4 class="text-sm font-bold text-red-900 flex items-center gap-2">
+                    AI Security Assessment
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-red-600"></i>
+                  </h4>
+                  <span class="rounded bg-red-200/80 px-2 py-0.5 font-mono text-[10px] font-bold text-red-800">
+                    CONFIDENCE: 99.4%
+                  </span>
+                </div>
+                <p class="mt-1.5 text-xs leading-relaxed text-red-900">
+                  "User accessed significantly more documents than their normal behavior pattern and attempted access to restricted cases outside assigned responsibilities. Multiple failed access attempts and unusual working hours increase the overall security risk."
+                </p>
+                <div class="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-medium text-red-800">
+                  <span class="flex items-center gap-1 font-mono">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-red-600"></i>
+                    Neural Threat Engine v3.2
+                  </span>
+                  <span>·</span>
+                  <span>Incident ID: <strong>INC-2026-991A</strong></span>
+                  <span>·</span>
+                  <span>Policy Rule: <strong>ZERO-TRUST-RULE-08</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Components: Risk Trend Chart & Historical Activity Comparison -->
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Risk Trend & Historical Activity Comparison</h3>
+              <p class="text-[11px] text-slate-500">24-hour continuous telemetry curve vs 30-day baseline</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="rounded-md bg-slate-100 px-2.5 py-1 font-mono text-[10px] font-semibold text-slate-600">
+                Hourly Intervals
+              </span>
+            </div>
+          </div>
+
+          <!-- SVG Visual Trend Chart -->
+          <div class="mt-4">
+            <div class="relative h-48 w-full">
+              <svg viewBox="0 0 500 150" preserveAspectRatio="none" class="h-full w-full">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3" />
+                    <stop offset="90%" stop-color="#ef4444" stop-opacity="0.0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Grid lines -->
+                <line x1="30" y1="20" x2="480" y2="20" stroke="#f1f5f9" stroke-width="1" />
+                <line x1="30" y1="65" x2="480" y2="65" stroke="#f1f5f9" stroke-width="1" />
+                <line x1="30" y1="110" x2="480" y2="110" stroke="#f1f5f9" stroke-width="1" />
+
+                <!-- Grid labels -->
+                <text x="10" y="24" class="fill-slate-400 font-mono text-[9px]">100</text>
+                <text x="10" y="69" class="fill-slate-400 font-mono text-[9px]">50</text>
+                <text x="10" y="114" class="fill-slate-400 font-mono text-[9px]">10</text>
+
+                <!-- Historical Baseline Curve (Gray Dashed) -->
+                <path d="M 30 115 Q 150 112 250 114 T 480 115" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" />
+
+                <!-- Today's Risk Area Fill -->
+                <path d="M 30 118 L 110 115 L 180 110 L 250 85 L 320 26 L 390 35 L 450 42 L 480 48 L 480 130 L 30 130 Z" fill="url(#chartGrad)" />
+
+                <!-- Today's Risk Curve Line (Spikes at 02:47 AM to 95) -->
+                <path d="M 30 118 L 110 115 L 180 110 L 250 85 L 320 26 L 390 35 L 450 42 L 480 48" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" />
+
+                <!-- Anomaly Peak Indicator -->
+                <circle cx="320" cy="26" r="5" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+                <rect x="328" y="12" width="105" height="22" rx="4" fill="#0f172a" />
+                <text x="334" y="27" class="fill-white font-mono text-[9px] font-bold">95 @ 02:47 AM</text>
+              </svg>
+            </div>
+
+            <!-- X-Axis Timeline Labels -->
+            <div class="mt-2 flex justify-between px-6 font-mono text-[10px] text-slate-400">
+              <span>22:00</span>
+              <span>00:00</span>
+              <span>01:00</span>
+              <span>02:00</span>
+              <span class="font-bold text-red-600">02:47 (Peak)</span>
+              <span>03:30</span>
+              <span>Current</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TIMELINE OF SUSPICIOUS EVENTS (Full Width Card)          -->
+    <!-- ======================================================== -->
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="flex size-9 items-center justify-center rounded-lg bg-red-50 text-red-700">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Timeline of Suspicious Events</h3>
+            <p class="text-xs text-slate-500">Chronological forensic ledger of flagged security triggers</p>
+          </div>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex items-center gap-2">
+          <i data-lucide="filter" class="w-4 h-4 text-slate-400"></i>
+          <div class="flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs">
+            <button onclick="filterEvents('all')" class="timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold bg-blue-900 text-white shadow-sm">All Events</button>
+            <button onclick="filterEvents('Access Violation')" class="timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors">Access Violation</button>
+            <button onclick="filterEvents('Data Exfiltration')" class="timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors">Data Exfiltration</button>
+            <button onclick="filterEvents('Privilege Escalation')" class="timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors">Privilege Escalation</button>
+            <button onclick="filterEvents('Off-Hours')" class="timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors">Off-Hours</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events List -->
+      <div id="eventsList" class="mt-5 space-y-3.5">
+        <!-- Event 1 -->
+        <div data-category="Access Violation" class="event-row flex flex-col sm:flex-row sm:items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-blue-400 hover:shadow-sm">
+          <div class="flex shrink-0 items-center gap-3 sm:w-44 sm:flex-col sm:items-start sm:gap-1">
+            <span class="font-mono text-xs font-bold text-slate-900">02:47:18 AM</span>
+            <span class="inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase bg-red-100 text-red-700">
+              <span class="size-1.5 rounded-full bg-red-600"></span> Critical
+            </span>
+            <span class="font-mono text-[10px] text-slate-400">EVT-01</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h4 class="text-sm font-bold text-slate-900">Attempted access to restricted case dossier</h4>
+              <span class="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">Access Violation</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Officer requested decrypted read access to high-profile anti-corruption case file outside designated bureau assignment.</p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+              <span class="flex items-center gap-1 text-blue-900">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <strong>Target:</strong> Case_File_C-1026_Classified.enc
+              </span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Case:</strong> C-1026</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Terminal:</strong> 192.168.4.118 (Internal VPN / WS-B4)</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-2 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+            <span class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase text-red-700">Blocked</span>
+            <button onclick="inspectEvent('EVT-01', 'Attempted access to restricted case dossier', 'C-1026', 'Case_File_C-1026_Classified.enc')" class="text-xs font-semibold text-blue-800 hover:underline">Forensic Trace →</button>
+          </div>
+        </div>
+
+        <!-- Event 2 -->
+        <div data-category="Data Exfiltration" class="event-row flex flex-col sm:flex-row sm:items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-blue-400 hover:shadow-sm">
+          <div class="flex shrink-0 items-center gap-3 sm:w-44 sm:flex-col sm:items-start sm:gap-1">
+            <span class="font-mono text-xs font-bold text-slate-900">02:45:30 AM</span>
+            <span class="inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase bg-red-100 text-red-700">
+              <span class="size-1.5 rounded-full bg-red-600"></span> Critical
+            </span>
+            <span class="font-mono text-[10px] text-slate-400">EVT-02</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h4 class="text-sm font-bold text-slate-900">Bulk batch download of forensic evidence records</h4>
+              <span class="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">Data Exfiltration</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Automated sequential download of 18 chain-of-custody forensic reports within a 45-second window.</p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+              <span class="flex items-center gap-1 text-blue-900">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <strong>Target:</strong> 18 Evidence Records (Archive_EVD_1024.zip)
+              </span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Case:</strong> C-1024</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Terminal:</strong> 192.168.4.118</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-2 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+            <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase text-amber-700">Flagged</span>
+            <button onclick="inspectEvent('EVT-02', 'Bulk batch download of forensic evidence records', 'C-1024', 'Archive_EVD_1024.zip')" class="text-xs font-semibold text-blue-800 hover:underline">Forensic Trace →</button>
+          </div>
+        </div>
+
+        <!-- Event 3 -->
+        <div data-category="Privilege Escalation" class="event-row flex flex-col sm:flex-row sm:items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-blue-400 hover:shadow-sm">
+          <div class="flex shrink-0 items-center gap-3 sm:w-44 sm:flex-col sm:items-start sm:gap-1">
+            <span class="font-mono text-xs font-bold text-slate-900">02:41:05 AM</span>
+            <span class="inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+              <span class="size-1.5 rounded-full bg-amber-600"></span> High
+            </span>
+            <span class="font-mono text-[10px] text-slate-400">EVT-03</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h4 class="text-sm font-bold text-slate-900">Privilege escalation attempt on Root FIR Archive</h4>
+              <span class="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">Privilege Escalation</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Multiple unauthorized privilege override commands entered to bypass department read-only role restrictions.</p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+              <span class="flex items-center gap-1 text-blue-900">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <strong>Target:</strong> Root_FIR_Database_2026
+              </span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Case:</strong> C-1020</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Terminal:</strong> 192.168.4.118</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-2 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+            <span class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase text-red-700">Blocked</span>
+            <button onclick="inspectEvent('EVT-03', 'Privilege escalation attempt', 'C-1020', 'Root_FIR_Database_2026')" class="text-xs font-semibold text-blue-800 hover:underline">Forensic Trace →</button>
+          </div>
+        </div>
+
+        <!-- Event 4 -->
+        <div data-category="Off-Hours" class="event-row flex flex-col sm:flex-row sm:items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-blue-400 hover:shadow-sm">
+          <div class="flex shrink-0 items-center gap-3 sm:w-44 sm:flex-col sm:items-start sm:gap-1">
+            <span class="font-mono text-xs font-bold text-slate-900">02:38:19 AM</span>
+            <span class="inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase bg-blue-100 text-blue-700">
+              <span class="size-1.5 rounded-full bg-blue-600"></span> Medium
+            </span>
+            <span class="font-mono text-[10px] text-slate-400">EVT-04</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h4 class="text-sm font-bold text-slate-900">Downloaded sensitive witness testimony</h4>
+              <span class="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">Off-Hours</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Document accessed and downloaded during unauthorized operational hours (Standard window: 08:00–20:00).</p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+              <span class="flex items-center gap-1 text-blue-900">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <strong>Target:</strong> Witness_Statement_Confidential_09.pdf
+              </span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Case:</strong> C-1024</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Terminal:</strong> 192.168.4.118</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-2 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+            <span class="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase text-blue-700">Logged</span>
+            <button onclick="inspectEvent('EVT-04', 'Downloaded sensitive witness testimony', 'C-1024', 'Witness_Statement_Confidential_09.pdf')" class="text-xs font-semibold text-blue-800 hover:underline">Forensic Trace →</button>
+          </div>
+        </div>
+
+        <!-- Event 5 -->
+        <div data-category="Access Violation" class="event-row flex flex-col sm:flex-row sm:items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-blue-400 hover:shadow-sm">
+          <div class="flex shrink-0 items-center gap-3 sm:w-44 sm:flex-col sm:items-start sm:gap-1">
+            <span class="font-mono text-xs font-bold text-slate-900">02:33:41 AM</span>
+            <span class="inline-flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+              <span class="size-1.5 rounded-full bg-amber-600"></span> High
+            </span>
+            <span class="font-mono text-[10px] text-slate-400">EVT-05</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h4 class="text-sm font-bold text-slate-900">Unauthorized query to unassigned Case C-1027</h4>
+              <span class="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">Access Violation</span>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Metadata query and read probe on unassigned multi-jurisdictional intelligence file.</p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-3 font-mono text-[11px]">
+              <span class="flex items-center gap-1 text-blue-900">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <strong>Target:</strong> Financial_Intelligence_Audit_C1027.pdf
+              </span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Case:</strong> C-1027</span>
+              <span class="text-slate-300">·</span>
+              <span class="text-slate-500"><strong>Terminal:</strong> 192.168.4.118</span>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 pt-2 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+            <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase text-amber-700">Flagged</span>
+            <button onclick="inspectEvent('EVT-05', 'Unauthorized query to unassigned Case C-1027', 'C-1027', 'Financial_Intelligence_Audit_C1027.pdf')" class="text-xs font-semibold text-blue-800 hover:underline">Forensic Trace →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL DIALOGS (Interactive Workflows)                    -->
+  <!-- ======================================================== -->
+
+  <!-- 1. Investigate Case Modal -->
+  <div id="investigateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-blue-900">
+            <i data-lucide="file-search" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Initiate Deep Case Investigation</h3>
+            <p class="text-xs text-slate-500">Dossier: Case C-1024 / Subject: Officer A</p>
+          </div>
+        </div>
+        <button onclick="closeModal('investigateModal')" class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <div class="rounded-lg bg-slate-50 p-3.5 border border-slate-200">
+          <div class="font-bold text-slate-800">Automated Protocol Actions:</div>
+          <ul class="mt-1.5 list-inside list-disc space-y-1 text-slate-600">
+            <li>Revoke active VPN and token sessions for terminal WS-DEL-402</li>
+            <li>Enforce cryptographic quarantine on 24 downloaded artifacts</li>
+            <li>Dispatch forensic summons to Division Head and Case Lead</li>
+            <li>Initiate tamper-evident audit ledger under Evidence Act guidelines</li>
+          </ul>
+        </div>
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+          <strong>Chain of Custody Notice:</strong> All digital forensics and terminal snapshots will be signed with the national legal time-stamping authority.
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="closeModal('investigateModal')" class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+          Cancel
+        </button>
+        <button onclick="confirmAction('Forensic docket opened for Case C-1024', 'investigateModal')" class="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">
+          <span>Launch Deep Investigation</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Generate Report Modal -->
+  <div id="reportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
+            <i data-lucide="printer" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Generate Official Incident Dossier</h3>
+            <p class="text-xs text-slate-500">Government Security Format (PDF / A4 Print Ready)</p>
+          </div>
+        </div>
+        <button onclick="closeModal('reportModal')" class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3.5 font-mono text-xs space-y-1.5">
+        <div class="flex justify-between text-slate-600">
+          <span>Dossier File:</span>
+          <span class="font-bold text-slate-900">SEC-INCIDENT-REPORT-88412.pdf</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Classification:</span>
+          <span class="font-bold text-red-600">CONFIDENTIAL // CRITICAL RISK</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Total Risk Points:</span>
+          <span class="font-bold text-red-600">95 / 100</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Digital Seal:</span>
+          <span class="text-emerald-700 font-bold">SHA-256 VERIFIED</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="closeModal('reportModal')" class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+          Cancel
+        </button>
+        <button onclick="window.print(); closeModal('reportModal');" class="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">
+          <i data-lucide="download-cloud" class="w-4 h-4"></i>
+          <span>Print / Export Official Dossier</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Notify Administrator Modal -->
+  <div id="notifyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded-lg bg-red-100 text-red-700">
+            <i data-lucide="send" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Dispatch Priority Command Alert</h3>
+            <p class="text-xs text-slate-500">Immediate broadcast to CISO & On-Call Bureau Staff</p>
+          </div>
+        </div>
+        <button onclick="closeModal('notifyModal')" class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <p class="text-slate-600">
+          This action dispatches an authenticated priority telemetry dispatch to the Security Operations Center (SOC) incident escalation bridge.
+        </p>
+
+        <div class="rounded-lg bg-slate-50 border border-slate-200 p-3 font-mono">
+          <div class="text-[10px] text-slate-400 uppercase font-bold">ALERT TELEMETRY BRIEF:</div>
+          <div class="mt-1 font-bold text-red-600">
+            [PRIORITY 1 ESCALATION] Insider Anomaly Alert · Officer A (Score: 95/100) · 5 Breaches & 24 Batch Downloads at 02:47 AM.
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="closeModal('notifyModal')" class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+          Cancel
+        </button>
+        <button onclick="confirmAction('Emergency alert transmitted to CISO and Command Desk.', 'notifyModal')" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700">
+          <i data-lucide="send" class="w-4 h-4"></i>
+          <span>Confirm & Dispatch Alert</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Mark as Reviewed Modal -->
+  <div id="reviewedModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Supervisor Review & Sign-Off</h3>
+            <p class="text-xs text-slate-500">Record officer audit findings & update threat state</p>
+          </div>
+        </div>
+        <button onclick="closeModal('reviewedModal')" class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-3 text-xs">
+        <label class="block font-semibold text-slate-800">Reviewer Observations & Disposition:</label>
+        <textarea id="reviewRemarks" rows="3" class="w-full rounded-lg border border-slate-300 p-3 text-xs outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700" placeholder="e.g. Activity confirmed anomalous. Subject Officer A placed on temporary suspension pending chain-of-custody forensic debrief."></textarea>
+        
+        <div class="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>Signed with Active Administrator Credentials</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="closeModal('reviewedModal')" class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+          Cancel
+        </button>
+        <button onclick="submitReviewSignoff()" class="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+          <span>Submit Review Sign-Off</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastNotification" class="hidden fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-cyan-500/40 bg-[#0f172a] px-4 py-3 text-sm text-white shadow-2xl">
+    <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+    <span id="toastText">Action completed successfully.</span>
+  </div>
+
+  <!-- JavaScript Interactivity -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Modal helpers
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Toast Notification helper
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      const text = document.getElementById('toastText');
+      text.innerText = message;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 4000);
+    }
+
+    function confirmAction(message, modalId) {
+      closeModal(modalId);
+      showToast(message);
+    }
+
+    function submitReviewSignoff() {
+      closeModal('reviewedModal');
+      changeOfficerStatus('Under Review');
+      showToast('Review submitted. Officer status updated to Under Review.');
+    }
+
+    // Interactive Officer Status Switcher
+    function changeOfficerStatus(status) {
+      const container = document.getElementById('statusBadgeContainer');
+      let badgeHtml = '';
+      if (status === 'Active') {
+        badgeHtml = `<span class="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wide text-emerald-700">
+          <span class="size-2 rounded-full bg-emerald-500"></span> Active
+        </span>`;
+      } else if (status === 'Under Review') {
+        badgeHtml = `<span class="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wide text-amber-700">
+          <span class="size-2 rounded-full bg-amber-500"></span> Under Review
+        </span>`;
+      } else {
+        badgeHtml = `<span class="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-red-50 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wide text-red-700">
+          <span class="size-2 rounded-full bg-red-600 animate-ping"></span> Suspicious
+        </span>`;
+      }
+      container.innerHTML = badgeHtml;
+
+      // Update button active styles
+      document.querySelectorAll('.status-btn').forEach(btn => {
+        if (btn.innerText.trim() === status) {
+          btn.className = 'status-btn rounded px-2 py-1 font-mono text-[10px] font-bold bg-blue-900 text-white shadow-sm';
+        } else {
+          btn.className = 'status-btn rounded px-2 py-1 font-mono text-[10px] font-bold text-slate-600 hover:bg-slate-200 transition-colors';
+        }
+      });
+      showToast('Officer status changed to: ' + status);
+    }
+
+    // Timeline Filter
+    function filterEvents(category) {
+      const rows = document.querySelectorAll('.event-row');
+      rows.forEach(row => {
+        if (category === 'all' || row.getAttribute('data-category') === category) {
+          row.style.display = 'flex';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      document.querySelectorAll('.timeline-filter-btn').forEach(btn => {
+        if ((category === 'all' && btn.innerText.includes('All')) || btn.innerText.includes(category)) {
+          btn.className = 'timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold bg-blue-900 text-white shadow-sm';
+        } else {
+          btn.className = 'timeline-filter-btn rounded px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition-colors';
+        }
+      });
+    }
+
+    function inspectEvent(id, name, caseId, file) {
+      showToast(`Tracing Event ${id}: Case ${caseId} (${file})`);
+      openModal('investigateModal');
+    }
+  </script>
+</body>
+</html>
