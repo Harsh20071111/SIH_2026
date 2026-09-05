@@ -3,14 +3,9 @@ import { logger } from "./lib/logger";
 import { connectDB } from "./lib/db";
 import { initFirebase } from "./lib/firebase";
 
-const rawPort = process.env["PORT"];
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
+const rawPort = process.env["PORT"] || "5001";
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
