@@ -10,8 +10,11 @@ import CaseDetail from '@/pages/case-detail';
 import NewCase from '@/pages/new-case';
 import EditCase from '@/pages/edit-case';
 import AllDocuments from '@/pages/AllDocuments';
+import Login from '@/pages/login';
 import { SecureDocsShell } from '@/components/securedocs-shell';
+import { AuthProvider, useAuth } from '@/context/auth-context';
 import type { Role } from '@/lib/mock-data';
+import { ShieldCheck } from 'lucide-react';
 import {
   Route,
   Switch,
@@ -21,10 +24,37 @@ import {
 
 const queryClient = new QueryClient();
 
+function AuthLoadingScreen() {
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#0d1522] text-slate-100 p-4">
+      <div className="flex flex-col items-center gap-4">
+        <div className="size-12 rounded-2xl bg-[#18263b] text-cyan-400 border border-cyan-500/30 grid place-items-center animate-pulse shadow-[0_0_20px_rgba(34,211,238,0.2)]">
+          <ShieldCheck size={26} />
+        </div>
+        <div className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
+          Checking Appwrite Session...
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   const [role, setRole] = useState<Role>('Admin');
   const [search, setSearch] = useState('');
+  const [location] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
   const shellRoutes = ['/dashboard', '/cases', '/documents', '/upload', '/reviews', '/security', '/integrity', '/audit-logs', '/reports', '/users', '/compliance', '/settings', '/notifications', '/profile'];
+
+  if (isLoading) {
+    return <AuthLoadingScreen />;
+  }
+
+  // If user is at /login or is not authenticated, render Login page
+  if (location === '/login' || !isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     // Keep a shared shell (sidebar, navbar) outside the boundary so it
     // survives a page crash.
@@ -41,7 +71,9 @@ function Router() {
           <Route path="/cases/:id" component={() => <CaseDetail role={role} />} />
           <Route path="/cases" component={() => <Cases role={role} search={search} setSearch={setSearch} />} />
           <Route path="/documents" component={() => <AllDocuments />} />
-          {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
+          {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents'].includes(route)).map((route) => (
+            <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />
+          ))}
           <Route component={NotFound} />
         </Switch>
       </SecureDocsShell>
@@ -57,12 +89,14 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

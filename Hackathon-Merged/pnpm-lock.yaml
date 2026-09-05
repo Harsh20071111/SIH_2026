@@ -443,6 +443,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      appwrite:
+        specifier: ^17.0.0
+        version: 17.0.2
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -1975,6 +1978,9 @@ packages:
 
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
+
+  appwrite@17.0.2:
+    resolution: {integrity: sha512-h8frLDRYzFDLS9xA2s8ZSlH/prPFq/ma5477fgQHHLcE/t9RDxNImpq9AleRUb9Oh1YJiP49HCObxgSTGW5AQA==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -4853,6 +4859,8 @@ snapshots:
       fast-uri: 3.1.4
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
+
+  appwrite@17.0.2: {}
 
   argparse@2.0.1: {}
 

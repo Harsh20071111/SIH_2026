@@ -2,10 +2,11 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Bell, BriefcaseBusiness, ChartNoAxesCombined, Check, ChevronDown, ClipboardCheck,
-  Files, History, LayoutDashboard, LockKeyhole, Menu, PanelLeftClose,
+  Files, History, LayoutDashboard, LockKeyhole, LogOut, Menu, PanelLeftClose,
   PanelLeftOpen, Search, Settings, ShieldCheck, UploadCloud, UserRound, Users, X,
 } from 'lucide-react';
 import { navGroups, roles, type Role } from '@/lib/mock-data';
+import { useAuth } from '@/hooks/use-auth';
 
 const iconMap = {
   layout: LayoutDashboard, briefcase: BriefcaseBusiness, files: Files, clipboard: ClipboardCheck,
@@ -16,12 +17,28 @@ const iconMap = {
 type ShellProps = { children: ReactNode; role: Role; setRole: (role: Role) => void; search: string; setSearch: (value: string) => void };
 
 export function SecureDocsShell({ children, role, setRole, search, setSearch }: ShellProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const visibleGroups = useMemo(() => navGroups.map((group) => ({ label: group.label, items: group.items.filter((item) => !('adminOnly' in item) || !item.adminOnly || role === 'Admin') })).filter((group) => group.items.length), [role]);
+
+  const userName = user?.name || (user?.email ? user.email.split('@')[0] : 'Officer User');
+  const userInitials = userName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() || 'SD';
+  const userEmail = user?.email || 'officer@agency.gov.in';
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setLocation('/login');
+    } catch (e) {
+      console.error('Logout error:', e);
+      setLocation('/login');
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -37,7 +54,25 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
         <nav className="flex-1 overflow-y-auto px-3 py-5">
           {visibleGroups.map((group) => <div key={group.label} className="mb-5"><div className={`mb-2 px-3 font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/40 ${collapsed ? 'text-center' : ''}`}>{collapsed ? '···' : group.label}</div>{group.items.map((item) => { const Icon = iconMap[item.icon as keyof typeof iconMap]; const active = location === item.href; const badge = 'badge' in item ? item.badge : undefined; return <Link key={item.href} href={item.href} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} onClick={() => setMobileOpen(false)} className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${active ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white'} ${collapsed ? 'justify-center px-2' : ''}`} title={collapsed ? item.label : undefined}><Icon size={17} strokeWidth={active ? 2.4 : 1.8} /><span className={collapsed ? 'sr-only' : ''}>{item.label}</span>{badge && !collapsed && <span className={`ml-auto rounded px-1.5 py-0.5 font-mono text-[10px] ${active ? 'bg-black/10' : 'bg-sidebar-primary/15 text-sidebar-primary'}`}>{badge}</span>}</Link> })}</div>)}
         </nav>
-        {!collapsed && <div className="border-t border-sidebar-border p-3"><Link href="/profile" data-testid="link-profile-sidebar" className="flex items-center gap-3 rounded-lg p-2.5 hover:bg-sidebar-accent"><div className="grid size-8 place-items-center rounded-full bg-[#d8b68e] text-xs font-bold text-slate-800">AR</div><div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold text-white">Ananya Rao</div><div className="truncate text-[10px] text-sidebar-foreground/55">{role}</div></div><ChevronDown size={14} className="text-sidebar-foreground/40" /></Link></div>}
+        {!collapsed && (
+          <div className="border-t border-sidebar-border p-3">
+            <div className="flex items-center justify-between gap-2 rounded-lg p-2.5 hover:bg-sidebar-accent">
+              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#d8b68e] text-xs font-bold text-slate-800">{userInitials}</div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-semibold text-white">{userName}</div>
+                <div className="truncate text-[10px] text-sidebar-foreground/55">{user?.email || role}</div>
+              </div>
+              <button
+                data-testid="button-logout"
+                onClick={handleLogout}
+                title="Sign out of Appwrite"
+                className="rounded p-1.5 text-sidebar-foreground/60 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
 
       <div className={`min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? 'md:pl-[76px]' : 'md:pl-[252px]'}`}>
@@ -45,13 +80,44 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
           <button data-testid="button-open-mobile-menu" onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted md:hidden" aria-label="Open menu"><Menu size={20} /></button>
           <div className="relative max-w-md flex-1"><Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" /><input data-testid="input-global-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search cases, documents, activity..." className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/10" /></div>
           <div className="ml-auto flex items-center gap-2">
-            <div className="relative"><button data-testid="button-role-selector" onClick={() => setRoleOpen(!roleOpen)} className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted sm:flex"><span className="grid size-5 place-items-center rounded bg-secondary text-[9px] text-secondary-foreground">AR</span>{role}<ChevronDown size={13} className="text-muted-foreground" /></button>{roleOpen && <div className="absolute right-0 top-12 z-50 w-44 rounded-xl border border-border bg-popover p-1.5 shadow-lg">{roles.map((candidate) => <button data-testid={`button-role-${candidate.toLowerCase().replaceAll(' ', '-')}`} key={candidate} onClick={() => { setRole(candidate); setRoleOpen(false); }} className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs hover:bg-muted ${candidate === role ? 'font-bold text-primary' : ''}`}>{candidate}{candidate === role && <Check size={14} className="ml-auto" />}</button>)}</div>}</div>
+            <div className="relative"><button data-testid="button-role-selector" onClick={() => setRoleOpen(!roleOpen)} className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted sm:flex"><span className="grid size-5 place-items-center rounded bg-secondary text-[9px] text-secondary-foreground">{userInitials}</span>{role}<ChevronDown size={13} className="text-muted-foreground" /></button>{roleOpen && <div className="absolute right-0 top-12 z-50 w-44 rounded-xl border border-border bg-popover p-1.5 shadow-lg">{roles.map((candidate) => <button data-testid={`button-role-${candidate.toLowerCase().replaceAll(' ', '-')}`} key={candidate} onClick={() => { setRole(candidate); setRoleOpen(false); }} className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs hover:bg-muted ${candidate === role ? 'font-bold text-primary' : ''}`}>{candidate}{candidate === role && <Check size={14} className="ml-auto" />}</button>)}</div>}</div>
             <div className="relative"><button data-testid="button-notifications" aria-label="Open notifications" onClick={() => setNotificationsOpen(!notificationsOpen)} className="relative rounded-lg border border-border bg-card p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"><Bell size={17} /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" /></button>{notificationsOpen && <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-popover p-4 shadow-xl"><div className="flex items-center justify-between"><h3 className="text-sm font-bold">Notifications</h3><span className="font-mono text-[10px] text-destructive">4 unread</span></div><div className="mt-3 space-y-3">{['Suspicious access pattern detected','Evidence_v3.pdf needs integrity review','12 reviews due today'].map((notice, index) => <button data-testid={`button-notification-${index}`} key={notice} className="flex w-full gap-3 border-t border-border pt-3 text-left hover:bg-muted/50"><span className={`mt-1 size-2 shrink-0 rounded-full ${index === 0 ? 'bg-destructive' : index === 1 ? 'bg-amber-500' : 'bg-cyan-500'}`} /><span><span className="block text-xs font-semibold">{notice}</span><span className="mt-0.5 block text-[10px] text-muted-foreground">{index + 1} hour{index ? 's' : ''} ago</span></span></button>)}</div><Link href="/notifications" data-testid="link-all-notifications" className="mt-3 block border-t border-border pt-3 text-center text-xs font-bold text-primary hover:underline">View all notifications</Link></div>}</div>
-            <Link href="/profile" data-testid="link-profile-header" className="grid size-9 place-items-center rounded-full bg-[#d8b68e] text-xs font-bold text-slate-800 ring-2 ring-card sm:hidden">AR</Link>
+            
+            {/* User Profile & Logout Popover */}
+            <div className="relative">
+              <button
+                data-testid="button-user-profile-menu"
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-muted cursor-pointer"
+              >
+                <span className="grid size-6 place-items-center rounded-full bg-[#d8b68e] text-[10px] font-bold text-slate-800">{userInitials}</span>
+                <span className="hidden sm:inline-block max-w-[120px] truncate">{userName}</span>
+                <ChevronDown size={13} className="text-muted-foreground" />
+              </button>
+              {profileOpen && (
+                <div className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-border bg-popover p-2 shadow-lg animate-in fade-in duration-150">
+                  <div className="px-3 py-2 border-b border-border mb-1">
+                    <div className="text-xs font-bold truncate">{userName}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">{userEmail}</div>
+                    <div className="mt-1 inline-flex items-center gap-1 rounded bg-sidebar-primary/10 px-1.5 py-0.5 text-[9px] font-mono text-sidebar-primary">
+                      <span className="size-1 rounded-full bg-emerald-500" /> Appwrite Session
+                    </div>
+                  </div>
+                  <button
+                    data-testid="button-logout-header"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-500/10 hover:text-red-500 transition-colors cursor-pointer"
+                  >
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
-}
+}
