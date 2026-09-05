@@ -1,7 +1,8 @@
-import admin from "firebase-admin";
+import * as admin from "firebase-admin";
+import { getStorage } from "firebase-admin/storage";
 import { logger } from "./logger";
 
-let bucket: admin.storage.Bucket | null = null;
+let bucket: any = null;
 
 /**
  * Initialize Firebase Admin SDK for Storage.
@@ -26,21 +27,23 @@ export function initFirebase(): void {
       return;
     }
 
-    const appConfig: admin.AppOptions = {
+    const appConfig: any = {
       storageBucket,
     };
 
     if (serviceAccountPath) {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const serviceAccount = require(serviceAccountPath);
+      // @ts-ignore
       appConfig.credential = admin.credential.cert(serviceAccount);
     }
 
+    // @ts-ignore
     if (!admin.apps.length) {
       admin.initializeApp(appConfig);
     }
 
-    bucket = admin.storage().bucket();
+    bucket = getStorage().bucket();
     logger.info({ bucket: storageBucket }, "Firebase Storage initialized");
   } catch (err) {
     logger.warn({ err }, "Firebase Storage initialization failed — using local fallback");

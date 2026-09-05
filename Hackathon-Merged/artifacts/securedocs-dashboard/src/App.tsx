@@ -9,6 +9,7 @@ import Cases from '@/pages/cases';
 import CaseDetail from '@/pages/case-detail';
 import NewCase from '@/pages/new-case';
 import EditCase from '@/pages/edit-case';
+// @ts-ignore
 import AllDocuments from '@/pages/AllDocuments';
 import Settings from '@/pages/settings';
 import SecurityDashboard from '@/pages/security';
@@ -62,8 +63,8 @@ function AuthenticatedApp() {
         <Route path="/documents" component={() => <AllDocuments />} />
         <Route path="/settings" component={() => <Settings />} />
         <Route path="/security" component={() => <SecurityDashboard />} />
-        <Route path="/users" component={() => <AdminUsers />} />
-        <Route path="/reviews" component={() => <ReviewQueue />} />
+        <Route path="/users" component={() => <AdminUsers role={role} />} />
+        <Route path="/reviews" component={() => <ReviewQueue role={role} />} />
         <Route path="/audit-logs" component={() => <AuditLogs />} />
         <Route path="/integrity" component={() => <IntegrityVerification />} />
         <Route path="/reports" component={() => <Reports />} />

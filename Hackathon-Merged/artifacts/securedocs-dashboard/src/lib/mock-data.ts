@@ -112,6 +112,7 @@ export const navGroups = [
     items: [
       { label: 'Users & roles', href: '/users', icon: 'users', adminOnly: true },
       { label: 'Compliance', href: '/compliance', icon: 'check', adminOnly: true },
+      { label: 'Retention & Archive', href: '/retention', icon: 'history', adminOnly: true },
       { label: 'Settings', href: '/settings', icon: 'settings', adminOnly: true },
     ],
   },

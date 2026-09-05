@@ -136,7 +136,7 @@ export default function NewCase({ role }: { role: Role }) {
         risk: values.priority,
         documents: 0,
         lastActivity: createdAt,
-      });
+      } as any);
       setCreatedCase({ id: created.id, officer: created.assignedOfficer ?? created.officer ?? 'Officer A' });
       window.setTimeout(() => setLocation(`/cases/${created.id}`), 1000);
     } catch (cause) {
