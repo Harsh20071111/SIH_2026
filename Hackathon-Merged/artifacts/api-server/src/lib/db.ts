@@ -1,5 +1,13 @@
+import dns from "node:dns";
 import mongoose from "mongoose";
 import { logger } from "./logger";
+
+// Configure DNS servers for Atlas SRV lookup to prevent querySrv ECONNREFUSED on Windows
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // Ignore if custom DNS servers cannot be set
+}
 
 const MONGODB_URI =
   process.env["MONGODB_URI"] ||

@@ -1,9 +1,17 @@
+import dns from "node:dns";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // Ignore if custom DNS servers cannot be set
+}
+
 const MONGODB_URI =
-  process.env["MONGODB_URI"] || "mongodb://localhost:27017/securedocs";
+  process.env["MONGODB_URI"] ||
+  "mongodb+srv://harshpanchal200011_db_user:xVN3cfRbKmNSIOWA@sih.9ut1ht1.mongodb.net/securedocs?retryWrites=true&w=majority";
 
 async function seed() {
   console.log("🌱 Connecting to MongoDB...");
