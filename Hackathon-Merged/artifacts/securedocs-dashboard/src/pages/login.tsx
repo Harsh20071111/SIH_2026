@@ -48,31 +48,27 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#0d1522] text-slate-100 p-4 sm:p-6 relative overflow-hidden">
-      {/* Subtle Background Glows */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col justify-center items-center bg-background text-foreground p-4 sm:p-6 relative">
       {/* Main Container */}
-      <div className="w-full max-w-[440px] relative z-10">
+      <div className="w-full max-w-[420px] relative z-10">
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-[#18263b] text-cyan-400 border border-cyan-500/30 shadow-[0_0_25px_rgba(34,211,238,0.15)] mb-4">
-            <ShieldCheck size={32} strokeWidth={2.2} />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center size-12 rounded-md bg-primary text-white shadow-xs mb-3">
+            <ShieldCheck size={26} strokeWidth={2.4} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center justify-center gap-1.5">
-            Secure<span className="text-cyan-400">Docs</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            SecureDocs
           </h1>
-          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[.2em] text-cyan-300/80">
-            Legal & Investigation Evidence Command
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">
+            Legal & Evidence Command
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="rounded-2xl border border-slate-800 bg-[#131d2e]/95 backdrop-blur shadow-2xl p-6 sm:p-8">
+        <div className="rounded-lg border border-border bg-card shadow-sm p-6 sm:p-8">
           <div className="mb-6">
-            <h2 className="text-lg font-bold text-white tracking-tight">Sign in to your account</h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <h2 className="text-base font-bold text-foreground tracking-tight">Sign in to your account</h2>
+            <p className="text-xs text-muted-foreground mt-1">
               Authenticate via Appwrite to access protected legal casework and evidence.
             </p>
           </div>
@@ -81,10 +77,10 @@ export default function Login() {
           {errorMessage && (
             <div
               data-testid="alert-login-error"
-              className="mb-5 flex items-start gap-3 rounded-lg border border-red-500/40 bg-red-950/40 p-3.5 text-xs text-red-200 animate-in fade-in duration-200"
+              className="mb-5 flex items-start gap-2.5 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive animate-in fade-in duration-150"
             >
-              <AlertCircle size={16} className="shrink-0 text-red-400 mt-0.5" />
-              <div className="flex-1 leading-relaxed">{errorMessage}</div>
+              <AlertCircle size={15} className="shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed font-medium">{errorMessage}</div>
             </div>
           )}
 
@@ -92,22 +88,22 @@ export default function Login() {
           {successMessage && (
             <div
               data-testid="alert-login-success"
-              className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-500/40 bg-emerald-950/40 p-3.5 text-xs text-emerald-200 animate-in fade-in duration-200"
+              className="mb-5 flex items-start gap-2.5 rounded-md border border-emerald-300 bg-[#E8F5E9] p-3 text-xs text-[#16803C] animate-in fade-in duration-150"
             >
-              <CheckCircle2 size={16} className="shrink-0 text-emerald-400 mt-0.5" />
-              <div className="flex-1 leading-relaxed">{successMessage}</div>
+              <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed font-medium">{successMessage}</div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div>
-              <label htmlFor="login-email" className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label htmlFor="login-email" className="block text-xs font-semibold text-foreground mb-1.5">
                 Official Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail size={16} />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                  <Mail size={15} />
                 </div>
                 <input
                   id="login-email"
@@ -118,7 +114,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="officer@agency.gov.in"
-                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-700 bg-[#0d1522] text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-colors"
+                  className="w-full h-10 pl-9 pr-3.5 rounded-md border border-input bg-card text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
             </div>
@@ -126,13 +122,13 @@ export default function Login() {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="login-password" className="block text-xs font-semibold text-slate-300">
+                <label htmlFor="login-password" className="block text-xs font-semibold text-foreground">
                   Password
                 </label>
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock size={16} />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                  <Lock size={15} />
                 </div>
                 <input
                   id="login-password"
@@ -143,16 +139,16 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full h-11 pl-10 pr-11 rounded-xl border border-slate-700 bg-[#0d1522] text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-colors"
+                  className="w-full h-10 pl-9 pr-10 rounded-md border border-input bg-card text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
                 <button
                   type="button"
                   data-testid="button-toggle-password"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
@@ -163,11 +159,11 @@ export default function Login() {
                 type="submit"
                 data-testid="button-login-submit"
                 disabled={isSubmitting || authLoading}
-                className="w-full h-11 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full h-10 rounded-md bg-primary hover:bg-primary-hover active:bg-primary-hover text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={15} className="animate-spin" />
                     <span>Verifying session...</span>
                   </>
                 ) : (
@@ -178,17 +174,17 @@ export default function Login() {
           </form>
 
           {/* Security Banner */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+          <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground font-mono">
             <span className="flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-emerald-400" />
+              <span className="size-1.5 rounded-full bg-emerald-500" />
               Appwrite Auth
             </span>
-            <span>TLS 1.3 · localhost</span>
+            <span>TLS 1.3 · Secure Session</span>
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="text-center mt-6 text-xs text-slate-500">
+        <div className="text-center mt-5 text-[11px] text-muted-foreground">
           SecureDocs Digital Evidence System · Protected Government Network
         </div>
       </div>

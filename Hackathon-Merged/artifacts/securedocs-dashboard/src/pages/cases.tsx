@@ -69,38 +69,38 @@ function relativeTime(timestamp: string) {
 
 function StatusBadge({ status }: { status: CaseStatus }) {
   const styles: Record<CaseStatus, string> = {
-    Active: 'border-blue-200 bg-blue-50 text-blue-700',
-    'Under Investigation': 'border-amber-200 bg-amber-50 text-amber-800',
-    'Under Review': 'border-violet-200 bg-violet-50 text-violet-700',
-    Closed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    Archived: 'border-slate-200 bg-slate-100 text-slate-600',
+    Active: 'border-[#C5DCF5] bg-[#EBF3FB] text-[#2563A8]',
+    'Under Investigation': 'border-[#FFE082] bg-[#FFF8E1] text-[#B77900]',
+    'Under Review': 'border-[#C5DCF5] bg-[#EBF3FB] text-[#2563A8]',
+    Closed: 'border-[#C8E6C9] bg-[#E8F5E9] text-[#16803C]',
+    Archived: 'border-[#D9E0E8] bg-[#F0F4F8] text-[#5B6575]',
   };
   const dot: Record<CaseStatus, string> = {
-    Active: 'bg-blue-600',
-    'Under Investigation': 'bg-amber-500',
-    'Under Review': 'bg-violet-600',
-    Closed: 'bg-emerald-600',
+    Active: 'bg-[#2563A8]',
+    'Under Investigation': 'bg-[#B77900]',
+    'Under Review': 'bg-[#2563A8]',
+    Closed: 'bg-[#16803C]',
     Archived: 'bg-slate-400',
   };
-  return <span data-testid={`status-case-${status.toLowerCase().replaceAll(' ', '-')}`} className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-bold ${styles[status]}`}><span className={`size-1.5 rounded-full ${dot[status]}`} />{status}</span>;
+  return <span data-testid={`status-case-${status.toLowerCase().replaceAll(' ', '-')}`} className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${styles[status]}`}><span className={`size-1.5 rounded-full ${dot[status]}`} />{status}</span>;
 }
 
 function RiskBadge({ risk }: { risk: CaseRisk }) {
-  const styles = { High: 'text-red-700', Medium: 'text-amber-700', Low: 'text-emerald-700' };
-  const dots = { High: 'bg-red-600', Medium: 'bg-amber-500', Low: 'bg-emerald-600' };
-  return <span data-testid={`risk-case-${risk.toLowerCase()}`} className={`inline-flex items-center gap-1.5 text-[11px] font-bold ${styles[risk]}`}><span className={`size-2 rounded-full ${dots[risk]} ${risk === 'High' ? 'ring-2 ring-red-100' : ''}`} />{risk}</span>;
+  const styles = { High: 'text-[#C62828]', Medium: 'text-[#2563A8]', Low: 'text-[#16803C]' };
+  const dots = { High: 'bg-[#C62828]', Medium: 'bg-[#2563A8]', Low: 'bg-[#16803C]' };
+  return <span data-testid={`risk-case-${risk.toLowerCase()}`} className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${styles[risk]}`}><span className={`size-2 rounded-full ${dots[risk]} ${risk === 'High' ? 'ring-2 ring-red-100' : ''}`} />{risk}</span>;
 }
 
 function PriorityBadge({ priority }: { priority: CasePriority }) {
-  const styles = { High: 'border-red-200 bg-red-50 text-red-700', Medium: 'border-amber-200 bg-amber-50 text-amber-700', Low: 'border-slate-200 bg-slate-100 text-slate-600' };
-  return <span data-testid={`priority-case-${priority.toLowerCase()}`} className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold ${styles[priority]}`}>{priority}</span>;
+  const styles = { High: 'border-[#FFE082] bg-[#FFF8E1] text-[#B77900]', Medium: 'border-[#C5DCF5] bg-[#EBF3FB] text-[#2563A8]', Low: 'border-[#C8E6C9] bg-[#E8F5E9] text-[#16803C]' };
+  return <span data-testid={`priority-case-${priority.toLowerCase()}`} className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold ${styles[priority]}`}>{priority}</span>;
 }
 
 function Metric({ label, value, note, tone }: { label: string; value: string; note: string; tone: string }) {
-  return <div data-testid={`metric-${label.toLowerCase().replaceAll(' ', '-')}`} className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm">
-    <div className={`mb-4 size-2 rounded-full ${tone}`} />
-    <div className="font-mono text-[27px] font-bold leading-none tracking-tight">{value}</div>
-    <div className="mt-2 text-xs font-bold text-foreground">{label}</div>
+  return <div data-testid={`metric-${label.toLowerCase().replaceAll(' ', '-')}`} className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div className={`mb-3 size-2 rounded-full ${tone}`} />
+    <div className="font-mono text-2xl font-bold leading-none tracking-tight text-foreground">{value}</div>
+    <div className="mt-2 text-xs font-semibold text-foreground">{label}</div>
     <div className="mt-1 text-[10px] text-muted-foreground">{note}</div>
     <div className={`absolute bottom-0 left-0 h-0.5 w-full ${tone}`} />
   </div>;

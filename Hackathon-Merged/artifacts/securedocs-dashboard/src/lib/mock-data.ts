@@ -2,13 +2,21 @@ export type Role = 'Admin' | 'Officer' | 'Legal Reviewer' | 'Clerk' | 'Auditor';
 
 export const roles: Role[] = ['Admin', 'Officer', 'Legal Reviewer', 'Clerk', 'Auditor'];
 
-export const stats = [
+export type StatItem = {
+  label: string;
+  value: string;
+  change: string;
+  tone: 'blue' | 'cyan' | 'amber' | 'red';
+  icon: string;
+};
+
+export const stats: StatItem[] = [
   { label: 'Total cases', value: '128', change: '+8 this month', tone: 'blue', icon: 'briefcase' },
   { label: 'Total documents', value: '4,820', change: '+124 this month', tone: 'cyan', icon: 'files' },
   { label: 'Pending reviews', value: '43', change: '12 due today', tone: 'amber', icon: 'clipboard' },
-  { label: 'Integrity issues', value: '3', change: 'Requires attention', tone: 'red', icon: 'shield' },
+  { label: 'Integrity alerts', value: '3', change: 'Requires attention', tone: 'red', icon: 'shield' },
   { label: 'Suspicious activities', value: '11', change: '3 high risk', tone: 'red', icon: 'activity' },
-] as const;
+];
 
 export const documentTypes = [
   ['FIR / Police Reports', 850],
@@ -22,17 +30,17 @@ export const documentTypes = [
 ] as const;
 
 export const caseStatuses = [
-  ['Active', 58, 'bg-cyan-500'],
-  ['Under Investigation', 32, 'bg-blue-700'],
-  ['Under Review', 18, 'bg-amber-500'],
-  ['Closed', 15, 'bg-emerald-500'],
+  ['Active', 58, 'bg-primary'],
+  ['Under Investigation', 32, 'bg-[#2563A8]'],
+  ['Under Review', 18, 'bg-[#B77900]'],
+  ['Closed', 15, 'bg-[#16803C]'],
   ['Archived', 5, 'bg-slate-400'],
 ] as const;
 
 export const riskDistribution = [
-  { label: 'Low', value: 109, color: '#2f9b72' },
-  { label: 'Medium', value: 14, color: '#d49a28' },
-  { label: 'High', value: 5, color: '#c94b4b' },
+  { label: 'Low', value: 109, color: '#16803C' },
+  { label: 'Medium', value: 14, color: '#2563A8' },
+  { label: 'High', value: 5, color: '#C62828' },
 ];
 
 export type Activity = {
@@ -110,7 +118,7 @@ export const navGroups = [
   {
     label: 'Administration',
     items: [
-      { label: 'Users & roles', href: '/users', icon: 'users', adminOnly: true },
+      { label: 'System Users', href: '/users', icon: 'users', adminOnly: true },
       { label: 'Compliance', href: '/compliance', icon: 'check', adminOnly: true },
       { label: 'Settings', href: '/settings', icon: 'settings', adminOnly: true },
     ],

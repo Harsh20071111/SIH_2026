@@ -26,12 +26,12 @@ const queryClient = new QueryClient();
 
 function AuthLoadingScreen() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#0d1522] text-slate-100 p-4">
-      <div className="flex flex-col items-center gap-4">
-        <div className="size-12 rounded-2xl bg-[#18263b] text-cyan-400 border border-cyan-500/30 grid place-items-center animate-pulse shadow-[0_0_20px_rgba(34,211,238,0.2)]">
-          <ShieldCheck size={26} />
+    <div className="min-h-screen flex flex-col justify-center items-center bg-background text-foreground p-4">
+      <div className="flex flex-col items-center gap-3">
+        <div className="size-12 rounded-md bg-primary text-white grid place-items-center animate-pulse shadow-xs">
+          <ShieldCheck size={26} strokeWidth={2.4} />
         </div>
-        <div className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
+        <div className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">
           Checking Appwrite Session...
         </div>
       </div>
