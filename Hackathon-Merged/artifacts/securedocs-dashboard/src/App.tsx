@@ -11,9 +11,27 @@ import NewCase from '@/pages/new-case';
 import EditCase from '@/pages/edit-case';
 import AllDocuments from '@/pages/AllDocuments';
 import Login from '@/pages/login';
+
+// Integrated Governance & Feature Pages
+import AuditLogs from '@/pages/audit-logs';
+import Security from '@/pages/security';
+import IntegrityVerification from '@/pages/integrity';
+import Reviews from '@/pages/reviews';
+import Reports from '@/pages/reports';
+import ComplianceDashboard from '@/pages/compliance-dashboard';
+import UserManagement from '@/pages/users';
+import Profile from '@/pages/profile';
+import Settings from '@/pages/settings';
+import AccessDenied from '@/pages/access-denied';
+import ActivityAnalysis from '@/pages/activity-analysis';
+import AuditChainVerify from '@/pages/audit-chain-verify';
+import OneClickIntegrityReport from '@/pages/one-click-integrity-report';
+import FIRManagement from '@/pages/fir';
+
 import { SecureDocsShell } from '@/components/securedocs-shell';
 import { AuthProvider, useAuth } from '@/context/auth-context';
-import type { Role } from '@/lib/mock-data';
+import { RouteGuard } from '@/components/RouteGuard';
+import { roles, type Role } from '@/lib/mock-data';
 import { ShieldCheck } from 'lucide-react';
 import {
   Route,
@@ -40,11 +58,18 @@ function AuthLoadingScreen() {
 }
 
 function Router() {
-  const [role, setRole] = useState<Role>('Admin');
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [search, setSearch] = useState('');
   const [location] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
-  const shellRoutes = ['/dashboard', '/cases', '/documents', '/upload', '/reviews', '/security', '/integrity', '/audit-logs', '/reports', '/users', '/compliance', '/settings', '/notifications', '/profile'];
+
+  // Resolve initial role safely from trusted user profile, defaulting to 'Officer' (never Admin)
+  const [role, setRole] = useState<Role>(() => {
+    const rawRole = (user?.labels && user.labels[0]) || (user?.prefs as any)?.role;
+    if (typeof rawRole === 'string' && roles.includes(rawRole as Role)) {
+      return rawRole as Role;
+    }
+    return 'Officer';
+  });
 
   if (isLoading) {
     return <AuthLoadingScreen />;
@@ -56,24 +81,70 @@ function Router() {
   }
 
   return (
-    // Keep a shared shell (sidebar, navbar) outside the boundary so it
-    // survives a page crash.
     <RoutedErrorBoundary>
       <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
         <Switch>
+          {/* Core Preserved Pages */}
           <Route path="/" component={() => <Dashboard search={search} />} />
           <Route path="/dashboard" component={() => <Dashboard search={search} />} />
           <Route path="/cases/new" component={() => <NewCase role={role} />} />
-          <Route path="/cases/:id/timeline" component={() => <ComingSoon title="Case Timeline" />} />
-          <Route path="/documents/:id" component={() => <ComingSoon title="Document workspace" />} />
-          <Route path="/security/activity/:id" component={() => <ComingSoon title="Security activity analysis" />} />
           <Route path="/cases/:id/edit" component={() => <EditCase role={role} />} />
           <Route path="/cases/:id" component={() => <CaseDetail role={role} />} />
           <Route path="/cases" component={() => <Cases role={role} search={search} setSearch={setSearch} />} />
           <Route path="/documents" component={() => <AllDocuments />} />
-          {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents'].includes(route)).map((route) => (
-            <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />
-          ))}
+
+          {/* Integrated Operational & Evidence Pages */}
+          <Route path="/fir" component={() => <FIRManagement role={role} />} />
+          <Route path="/reviews" component={() => <Reviews role={role} />} />
+
+          {/* Integrated Governance & Security Pages */}
+          <Route
+            path="/security"
+            component={() => (
+              <RouteGuard do="security.view" role={role}>
+                <Security />
+              </RouteGuard>
+            )}
+          />
+          <Route
+            path="/security/activity/:id"
+            component={() => <ActivityAnalysis role={role} />}
+          />
+          <Route path="/integrity" component={() => <IntegrityVerification />} />
+          <Route
+            path="/audit-logs"
+            component={() => (
+              <RouteGuard do="audit.view" role={role}>
+                <AuditLogs />
+              </RouteGuard>
+            )}
+          />
+          <Route path="/reports" component={() => <Reports />} />
+          <Route path="/reports/integrity" component={() => <OneClickIntegrityReport />} />
+          <Route path="/reports/audit-chain" component={() => <AuditChainVerify />} />
+          <Route path="/reports/activity-analysis" component={() => <ActivityAnalysis />} />
+
+          {/* Integrated Administration Pages */}
+          <Route
+            path="/users"
+            component={() => (
+              <RouteGuard do="users.manage" role={role}>
+                <UserManagement />
+              </RouteGuard>
+            )}
+          />
+          <Route path="/compliance" component={() => <ComplianceDashboard />} />
+          <Route path="/settings" component={() => <Settings />} />
+          <Route path="/profile" component={() => <Profile />} />
+
+          {/* Access Denied & Fallbacks */}
+          <Route path="/access-denied" component={AccessDenied} />
+          <Route path="/403" component={AccessDenied} />
+          <Route path="/cases/:id/timeline" component={() => <ComingSoon title="Case Timeline" />} />
+          <Route path="/documents/:id" component={() => <ComingSoon title="Document workspace" />} />
+          <Route path="/upload" component={() => <ComingSoon title="Secure Document Upload" />} />
+          <Route path="/notifications" component={() => <ComingSoon title="Notification Center" />} />
+
           <Route component={NotFound} />
         </Switch>
       </SecureDocsShell>

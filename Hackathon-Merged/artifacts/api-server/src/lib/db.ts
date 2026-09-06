@@ -12,6 +12,9 @@ try {
   // Ignore if custom DNS servers cannot be set
 }
 
+// Disable Mongoose query buffering so disconnected states immediately use fallbacks without hanging
+mongoose.set("bufferCommands", false);
+
 // Ensure .env is loaded regardless of process cwd or monorepo nesting
 export function loadEnv(): void {
   const candidatePaths = [

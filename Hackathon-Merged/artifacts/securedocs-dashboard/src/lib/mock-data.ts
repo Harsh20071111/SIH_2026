@@ -103,6 +103,7 @@ export const navGroups = [
       { label: 'Dashboard', href: '/dashboard', icon: 'layout' },
       { label: 'Cases', href: '/cases', icon: 'briefcase' },
       { label: 'Documents', href: '/documents', icon: 'files' },
+      { label: 'FIR Registry', href: '/fir', icon: 'shield' },
       { label: 'Reviews', href: '/reviews', icon: 'clipboard', badge: '43' },
     ],
   },

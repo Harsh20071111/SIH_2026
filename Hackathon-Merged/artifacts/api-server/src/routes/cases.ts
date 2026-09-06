@@ -2,6 +2,8 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import { Case, type ICase } from "../models/Case";
 import { Document } from "../models/Document";
+import { requireAuth } from "../middlewares/auth";
+import { requirePermission } from "../middlewares/rbac";
 
 const router: IRouter = Router();
 
@@ -72,7 +74,7 @@ async function findCaseByIdentifier(identifier: string) {
 }
 
 // POST /api/cases - Create a new case
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", requireAuth, requirePermission("cases.create"), async (req: Request, res: Response) => {
   try {
     const {
       caseId,
@@ -184,7 +186,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/cases - Return all cases (with search and filtering)
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", requireAuth, requirePermission("cases.view"), async (req: Request, res: Response) => {
   try {
     const { status, priority, caseType, search } = req.query;
 
@@ -254,9 +256,9 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/cases/:id/documents - Return all documents belonging to a case
-router.get("/:id/documents", async (req: Request, res: Response) => {
+router.get("/:id/documents", requireAuth, requirePermission("cases.view"), async (req: Request, res: Response) => {
   try {
-    const caseDoc = await findCaseByIdentifier(req.params.id);
+    const caseDoc = await findCaseByIdentifier(String(req.params.id));
     if (!caseDoc) {
       return res.status(404).json({
         success: false,
@@ -294,10 +296,10 @@ router.get("/:id/documents", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/cases/:id - Return one case
-router.get("/:id", async (req: Request, res: Response) => {
+// GET /api/cases/:id - Retrieve case by MongoDB _id or caseId
+router.get("/:id", requireAuth, requirePermission("cases.view"), async (req: Request, res: Response) => {
   try {
-    const caseDoc = await findCaseByIdentifier(req.params.id);
+    const caseDoc = await findCaseByIdentifier(String(req.params.id));
     if (!caseDoc) {
       return res.status(404).json({
         success: false,
@@ -318,10 +320,10 @@ router.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/cases/:id - Update case information
-router.put("/:id", async (req: Request, res: Response) => {
+// PUT /api/cases/:id - Update case details
+router.put("/:id", requireAuth, requirePermission("cases.update"), async (req: Request, res: Response) => {
   try {
-    const caseDoc = await findCaseByIdentifier(req.params.id);
+    const caseDoc = await findCaseByIdentifier(String(req.params.id));
     if (!caseDoc) {
       return res.status(404).json({
         success: false,
@@ -329,18 +331,19 @@ router.put("/:id", async (req: Request, res: Response) => {
       });
     }
 
-    const { status, priority } = req.body;
-    if (status && !VALID_STATUSES.includes(status)) {
+    const { status, priority, title, description, caseType, assignedOfficer } = req.body;
+
+    if (status !== undefined && !VALID_STATUSES.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: `${status} is not a valid status`,
+        message: `Invalid status. Allowed values: ${VALID_STATUSES.join(", ")}`,
       });
     }
 
-    if (priority && !VALID_PRIORITIES.includes(priority)) {
+    if (priority !== undefined && !VALID_PRIORITIES.includes(priority)) {
       return res.status(400).json({
         success: false,
-        message: `${priority} is not a valid priority`,
+        message: `Invalid priority. Allowed values: ${VALID_PRIORITIES.join(", ")}`,
       });
     }
 
@@ -356,7 +359,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     if (isDbConnected() && typeof (caseDoc as ICase).save === "function") {
       for (const key of allowedUpdates) {
         if (req.body[key] !== undefined) {
-          (caseDoc as Record<string, unknown>)[key] = req.body[key];
+          (caseDoc as any)[key] = req.body[key];
         }
       }
 
@@ -364,24 +367,24 @@ router.put("/:id", async (req: Request, res: Response) => {
 
       return res.status(200).json({
         success: true,
-        message: "Case updated successfully",
         data: updated,
+        message: "Case updated successfully",
       });
     }
 
-    // In-memory update
-    const memCase = caseDoc as FallbackCase;
+    // Fallback in-memory update
+    const fbDoc = caseDoc as FallbackCase;
     for (const key of allowedUpdates) {
       if (req.body[key] !== undefined) {
-        (memCase as unknown as Record<string, unknown>)[key] = req.body[key];
+        (fbDoc as any)[key] = req.body[key];
       }
     }
-    memCase.updatedAt = new Date();
+    fbDoc.updatedAt = new Date();
 
     return res.status(200).json({
       success: true,
-      message: "Case updated successfully",
-      data: memCase,
+      data: fbDoc,
+      message: "Case updated successfully (in-memory mode)",
     });
   } catch (error: unknown) {
     const err = error as { name?: string; message?: string };
@@ -398,10 +401,10 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/cases/:id - Delete a case
-router.delete("/:id", async (req: Request, res: Response) => {
+// DELETE /api/cases/:id - Delete case
+router.delete("/:id", requireAuth, requirePermission("cases.delete"), async (req: Request, res: Response) => {
   try {
-    const caseDoc = await findCaseByIdentifier(req.params.id);
+    const caseDoc = await findCaseByIdentifier(String(req.params.id));
     if (!caseDoc) {
       return res.status(404).json({
         success: false,
@@ -412,9 +415,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     if (isDbConnected()) {
       await Case.deleteOne({ _id: (caseDoc as ICase)._id });
     } else {
-      const idx = fallbackCases.findIndex(
-        (c) => c._id === (caseDoc as FallbackCase)._id || c.caseId === (caseDoc as FallbackCase).caseId
-      );
+      const idx = fallbackCases.findIndex((c) => c._id === (caseDoc as FallbackCase)._id);
       if (idx >= 0) fallbackCases.splice(idx, 1);
     }
 
