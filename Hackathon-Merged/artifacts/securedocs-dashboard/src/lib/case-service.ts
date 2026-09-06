@@ -110,19 +110,93 @@ export function canViewCase(item: CaseRecord, role: Role) {
   return item.officer === 'Officer A' || item.status === 'Under Review' || item.risk === 'High';
 }
 
+const API_BASE = '/api';
+
+function mapApiCaseToRecord(apiCase: any): CaseRecord {
+  const statusMap: Record<string, CaseStatus> = {
+    Open: 'Active',
+    'Under Investigation': 'Under Investigation',
+    'Pending Review': 'Under Review',
+    Closed: 'Closed',
+  };
+  const priorityMap: Record<string, CasePriority> = {
+    Low: 'Low',
+    Medium: 'Medium',
+    High: 'High',
+    Critical: 'High',
+  };
+
+  const id = apiCase.caseId || apiCase._id;
+  const status: CaseStatus = statusMap[apiCase.status] || (apiCase.status as CaseStatus) || 'Active';
+  const priority: CasePriority = priorityMap[apiCase.priority] || 'Medium';
+
+  return {
+    id,
+    caseId: apiCase.caseId || id,
+    title: apiCase.title,
+    type: apiCase.caseType || 'General',
+    officer: apiCase.assignedOfficer || 'Officer A',
+    assignedOfficer: apiCase.assignedOfficer || 'Officer A',
+    documents: apiCase.documentsCount ?? 0,
+    activityCount: 0,
+    lastActivity: apiCase.updatedAt || apiCase.createdAt || new Date().toISOString(),
+    status,
+    risk: priority,
+    priority,
+    description: apiCase.description || '',
+    department: 'Investigation',
+    startDate: (apiCase.createdAt ? String(apiCase.createdAt).slice(0, 10) : new Date().toISOString().slice(0, 10)),
+    confidentiality: 'Confidential',
+    createdAt: apiCase.createdAt,
+    createdBy: apiCase.createdBy,
+  };
+}
+
 export async function getCases(): Promise<CaseRecord[]> {
-  await wait(380);
+  try {
+    const res = await fetch(`${API_BASE}/cases`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        const apiRecords = json.data.map(mapApiCaseToRecord);
+        // Merge with existing cases so initial UI state stays rich
+        const existingIds = new Set(apiRecords.map((r: CaseRecord) => r.caseId?.toLowerCase() || r.id.toLowerCase()));
+        const remainingSeed = cases.filter((c) => !existingIds.has((c.caseId || c.id).toLowerCase()));
+        return [...apiRecords, ...remainingSeed];
+      }
+    }
+  } catch (err) {
+    console.warn('Backend API getCases failed, using local store:', err);
+  }
   return cases.map((item) => ({ ...item }));
 }
 
 export async function getCaseById(id: string): Promise<CaseRecord | undefined> {
-  await wait(220);
-  const item = cases.find((candidate) => candidate.id === id);
+  try {
+    const res = await fetch(`${API_BASE}/cases/${id}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return mapApiCaseToRecord(json.data);
+      }
+    }
+  } catch (err) {
+    console.warn('Backend API getCaseById failed, using local store:', err);
+  }
+  const item = cases.find((candidate) => candidate.id === id || candidate.caseId === id);
   return item ? { ...item } : undefined;
 }
 
 export async function checkCaseIdExists(caseId: string): Promise<boolean> {
-  await wait(90);
+  try {
+    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(caseId)}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) return true;
+    }
+  } catch {
+    // Fallback to local
+  }
   return cases.some((item) => item.id.toLowerCase() === caseId.trim().toLowerCase());
 }
 
@@ -144,12 +218,49 @@ export function getCaseAuditEvents(): CaseAuditEvent[] {
 }
 
 export async function createCase(data: CaseCreateInput): Promise<CaseRecord> {
-  await wait(260);
-  if (await checkCaseIdExists(data.id)) throw new Error('A case with this ID already exists');
+  const caseId = data.caseId || data.id;
   const createdAt = data.createdAt || new Date().toISOString();
+
+  try {
+    const statusApiMap: Record<string, string> = {
+      Active: 'Open',
+      'Under Investigation': 'Under Investigation',
+      'Under Review': 'Pending Review',
+      Closed: 'Closed',
+      Archived: 'Closed',
+    };
+
+    const res = await fetch(`${API_BASE}/cases`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caseId,
+        title: data.title,
+        description: data.description,
+        caseType: data.type,
+        status: statusApiMap[data.status] || 'Open',
+        priority: data.priority,
+        createdBy: data.createdBy,
+        assignedOfficer: data.assignedOfficer,
+      }),
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        const created = mapApiCaseToRecord(json.data);
+        cases = [created, ...cases];
+        return created;
+      }
+    }
+  } catch (err) {
+    console.warn('Backend API createCase failed, saving to local store:', err);
+  }
+
+  // Local fallback
   const created: CaseRecord = {
     id: data.id,
-    caseId: data.caseId || data.id,
+    caseId,
     title: data.title,
     type: data.type,
     description: data.description,
@@ -167,25 +278,46 @@ export async function createCase(data: CaseCreateInput): Promise<CaseRecord> {
     createdBy: data.createdBy,
   };
   cases = [created, ...cases];
-  caseAuditEvents = [{
-    action: 'CASE_CREATED',
-    caseId: created.id,
-    createdAt,
-    createdBy: data.createdBy,
-    metadata: {
-      title: data.title,
-      type: data.type,
-      department: data.department,
-      assignedOfficer: data.assignedOfficer,
-      priority: data.priority,
-      confidentiality: data.confidentiality,
-    },
-  }, ...caseAuditEvents];
   return { ...created };
 }
 
 export async function updateCase(id: string, data: Partial<Omit<CaseRecord, 'id'>>): Promise<CaseRecord> {
-  await wait(260);
+  try {
+    const statusApiMap: Record<string, string> = {
+      Active: 'Open',
+      'Under Investigation': 'Under Investigation',
+      'Under Review': 'Pending Review',
+      Closed: 'Closed',
+      Archived: 'Closed',
+    };
+
+    const body: Record<string, unknown> = {};
+    if (data.title !== undefined) body.title = data.title;
+    if (data.description !== undefined) body.description = data.description;
+    if (data.type !== undefined) body.caseType = data.type;
+    if (data.status !== undefined) body.status = statusApiMap[data.status] || data.status;
+    if (data.priority !== undefined) body.priority = data.priority;
+    if (data.assignedOfficer !== undefined) body.assignedOfficer = data.assignedOfficer;
+
+    const res = await fetch(`${API_BASE}/cases/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        const updated = mapApiCaseToRecord(json.data);
+        const index = cases.findIndex((item) => item.id === id || item.caseId === id);
+        if (index >= 0) cases[index] = { ...cases[index], ...updated, ...data };
+        return { ...cases[index] };
+      }
+    }
+  } catch (err) {
+    console.warn('Backend API updateCase failed, updating local store:', err);
+  }
+
   const index = cases.findIndex((item) => item.id === id);
   if (index < 0) throw new Error('Case not found');
   cases[index] = { ...cases[index], ...data };

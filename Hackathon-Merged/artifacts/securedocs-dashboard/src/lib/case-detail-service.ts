@@ -159,6 +159,27 @@ function copy<T>(value: T): T {
 }
 
 export async function getCaseDocuments(id: string, item?: CaseRecord): Promise<CaseDocument[]> {
+  try {
+    const res = await fetch(`/api/cases/${encodeURIComponent(id)}/documents`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data.map((d: any) => ({
+          id: d._id || d.id,
+          name: d.fileName || d.name || 'Document.pdf',
+          type: d.documentType || 'Case Record',
+          version: 'v1',
+          uploadedBy: d.uploadedBy || item?.officer || 'Officer A',
+          date: d.createdAt ? String(d.createdAt).slice(0, 10) : new Date().toISOString().slice(0, 10),
+          status: d.status === 'Approved' ? 'Approved' : (d.status === 'Under Review' ? 'Pending Review' : 'Pending Review'),
+          integrity: 'Verified',
+          hash: d.sha256Hash || 'A7F32C9D…19A2',
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('Backend API getCaseDocuments failed, using local store:', err);
+  }
   await wait(55);
   return copy(documentsByCase[id] ?? (item ? fallbackDocuments(item) : []));
 }

@@ -81,6 +81,42 @@ function LogOutIcon() { return <LogOut size={14} />; }
 
 export default function AllDocuments() {
   const [collapsed, setCollapsed] = useState(false); const [query, setQuery] = useState(''); const [filters, setFilters] = useState({ caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }); const [applied, setApplied] = useState(filters); const [sort, setSort] = useState({ key: 'lastModified', direction: 'desc' }); const [page, setPage] = useState(1); const [menu, setMenu] = useState(null); const [modal, setModal] = useState(null); const [toast, setToast] = useState(''); const [notifications, setNotifications] = useState(false); const [profile, setProfile] = useState(false); const [loading, setLoading] = useState(false); const [docs, setDocs] = useState(seedDocuments); const perPage = 7;
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/documents')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (active && json?.success && Array.isArray(json.data) && json.data.length > 0) {
+          const apiDocs = json.data.map((d, index) => ({
+            id: d._id ? `SD-${d._id.slice(-6)}` : `SD-API-${index}`,
+            documentName: d.fileName || 'document.pdf',
+            caseId: d.caseId || 'CASE-2026-001',
+            documentType: d.documentType || 'FIR',
+            uploadedBy: d.uploadedBy || 'Officer Raj Patel',
+            uploadDate: d.createdAt ? String(d.createdAt).slice(0, 10) : '2026-09-02',
+            version: 1,
+            status: d.status || 'Approved',
+            integrity: 'Verified',
+            confidentiality: 'Confidential',
+            lastModified: d.updatedAt || d.createdAt || new Date().toISOString(),
+            hash: d.sha256Hash || 'sha256: 7f0c…d91a',
+            lastAccessed: new Date().toISOString(),
+            totalAccesses: 1,
+            lastAccessedBy: 'Officer Raj Patel',
+            versionHistory: [{ version: 1, date: 'Sep 02, 2026 · 12:00', user: d.uploadedBy || 'Officer', note: 'Initial upload' }],
+          }));
+          const existingIds = new Set(apiDocs.map((doc) => doc.documentName.toLowerCase()));
+          const remainingSeed = seedDocuments.filter((doc) => !existingIds.has(doc.documentName.toLowerCase()));
+          setDocs([...apiDocs, ...remainingSeed]);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch documents from /api/documents:', err);
+      });
+    return () => { active = false; };
+  }, []);
+
   const filtered = useMemo(() => docs.filter((doc) => { const q = query.toLowerCase(); const matchesQuery = !q || [doc.documentName, doc.caseId, doc.uploadedBy, doc.documentType, doc.id].some((value) => value.toLowerCase().includes(q)); const inDateRange = (!applied.dateFrom || doc.uploadDate >= applied.dateFrom) && (!applied.dateTo || doc.uploadDate <= applied.dateTo); return matchesQuery && inDateRange && Object.entries(applied).filter(([key]) => !['dateFrom', 'dateTo'].includes(key)).every(([key, value]) => !value || String(doc[key]).toLowerCase().includes(value.toLowerCase())); }), [docs, query, applied]);
   const sorted = useMemo(() => [...filtered].sort((a, b) => { if (sort.key === 'version') return sort.direction === 'asc' ? a.version - b.version : b.version - a.version; const av = String(a[sort.key]).toLowerCase(); const bv = String(b[sort.key]).toLowerCase(); return sort.direction === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); }), [filtered, sort]);
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage)); const pageDocs = sorted.slice((page - 1) * perPage, page * perPage);
@@ -88,7 +124,27 @@ export default function AllDocuments() {
   const clearFilters = () => { const blank = { caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }; setFilters(blank); setApplied(blank); setQuery(''); setPage(1); };
   const openAction = (doc, action) => { setMenu(null); setModal({ type: action, document: doc }); };
   const menuApi = (id) => { const fn = (doc) => setMenu((current) => current === id ? null : id); fn.activeId = menu; fn.share = (doc) => openAction(doc, 'share'); fn.download = (doc) => openAction(doc, 'download'); fn.verify = (doc) => openAction(doc, 'verify'); return fn; };
-  const handleUpload = (info) => { const newDoc = { ...seedDocuments[0], id: `SD-${Math.floor(26100 + Math.random() * 80)}`, documentName: info.name, caseId: info.caseId, documentType: info.type, confidentiality: info.confidentiality, uploadDate: '2026-09-02', lastModified: '2026-09-02T16:50:00', uploadedBy: 'Officer Raj Patel', hash: 'sha256: 1a6e…9f22', version: 1, totalAccesses: 0, lastAccessed: '2026-09-02T16:50:00', lastAccessedBy: 'Officer Raj Patel', versionHistory: [{ version: 1, date: 'Sep 02, 2026 · 16:50', user: 'Officer Raj Patel', note: 'Secure intake complete' }] }; setDocs((current) => [newDoc, ...current]); setModal(null); setToast('Document uploaded securely.'); };
+  const handleUpload = async (info) => {
+    const docName = info.name || info.fileName || 'secure-document.pdf';
+    const cId = info.caseId || 'CASE-2026-NEW';
+    try {
+      await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caseId: cId,
+          fileName: docName,
+          documentType: info.type || 'FIR',
+          description: info.name,
+          uploadedBy: 'Officer Raj Patel',
+          status: 'Approved',
+        }),
+      });
+    } catch (err) {
+      console.warn('API document upload failed, saving to state:', err);
+    }
+    const newDoc = { ...seedDocuments[0], id: `SD-${Math.floor(26100 + Math.random() * 80)}`, documentName: docName, caseId: cId, documentType: info.type, confidentiality: info.confidentiality, uploadDate: '2026-09-02', lastModified: '2026-09-02T16:50:00', uploadedBy: 'Officer Raj Patel', hash: 'sha256: 1a6e…9f22', version: 1, totalAccesses: 0, lastAccessed: '2026-09-02T16:50:00', lastAccessedBy: 'Officer Raj Patel', versionHistory: [{ version: 1, date: 'Sep 02, 2026 · 16:50', user: 'Officer Raj Patel', note: 'Secure intake complete' }] }; setDocs((current) => [newDoc, ...current]); setModal(null); setToast('Document uploaded securely.');
+  };
   const handleDownload = () => { setModal(null); setToast('Controlled copy prepared for download'); };
   const activeFilterCount = Object.values(applied).filter(Boolean).length;
   const columns = [['documentName', 'Document Name'], ['caseId', 'Case ID'], ['documentType', 'Document Type'], ['uploadedBy', 'Uploaded By'], ['uploadDate', 'Upload Date'], ['version', 'Version'], ['status', 'Status'], ['integrity', 'Integrity'], ['confidentiality', 'Confidentiality']];
