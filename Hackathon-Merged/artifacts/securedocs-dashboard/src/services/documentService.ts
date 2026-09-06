@@ -1,10 +1,3 @@
-// @ts-ignore
-import { documents as seedDocuments, filterOptions } from '../data/documents';
-
-// In a real app, this would be an API call to the backend.
-// We maintain a local mock state here to simulate persistence across component unmounts.
-let mockDocuments = [...seedDocuments];
-
 import { api } from './api';
 
 export const documentService = {

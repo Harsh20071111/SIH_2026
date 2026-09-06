@@ -1,9 +1,8 @@
 import mongoose from "mongoose";
 import { logger } from "./logger";
 
-const MONGODB_URI =
-  process.env["MONGODB_URI"] ||
-  "mongodb+srv://harshpanchal200011_db_user:xVN3cfRbKmNSIOWA@sih.9ut1ht1.mongodb.net/securedocs?retryWrites=true&w=majority";
+const MONGODB_URI: string =
+  process.env["MONGODB_URI"] || "mongodb://localhost:27017/securedocs";
 
 let isConnected = false;
 
