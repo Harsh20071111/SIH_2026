@@ -1,4 +1,9 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+let rawBase = import.meta.env.VITE_API_URL || "/api";
+rawBase = rawBase.replace(/\/+$/, "");
+if (rawBase.startsWith("http") && !rawBase.endsWith("/api")) {
+  rawBase = `${rawBase}/api`;
+}
+const API_BASE_URL = rawBase;
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -9,12 +14,18 @@ export class ApiError extends Error {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    let errorMsg = "An error occurred";
+    let errorMsg = `Request failed (${response.status})`;
     try {
       const errorData = await response.json();
       errorMsg = errorData.error || errorData.message || errorMsg;
     } catch {
-      // Ignored
+      if (response.status === 404) {
+        errorMsg = "Backend endpoint not found (404). Please verify your backend is running.";
+      } else if (response.status === 502 || response.status === 503) {
+        errorMsg = "Backend server is starting up. Please wait 30 seconds and retry.";
+      } else if (response.status === 401) {
+        errorMsg = "Invalid email/employee ID or password.";
+      }
     }
     throw new ApiError(response.status, errorMsg);
   }
