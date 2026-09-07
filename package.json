@@ -8,6 +8,7 @@
     "dev:mockup": "npm --prefix Hackathon-Merged run dev:mockup",
     "dev:api": "npm --prefix Hackathon-Merged run dev:api",
     "watch:audit": "npm --prefix Hackathon-Merged run watch:audit",
+    "watch:audit:live": "npm --prefix Hackathon-Merged run watch:audit:live",
     "build": "npm --prefix Hackathon-Merged run build"
   }
 }
