@@ -1,18 +1,21 @@
 import mongoose from "mongoose";
+import { loadEnv } from "./env";
 import { logger } from "./logger";
 
-const MONGODB_URI: string =
-  process.env["MONGODB_URI"] || "mongodb://localhost:27017/securedocs";
+loadEnv();
 
 let isConnected = false;
 
 export async function connectDB(): Promise<void> {
   if (isConnected) return;
+  loadEnv();
+
+  const uri = process.env["MONGODB_URI"] || "mongodb://localhost:27017/securedocs";
 
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(uri);
     isConnected = true;
-    logger.info({ uri: MONGODB_URI.replace(/\/\/.*@/, "//<credentials>@") }, "MongoDB connected");
+    logger.info({ uri: uri.replace(/\/\/.*@/, "//<credentials>@") }, "MongoDB connected");
   } catch (err) {
     logger.error({ err }, "MongoDB connection failed");
     throw err;

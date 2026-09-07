@@ -7,11 +7,10 @@
   - `api-server`: Express.js backend (port 5001)
   - `securedocs-dashboard`: Main React dashboard
   - `mockup-sandbox`: Experimental UI sandbox
-- Shared libraries in `lib/`:
-  - `api-client-react`: React API client
-  - `api-zod`: API validation schemas
-  - `db`: Database layer (includes migration scripts)
-  - `api-spec`: API specifications
+- Docker configs in `docker/`:
+  - `api.Dockerfile`: Multi-stage build for API server
+  - `dashboard.Dockerfile`: Multi-stage build for dashboard (Nginx)
+  - `nginx.conf`: Nginx config with API proxy
 
 ## Essential Commands
 **From repository root:**
@@ -26,27 +25,57 @@
 - `pnpm dev:mockup` - Start mockup sandbox
 - `pnpm build` - Full build (typecheck → build)
 - `pnpm typecheck` - Type-check all packages
-- `pnpm typecheck:libs` - Type-check shared libraries only
 
-## Database Operations
-- Uses Drizzle ORM with PostgreSQL
-- Migration commands (run from Hackathon-Merged/):
-  - `pnpm --filter db push` - Push schema changes to database
-  - `pnpm --filter db push-force` - Force push schema changes
-- Post-merge workflow: `pnpm install --frozen-lockfile` then `pnpm --filter db push`
+## Database (MongoDB)
+- Uses **Mongoose** ODM with **MongoDB**
+- Default connection: `mongodb://localhost:27017/securedocs`
+- Set via `MONGODB_URI` environment variable
 
-## Development Workflow
-1. Start API server first: `npm run dev:api`
-2. Start dashboard: `npm run dev`
-3. API server auto-rebuilds with esbuild on changes
-4. Frontend apps use Vite with HMR
+## Docker Setup (Full-Stack)
+All services run via Docker Compose from `Hackathon-Merged/`:
+
+### Start Everything
+```bash
+docker compose up --build        # Build & start (first time)
+docker compose up -d             # Start in background
+docker compose down              # Stop all services
+docker compose down -v           # Stop & delete all data (including DB)
+```
+
+### Services & Ports
+| Service      | Container               | Port          | Description              |
+|------------- |-------------------------|---------------|--------------------------|
+| `mongodb`    | `securedocs-mongo`      | `27017`       | MongoDB 7.0 database     |
+| `mongo-ui`   | `securedocs-mongo-ui`   | `8081`        | Mongo Express GUI        |
+| `api`        | `securedocs-api`        | `5001`        | Express.js API server    |
+| `dashboard`  | `securedocs-dashboard`  | `3000`        | React dashboard (Nginx)  |
+
+### Seeding (after containers are running)
+```bash
+docker compose exec api node --enable-source-maps ./dist/index.mjs  # verify API is healthy first
+# OR seed from local machine:
+cd Hackathon-Merged && pnpm --filter @workspace/api-server run seed
+```
+
+### View Logs
+```bash
+docker compose logs -f api         # API server logs
+docker compose logs -f dashboard   # Dashboard/Nginx logs
+docker compose logs -f mongodb     # MongoDB logs
+```
+
+## Development Workflow (Without Docker)
+1. Start MongoDB: `docker compose up mongodb -d` (just the DB container)
+2. Start API server: `npm run dev:api`
+3. Start dashboard: `npm run dev`
+4. API server auto-rebuilds with esbuild on changes
+5. Frontend apps use Vite with HMR
 
 ## Key Details
 - **Package manager**: pnpm only (enforced by preinstall script)
 - **API server**: Uses esbuild for bundling, outputs ESM
 - **Frontend**: Vite + React + Tailwind CSS
 - **TypeScript**: Strict mode enabled, noUnusedLocals false
-- **Validation**: Zod schemas (lib/api-zod/)
 - **Environment**: API server reads NODE_ENV (dev/prod)
 - **Ports**: API defaults to 5001, frontend Vite ports vary
 
@@ -56,4 +85,5 @@
 - Type checking is separate from building (`typecheck` vs `build`)
 - External dependencies in esbuild config are extensive (native modules, cloud SDKs, etc.)
 - API uses `export NODE_ENV=development` in dev script
-- Database requires DATABASE_URL environment variable to be set
+- MongoDB must be running before starting the API server
+- In Docker, the dashboard's Nginx proxies `/api/*` to the API container
