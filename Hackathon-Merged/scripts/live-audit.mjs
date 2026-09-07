@@ -9,18 +9,25 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(path.resolve(__dirname, "../artifacts/api-server/package.json"));
 const mongoose = require("mongoose");
 
-// Load .env from api-server or parent if present
-const envPath = path.resolve(__dirname, "../artifacts/api-server/.env");
-let mongoUri = "mongodb+srv://harshpanchal200011_db_user:JoIlq1mikGentrrU@sih.9ut1ht1.mongodb.net/securedocs?retryWrites=true&w=majority&appName=SIH";
+// Default cloud URI (Atlas)
+const ATLAS_URI = "mongodb+srv://harshpanchal200011_db_user:JoIlq1mikGentrrU@sih.9ut1ht1.mongodb.net/securedocs?retryWrites=true&w=majority&appName=SIH";
 
-if (process.env.MONGODB_URI) {
-  mongoUri = process.env.MONGODB_URI;
-} else if (fs.existsSync(envPath)) {
-  const content = fs.readFileSync(envPath, "utf-8");
-  const match = content.match(/^MONGODB_URI=(.+)$/m);
-  if (match && match[1]) {
-    const val = match[1].trim();
-    if (val.startsWith("mongodb")) mongoUri = val;
+// Check if user requested cloud/atlas or provided custom URI
+const isCloudArg = process.argv.includes("--cloud") || process.argv.includes("--atlas") || process.env.USE_ATLAS === "true";
+
+let mongoUri = ATLAS_URI;
+
+if (!isCloudArg) {
+  const envPath = path.resolve(__dirname, "../artifacts/api-server/.env");
+  if (process.env.MONGODB_URI) {
+    mongoUri = process.env.MONGODB_URI;
+  } else if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, "utf-8");
+    const match = content.match(/^MONGODB_URI=(.+)$/m);
+    if (match && match[1]) {
+      const val = match[1].trim();
+      if (val.startsWith("mongodb")) mongoUri = val;
+    }
   }
 }
 
