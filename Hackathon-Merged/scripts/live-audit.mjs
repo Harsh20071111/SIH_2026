@@ -10,7 +10,7 @@ const require = createRequire(path.resolve(__dirname, "../artifacts/api-server/p
 const mongoose = require("mongoose");
 
 // Default cloud URI (Atlas)
-const ATLAS_URI = "mongodb+srv://harshpanchal200011_db_user:JoIlq1mikGentrrU@sih.9ut1ht1.mongodb.net/securedocs?retryWrites=true&w=majority&appName=SIH";
+const ATLAS_URI = process.env.MONGODB_URI || "mongodb+srv://Harsh__1111admin:Harsh2007@sih.9ut1ht1.mongodb.net/securedocs?retryWrites=true&w=majority&appName=SIH";
 
 // Check if user requested cloud/atlas or provided custom URI
 const isCloudArg = process.argv.includes("--cloud") || process.argv.includes("--atlas") || process.env.USE_ATLAS === "true";
