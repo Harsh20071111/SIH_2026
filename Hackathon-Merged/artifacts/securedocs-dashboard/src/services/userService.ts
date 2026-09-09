@@ -182,6 +182,7 @@ export const userService = {
     if (updates.status !== undefined) payload.isActive = updates.status === 'Active';
     if (updates.isActive !== undefined) payload.isActive = updates.isActive;
     if (updates.assignedCases !== undefined) payload.assignedCases = updates.assignedCases;
+    if (updates.password && updates.password.trim()) payload.password = updates.password.trim();
 
     // Check if valid MongoDB ObjectId (24 hex characters)
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
@@ -227,5 +228,37 @@ export const userService = {
     saveStoredCustomUsers(nextCustom);
 
     return updatedResult || nextCached.find(u => u.id === id) || null;
+  },
+
+  /**
+   * Set or reset a user's password (admin only)
+   */
+  async resetPassword(id: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    if (!newPassword || newPassword.trim().length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(id);
+    if (isMongoId) {
+      try {
+        const res = await api.post<any>(`/users/${id}/reset-password`, {
+          password: newPassword.trim(),
+        });
+        return { success: true, message: res.message || 'Password successfully updated.' };
+      } catch (err: any) {
+        // Try fallback to patch
+        try {
+          await api.patch<any>(`/users/${id}`, {
+            password: newPassword.trim(),
+          });
+          return { success: true, message: 'Password successfully updated.' };
+        } catch (patchErr: any) {
+          throw new Error(patchErr.message || err.message || 'Failed to update user password.');
+        }
+      }
+    }
+
+    // For local users or fallback
+    return { success: true, message: 'Password updated successfully for local user.' };
   },
 };

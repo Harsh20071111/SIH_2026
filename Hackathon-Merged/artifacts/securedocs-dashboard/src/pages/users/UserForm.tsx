@@ -111,6 +111,9 @@ export default function UserForm() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Enter a valid email';
     if (!department) newErrors.department = 'Select a department';
     if (!role) newErrors.role = 'Select a role';
+    if (password.trim() && password.trim().length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -130,8 +133,14 @@ export default function UserForm() {
           role: role as UserRole,
           status,
           assignedCases,
+          password: password.trim() ? password.trim() : undefined,
         });
-        setToast({ message: 'User updated successfully', variant: 'success' });
+        setToast({
+          message: password.trim()
+            ? 'User details and password updated successfully'
+            : 'User updated successfully',
+          variant: 'success',
+        });
       } else {
         await userService.createUser({
           name,
@@ -292,11 +301,11 @@ export default function UserForm() {
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
-                      className={styles.formInput}
+                      className={`${styles.formInput} ${submitted && errors.password ? styles.formInputError : ''}`}
                       type={showPassword ? 'text' : 'password'}
                       placeholder={isEdit ? 'Enter new password' : 'Enter password (or leave blank for default)'}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => { setPassword(e.target.value); if (submitted) validate(); }}
                     />
                     <button
                       type="button"
@@ -319,6 +328,7 @@ export default function UserForm() {
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {submitted && errors.password && <span className={styles.formError}>{errors.password}</span>}
                 </div>
               </div>
             </div>

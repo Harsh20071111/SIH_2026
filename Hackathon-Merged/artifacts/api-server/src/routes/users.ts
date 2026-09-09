@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/User";
 import { requireAuth } from "../middlewares/auth";
 import { requireRole } from "../middlewares/rbac";
-import { createAuditEvent } from "../lib/audit";
+import { createAuditEvent, type AuditAction } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -115,8 +115,7 @@ router.post(
 
 /**
  * PATCH /api/users/:id
- * Update a user (admin only). Can update role, department, isActive, name, assignedCases.
- * Cannot update password through this endpoint.
+ * Update a user (admin only). Can update role, department, isActive, name, assignedCases, password.
  */
 router.patch(
   "/users/:id",
@@ -125,7 +124,7 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, department, isActive, assignedCases, employeeId, email } = req.body;
+      const { name, department, isActive, assignedCases, employeeId, email, password } = req.body;
       let { role } = req.body;
 
       const updateFields: Record<string, unknown> = {};
@@ -143,6 +142,17 @@ router.patch(
       if (employeeId !== undefined) updateFields.employeeId = employeeId;
       if (email !== undefined) updateFields.email = email.toLowerCase().trim();
 
+      let passwordChanged = false;
+      if (password && typeof password === "string" && password.trim().length > 0) {
+        if (password.trim().length < 6) {
+          res.status(400).json({ error: "Password must be at least 6 characters long." });
+          return;
+        }
+        const salt = await bcrypt.genSalt(12);
+        updateFields.passwordHash = await bcrypt.hash(password.trim(), salt);
+        passwordChanged = true;
+      }
+
       const user = await User.findByIdAndUpdate(id, updateFields, {
         new: true,
         runValidators: true,
@@ -153,7 +163,10 @@ router.patch(
         return;
       }
 
-      const action = isActive === false ? "USER_DEACTIVATED" : "USER_UPDATED";
+      let action: AuditAction = isActive === false ? "USER_DEACTIVATED" : "USER_UPDATED";
+      if (passwordChanged && Object.keys(updateFields).length === 1) {
+        action = "USER_PASSWORD_RESET";
+      }
 
       await createAuditEvent({
         action,
@@ -164,13 +177,69 @@ router.patch(
         metadata: {
           targetUserId: user._id.toString(),
           targetUserEmail: user.email,
-          updatedFields: Object.keys(updateFields),
+          updatedFields: Object.keys(updateFields).filter((k) => k !== "passwordHash"),
+          passwordReset: passwordChanged,
         },
       });
 
       res.json(user);
-    } catch (err) {
-      res.status(500).json({ error: "Failed to update user." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Failed to update user." });
+    }
+  }
+);
+
+/**
+ * POST /api/users/:id/reset-password
+ * Admin sets/resets a user's password directly.
+ */
+router.post(
+  "/users/:id/reset-password",
+  requireAuth,
+  requireRole("Admin"),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+
+      if (!password || typeof password !== "string" || password.trim().length < 6) {
+        res.status(400).json({ error: "Password must be at least 6 characters long." });
+        return;
+      }
+
+      const salt = await bcrypt.genSalt(12);
+      const passwordHash = await bcrypt.hash(password.trim(), salt);
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { passwordHash },
+        { new: true }
+      ).select("-passwordHash");
+
+      if (!user) {
+        res.status(404).json({ error: "User not found." });
+        return;
+      }
+
+      await createAuditEvent({
+        action: "USER_PASSWORD_RESET",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        result: "Success",
+        metadata: {
+          targetUserId: user._id.toString(),
+          targetUserEmail: user.email,
+          targetUserName: user.name,
+        },
+      });
+
+      res.json({
+        message: `Password successfully updated for ${user.name}.`,
+        user,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Failed to reset password." });
     }
   }
 );
