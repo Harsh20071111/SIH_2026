@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { Case } from "../models/Case";
 import { requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
+import { getClientIp } from "../lib/ip";
 
 const router: IRouter = Router();
 
@@ -91,7 +92,7 @@ router.post("/cases", requireAuth, async (req: Request, res: Response) => {
         userRole: req.user!.role,
         caseId: newCase.caseId,
         result: "Success",
-        ipAddress: req.ip || "",
+        ipAddress: getClientIp(req),
         metadata: {
           title: newCase.title,
           type: newCase.type,
@@ -131,6 +132,7 @@ router.get("/cases/:id", requireAuth, async (req: Request, res: Response) => {
         userRole: req.user!.role,
         caseId: caseRecord.caseId,
         result: "Success",
+        ipAddress: getClientIp(req),
       });
     } catch (_) {}
 
@@ -177,6 +179,7 @@ router.patch("/cases/:id", requireAuth, async (req: Request, res: Response) => {
         userRole: req.user!.role,
         caseId: caseRecord.caseId,
         result: "Success",
+        ipAddress: getClientIp(req),
         metadata: { updatedFields: Object.keys(updateFields) },
       });
     } catch (_) {}

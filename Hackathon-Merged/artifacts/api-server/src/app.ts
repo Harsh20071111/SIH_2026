@@ -6,6 +6,9 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// Trust reverse proxies (Render, Cloudflare, Nginx, Docker) so req.ip and headers represent client IP
+app.set("trust proxy", true);
+
 app.use(
   pinoHttp({
     logger,

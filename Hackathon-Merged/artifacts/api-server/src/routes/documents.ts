@@ -6,6 +6,7 @@ import { DocumentVersion } from "../models/DocumentVersion";
 import { Case } from "../models/Case";
 import { requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
+import { getClientIp } from "../lib/ip";
 import { uploadToFirebase, downloadFromFirebase, getSignedUrl } from "../lib/firebase";
 
 const router: IRouter = Router();
@@ -191,7 +192,7 @@ router.post(
           caseId,
           documentId: docId,
           result: "Success",
-          ipAddress: req.ip || "",
+          ipAddress: getClientIp(req),
           metadata: {
             documentName: doc.documentName,
             documentType,
@@ -241,6 +242,7 @@ router.get("/documents/:id", requireAuth, async (req: Request, res: Response) =>
         caseId: doc.caseId,
         documentId: doc.documentId,
         result: "Success",
+        ipAddress: getClientIp(req),
       });
     } catch (_) {}
 
@@ -285,7 +287,7 @@ router.get("/documents/:id/download", requireAuth, async (req: Request, res: Res
         caseId: doc.caseId,
         documentId: doc.documentId,
         result: "Success",
-        ipAddress: req.ip || "",
+        ipAddress: getClientIp(req),
       });
     } catch (_) {}
 
@@ -367,6 +369,7 @@ router.post("/documents/:id/verify-integrity", requireAuth, async (req: Request,
         caseId: doc.caseId,
         documentId: doc.documentId,
         result: verified ? "Verified" : "Issue Detected",
+        ipAddress: getClientIp(req),
         metadata: {
           storedHash: doc.hash,
           currentHash,

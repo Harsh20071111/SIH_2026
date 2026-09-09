@@ -4,6 +4,7 @@ import { User } from "../models/User";
 import { signToken, requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
 import { createSecurityEvent } from "../lib/security";
+import { getClientIp } from "../lib/ip";
 import { logger } from "../lib/logger";
 
 import mongoose from "mongoose";
@@ -213,7 +214,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
           action: "LOGIN_FAILED",
           userName: email,
           result: "Failed",
-          ipAddress: req.ip || "",
+          ipAddress: getClientIp(req),
           userAgent: req.headers["user-agent"] || "",
           metadata: { reason: "Invalid credentials" },
         });
@@ -224,7 +225,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
           type: "LOGIN_FAILED",
           action: "Failed login attempt",
           userName: email,
-          ipAddress: req.ip || "",
+          ipAddress: getClientIp(req),
           userAgent: req.headers["user-agent"] || "",
         });
       } catch (_) {}
@@ -262,7 +263,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
           userName: user.name,
           userRole: user.role,
           result: "Failed",
-          ipAddress: req.ip || "",
+          ipAddress: getClientIp(req),
           userAgent: req.headers["user-agent"] || "",
           metadata: { reason: "Invalid password" },
         });
@@ -274,7 +275,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
           userId: user._id.toString(),
           userName: user.name,
           action: "Failed login attempt — invalid password",
-          ipAddress: req.ip || "",
+          ipAddress: getClientIp(req),
           userAgent: req.headers["user-agent"] || "",
         });
       } catch (_) {}
@@ -310,7 +311,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
         userName: user.name,
         userRole: user.role,
         result: "Success",
-        ipAddress: req.ip || "",
+        ipAddress: getClientIp(req),
         userAgent: req.headers["user-agent"] || "",
       });
     } catch (_) {}
@@ -343,7 +344,7 @@ router.post("/auth/logout", requireAuth, async (req: Request, res: Response) => 
       userName: req.user!.name,
       userRole: req.user!.role,
       result: "Success",
-      ipAddress: req.ip || "",
+      ipAddress: getClientIp(req),
       userAgent: req.headers["user-agent"] || "",
     });
   } catch (_) {}

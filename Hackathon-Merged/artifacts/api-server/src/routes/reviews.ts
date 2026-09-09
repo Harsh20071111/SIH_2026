@@ -3,6 +3,7 @@ import { Review } from "../models/Review";
 import { SecureDocument } from "../models/Document";
 import { requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
+import { getClientIp } from "../lib/ip";
 
 const router: IRouter = Router();
 
@@ -69,6 +70,7 @@ router.post("/reviews", requireAuth, async (req: Request, res: Response) => {
         caseId,
         documentId,
         result: "Success",
+        ipAddress: getClientIp(req),
       });
     } catch (_) {}
 
@@ -129,6 +131,7 @@ router.patch("/reviews/:id", requireAuth, async (req: Request, res: Response) =>
         caseId: review.caseId,
         documentId: review.documentId,
         result: "Success",
+        ipAddress: getClientIp(req),
         metadata: { reviewStatus: status, comment },
       });
     } catch (_) {}

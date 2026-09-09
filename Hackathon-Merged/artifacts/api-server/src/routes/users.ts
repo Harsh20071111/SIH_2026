@@ -4,6 +4,7 @@ import { User } from "../models/User";
 import { requireAuth } from "../middlewares/auth";
 import { requireRole } from "../middlewares/rbac";
 import { createAuditEvent, type AuditAction } from "../lib/audit";
+import { getClientIp } from "../lib/ip";
 
 const router: IRouter = Router();
 
@@ -72,6 +73,7 @@ router.post("/users", requireAuth, requireRole("Admin"), async (req: Request, re
         userName: req.user!.name,
         userRole: req.user!.role,
         result: "Success",
+        ipAddress: getClientIp(req),
         metadata: {
           createdUserId: user._id.toString(),
           createdUserEmail: user.email,
@@ -155,6 +157,7 @@ router.patch("/users/:id", requireAuth, requireRole("Admin"), async (req: Reques
         userName: req.user!.name,
         userRole: req.user!.role,
         result: "Success",
+        ipAddress: getClientIp(req),
         metadata: {
           targetUserId: user._id.toString(),
           targetUserEmail: user.email,
@@ -202,6 +205,7 @@ router.post("/users/:id/reset-password", requireAuth, requireRole("Admin"), asyn
         userName: req.user!.name,
         userRole: req.user!.role,
         result: "Success",
+        ipAddress: getClientIp(req),
         metadata: {
           targetUserId: user._id.toString(),
           targetUserEmail: user.email,
