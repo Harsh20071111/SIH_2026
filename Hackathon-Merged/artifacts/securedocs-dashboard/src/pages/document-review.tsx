@@ -337,19 +337,8 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   minHeight: '680px',
                 }}
               >
-                {/* Watermark (Positioned strictly in background layer with subtle opacity so it never obstructs or overlaps document text) */}
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center select-none overflow-hidden"
-                  style={{ opacity: 0.035 }}
-                >
-                  <span className="rotate-[-35deg] text-5xl sm:text-6xl font-black tracking-widest text-slate-800 uppercase whitespace-nowrap">
-                    CONFIDENTIAL EVIDENCE
-                  </span>
-                </div>
-
                 {/* Document Foreground Content */}
-                <div className="relative z-10 flex min-h-[616px] flex-col justify-between">
+                <div className="flex min-h-[616px] flex-col justify-between">
                   <div>
                     {/* Document Header */}
                     <div className="border-b-2 border-slate-900 pb-4">
