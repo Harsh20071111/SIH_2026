@@ -94,8 +94,8 @@ export const navGroups = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: 'layout' },
       { label: 'Document Repository', href: '/documents', icon: 'files' },
-      { label: 'Document Review', href: '/reviews/C-1024', icon: 'clipboard', badge: '12' },
-      { label: 'Access Control', href: '/security', icon: 'lock', badge: '11' },
+      { label: 'Document Review', href: '/reviews/C-1024', icon: 'clipboard' },
+      { label: 'Access Control', href: '/security', icon: 'lock' },
       { label: 'User Management', href: '/users', icon: 'users' },
     ],
   },
