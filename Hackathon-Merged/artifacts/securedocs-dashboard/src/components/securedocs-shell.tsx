@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Bell, BriefcaseBusiness, ChartNoAxesCombined, Check, ChevronDown, ClipboardCheck,
@@ -23,6 +23,37 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close notifications or profile dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setNotificationsOpen(false);
+        setProfileOpen(false);
+      }
+    }
+
+    if (notificationsOpen || profileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [notificationsOpen, profileOpen]);
 
   const userDisplayName = user?.name || (role === 'Admin' ? 'Admin User' : `${role} User`);
   const userDisplayEmail = user?.email || `${role.toLowerCase().replace(/\s+/g, '.')}@securedocs.gov`;
@@ -104,7 +135,7 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
               <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
               <span>STATUS: SECURE · 94% READINESS</span>
             </div>
-            <div className="relative">
+            <div ref={profileRef} className="relative">
               <button 
                 data-testid="button-user-profile-menu" 
                 onClick={() => setProfileOpen(!profileOpen)} 
@@ -152,7 +183,49 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
                 </div>
               )}
             </div>
-            <div className="relative"><button data-testid="button-notifications" aria-label="Open notifications" onClick={() => setNotificationsOpen(!notificationsOpen)} className="relative rounded-lg border border-border bg-card p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"><Bell size={17} /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" /></button>{notificationsOpen && <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-popover p-4 shadow-xl"><div className="flex items-center justify-between"><h3 className="text-sm font-bold">Notifications</h3><span className="font-mono text-[10px] text-destructive">4 unread</span></div><div className="mt-3 space-y-3">{['Suspicious access pattern detected','Evidence_v3.pdf needs integrity review','12 reviews due today'].map((notice, index) => <button data-testid={`button-notification-${index}`} key={notice} className="flex w-full gap-3 border-t border-border pt-3 text-left hover:bg-muted/50"><span className={`mt-1 size-2 shrink-0 rounded-full ${index === 0 ? 'bg-destructive' : index === 1 ? 'bg-amber-500' : 'bg-cyan-500'}`} /><span><span className="block text-xs font-semibold">{notice}</span><span className="mt-0.5 block text-[10px] text-muted-foreground">{index + 1} hour{index ? 's' : ''} ago</span></span></button>)}</div><Link href="/notifications" data-testid="link-all-notifications" className="mt-3 block border-t border-border pt-3 text-center text-xs font-bold text-primary hover:underline">View all notifications</Link></div>}</div>
+            <div ref={notificationsRef} className="relative">
+              <button 
+                data-testid="button-notifications" 
+                aria-label="Open notifications" 
+                onClick={() => setNotificationsOpen(!notificationsOpen)} 
+                className="relative rounded-lg border border-border bg-card p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Bell size={17} />
+                <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" />
+              </button>
+              {notificationsOpen && (
+                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-popover p-4 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold">Notifications</h3>
+                    <span className="font-mono text-[10px] text-destructive">4 unread</span>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {['Suspicious access pattern detected','Evidence_v3.pdf needs integrity review','12 reviews due today'].map((notice, index) => (
+                      <button 
+                        data-testid={`button-notification-${index}`} 
+                        key={notice} 
+                        onClick={() => setNotificationsOpen(false)}
+                        className="flex w-full gap-3 border-t border-border pt-3 text-left hover:bg-muted/50"
+                      >
+                        <span className={`mt-1 size-2 shrink-0 rounded-full ${index === 0 ? 'bg-destructive' : index === 1 ? 'bg-amber-500' : 'bg-cyan-500'}`} />
+                        <span>
+                          <span className="block text-xs font-semibold">{notice}</span>
+                          <span className="mt-0.5 block text-[10px] text-muted-foreground">{index + 1} hour{index ? 's' : ''} ago</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <Link 
+                    href="/notifications" 
+                    data-testid="link-all-notifications" 
+                    onClick={() => setNotificationsOpen(false)}
+                    className="mt-3 block border-t border-border pt-3 text-center text-xs font-bold text-primary hover:underline"
+                  >
+                    View all notifications
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link href="/profile" data-testid="link-profile-header" className="grid size-9 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white ring-2 ring-card sm:hidden">{userInitials}</Link>
           </div>
         </header>
