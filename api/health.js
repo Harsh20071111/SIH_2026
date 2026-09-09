@@ -26,12 +26,16 @@ async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
   const uri = process.env.MONGODB_URI || FALLBACK_ATLAS_URI;
   try {
-    await mongoose.connect(uri);
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
     isConnected = true;
   } catch (err) {
     console.warn("Retrying with fallback Atlas URI...", err.message);
-    await mongoose.connect(FALLBACK_ATLAS_URI);
-    isConnected = true;
+    try {
+      await mongoose.connect(FALLBACK_ATLAS_URI, { serverSelectionTimeoutMS: 5000 });
+      isConnected = true;
+    } catch (fallbackErr) {
+      console.error("Fallback Atlas URI failed:", fallbackErr.message);
+    }
   }
 }
 
