@@ -1,15 +1,15 @@
-const dns = require('dns');
+import dns from 'node:dns';
 try {
   dns.setServers(["8.8.8.8", "1.1.1.1"]);
 } catch (e) {}
 
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import multer from 'multer';
+import crypto from 'node:crypto';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 app.set("trust proxy", true);
@@ -109,7 +109,7 @@ app.get(["/api/health", "/health"], (req, res) => {
     status: "ok",
     database: isConnected ? "connected" : "disconnected",
     timestamp: new Date().toISOString(),
-    service: "SecureDocs API (Serverless)",
+    service: "SecureDocs API (Serverless ESM)",
     version: "2.0.0"
   });
 });
@@ -295,5 +295,6 @@ app.post(["/api/auth/login", "/auth/login"], async (req, res) => {
   }
 });
 
-module.exports = app;
-module.exports.default = app;
+export default function handler(req, res) {
+  return app(req, res);
+}
