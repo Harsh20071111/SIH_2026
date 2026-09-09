@@ -7,13 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, Key, Clock, MonitorSmartphone, MapPin, Activity } from 'lucide-react';
+import { User, Shield, Key, Clock, MonitorSmartphone, MapPin, Activity, Eye, EyeOff } from 'lucide-react';
 
 export default function Profile() {
   const { toast } = useToast();
   
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,9 +29,16 @@ export default function Profile() {
     });
   };
 
+  const resetPasswordVisibility = () => {
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
     setIsChangePasswordOpen(false);
+    resetPasswordVisibility();
     toast({
       title: "Password updated successfully.",
       description: "Your account password has been changed.",
@@ -100,7 +110,13 @@ export default function Profile() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+            <Dialog 
+              open={isChangePasswordOpen} 
+              onOpenChange={(open) => {
+                setIsChangePasswordOpen(open);
+                if (!open) resetPasswordVisibility();
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">Change Password</Button>
               </DialogTrigger>
@@ -115,19 +131,73 @@ export default function Profile() {
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="current" className="text-right">Current</Label>
-                      <Input id="current" type="password" required className="col-span-3" />
+                      <div className="col-span-3 relative">
+                        <Input 
+                          id="current" 
+                          type={showCurrentPassword ? 'text' : 'password'} 
+                          required 
+                          className="pr-10" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                        >
+                          {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="new" className="text-right">New</Label>
-                      <Input id="new" type="password" required className="col-span-3" />
+                      <div className="col-span-3 relative">
+                        <Input 
+                          id="new" 
+                          type={showNewPassword ? 'text' : 'password'} 
+                          required 
+                          className="pr-10" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                        >
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="confirm" className="text-right">Confirm</Label>
-                      <Input id="confirm" type="password" required className="col-span-3" />
+                      <div className="col-span-3 relative">
+                        <Input 
+                          id="confirm" 
+                          type={showConfirmPassword ? 'text' : 'password'} 
+                          required 
+                          className="pr-10" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsChangePasswordOpen(false)}>Cancel</Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsChangePasswordOpen(false);
+                        resetPasswordVisibility();
+                      }}
+                    >
+                      Cancel
+                    </Button>
                     <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Update Password</Button>
                   </DialogFooter>
                 </form>
