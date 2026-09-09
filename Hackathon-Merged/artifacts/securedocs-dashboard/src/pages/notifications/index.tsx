@@ -35,93 +35,18 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
-// Define the notification types and data structure
-type NotificationType = 'High Risk' | 'Integrity Alert' | 'Review Required' | 'Document Approved' | 'System';
-type NotificationStatus = 'Unread' | 'Read';
-type DateFilter = 'Today' | 'Last 7 Days' | 'Last 30 Days' | 'All Time';
-
-interface NotificationData {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  status: NotificationStatus;
-  timestamp: string;
-  date: Date;
-  details: Record<string, string>;
-  risk?: 'High' | 'Critical' | 'Medium' | 'Low';
-}
-
-const initialNotifications: NotificationData[] = [
-  {
-    id: '1',
-    type: 'High Risk',
-    title: 'HIGH RISK ACTIVITY',
-    message: 'Officer A accessed 37 documents.',
-    status: 'Unread',
-    timestamp: 'Today, 10:42 AM',
-    date: new Date(),
-    risk: 'High',
-    details: {
-      User: 'Officer A',
-      Activity: 'Multiple document access',
-      'Documents Accessed': '37',
-      'Risk Level': 'HIGH',
-    },
-  },
-  {
-    id: '2',
-    type: 'Integrity Alert',
-    title: 'INTEGRITY ALERT',
-    message: 'Evidence.pdf has a hash mismatch.',
-    status: 'Unread',
-    timestamp: 'Today, 09:35 AM',
-    date: new Date(),
-    risk: 'Critical',
-    details: {
-      Document: 'Evidence.pdf',
-      'Case ID': 'C-1024',
-      'Expected Hash': 'A7F32...',
-      'Current Hash': 'B91C4...',
-      'Integrity Status': 'MISMATCH',
-    },
-  },
-  {
-    id: '3',
-    type: 'Review Required',
-    title: 'REVIEW REQUIRED',
-    message: 'ForensicReport.pdf is waiting for approval.',
-    status: 'Unread',
-    timestamp: 'Today, 08:20 AM',
-    date: new Date(),
-    details: {
-      Document: 'ForensicReport.pdf',
-      'Case ID': 'C-1025',
-      'Submitted By': 'Officer A',
-      'Assigned Reviewer': 'Reviewer B',
-      Status: 'Pending Approval',
-    },
-  },
-  {
-    id: '4',
-    type: 'Document Approved',
-    title: 'DOCUMENT APPROVED',
-    message: 'FIR.pdf approved by Reviewer B.',
-    status: 'Read',
-    timestamp: 'Yesterday, 04:15 PM',
-    date: new Date(Date.now() - 86400000),
-    details: {
-      Document: 'FIR.pdf',
-      'Case ID': 'C-1024',
-      'Approved By': 'Reviewer B',
-      Status: 'Approved',
-    },
-  },
-];
+import { useNotification, type NotificationData, type NotificationType } from '@/context/NotificationContext';
 
 export default function Notifications() {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<NotificationData[]>(initialNotifications);
+  const { 
+    notifications, 
+    unreadCount, 
+    handleMarkAsRead, 
+    handleMarkAsUnread, 
+    handleMarkAllAsRead, 
+    handleNotificationClick 
+  } = useNotification();
   
   // Filters
   const [search, setSearch] = useState('');
@@ -132,47 +57,13 @@ export default function Notifications() {
   // Modal State
   const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
   
-  // Derived state
-  const unreadCount = notifications.filter((n) => n.status === 'Unread').length;
+  // Derived state (only what's specific to this view)
   const highRiskCount = notifications.filter((n) => n.type === 'High Risk' && n.status === 'Unread').length;
   const integrityCount = notifications.filter((n) => n.type === 'Integrity Alert' && n.status === 'Unread').length;
   const reviewCount = notifications.filter((n) => n.type === 'Review Required' && n.status === 'Unread').length;
   const approvedCount = notifications.filter((n) => n.type === 'Document Approved' && n.status === 'Unread').length;
   
   // Handlers
-  const handleMarkAsRead = (id: string, notify = true) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, status: 'Read' } : n))
-    );
-    if (notify) {
-      toast({
-        title: 'Success',
-        description: 'Notification marked as read.',
-      });
-    }
-    if (selectedNotification?.id === id) {
-      setSelectedNotification(prev => prev ? { ...prev, status: 'Read' } : null);
-    }
-  };
-  
-  const handleMarkAsUnread = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, status: 'Unread' } : n))
-    );
-    toast({
-      title: 'Success',
-      description: 'Notification marked as unread.',
-    });
-  };
-  
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, status: 'Read' })));
-    toast({
-      title: 'Success',
-      description: 'All notifications marked as read.',
-    });
-  };
-  
   const handleClearFilters = () => {
     setSearch('');
     setTypeFilter('All');
@@ -192,10 +83,7 @@ export default function Notifications() {
   };
 
   const handleActionClick = (notification: NotificationData) => {
-    toast({
-      title: 'Action triggered',
-      description: `Opening relevant page for ${notification.title}...`,
-    });
+    handleNotificationClick(notification);
   };
 
   // Filtering Logic

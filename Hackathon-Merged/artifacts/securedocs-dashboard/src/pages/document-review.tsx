@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   ShieldCheck,
@@ -60,6 +60,19 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const totalPages = 4;
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const initializedDocRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const docId = params.get('documentId');
+    if (docId && initializedDocRef.current !== docId) {
+      initializedDocRef.current = docId;
+      toast({
+        title: 'Document Loaded',
+        description: `Highlighting specifics for ${docId}`,
+      });
+    }
+  }, [toast]);
 
   // Review interaction state
   const [actionStatus, setActionStatus] = useState<ActionStatus>('approved'); // Default to approved so approval workflow is visible by default or selectable

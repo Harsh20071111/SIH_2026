@@ -27,9 +27,11 @@ import Profile from '@/pages/profile';
 import { SecureDocsShell } from '@/components/securedocs-shell';
 import type { Role } from '@/lib/mock-data';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Login from '@/pages/login';
 import ForgotPassword from '@/pages/forgot-password';
+import NotificationsPage from '@/pages/notifications/index';
 import {
   Route,
   Switch,
@@ -80,7 +82,8 @@ function AuthenticatedApp() {
         <Route path="/reports" component={() => <Reports />} />
         <Route path="/403" component={() => <AccessDenied />} />
         <Route path="/profile" component={() => <Profile />} />
-        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/audit-logs/verify', '/integrity', '/reports', '/compliance', '/403', '/profile'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
+        <Route path="/notifications" component={() => <NotificationsPage />} />
+        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/audit-logs/verify', '/integrity', '/reports', '/compliance', '/403', '/profile', '/notifications'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
         <Route component={NotFound} />
       </Switch>
     </SecureDocsShell>
@@ -185,11 +188,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <RoutedErrorBoundary>
-              <Router />
-            </RoutedErrorBoundary>
-          </WouterRouter>
+          <NotificationProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <RoutedErrorBoundary>
+                <Router />
+              </RoutedErrorBoundary>
+            </WouterRouter>
+          </NotificationProvider>
         </AuthProvider>
         <Toaster />
       </TooltipProvider>

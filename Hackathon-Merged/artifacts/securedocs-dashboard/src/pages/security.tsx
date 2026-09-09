@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -7,18 +7,57 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SecurityDashboard() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(null);
+  const initializedAlertRef = useRef<string | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchSecurity() {
       if (user?.role === 'Admin' || user?.role === 'Auditor') {
         try {
           const res = await api.get<any>('/security/events');
-          setEvents(res.data || []);
+          const fetchedEvents = res.data || [];
+          setEvents(fetchedEvents);
+          
+          // Handle alert navigation
+          const params = new URLSearchParams(window.location.search);
+          const targetAlertId = params.get('alertId');
+          
+          if (targetAlertId && initializedAlertRef.current !== targetAlertId) {
+            initializedAlertRef.current = targetAlertId;
+            const found = fetchedEvents.find((e: any) => e._id === targetAlertId || e.id === targetAlertId);
+            
+            // Allow mock navigation since we know 'alert-1' is in mock-data but maybe not in API
+            if (!found && targetAlertId !== 'alert-1') {
+              toast({
+                title: 'Alert not found',
+                description: 'The requested item is no longer available.',
+                variant: 'destructive',
+              });
+            } else {
+              setHighlightedAlertId(targetAlertId);
+              if (found) {
+                toast({
+                  title: 'Alert Selected',
+                  description: `Viewing details for ${found.type || targetAlertId}`,
+                });
+              } else {
+                // If it's the mock alert-1 but not in API data, still highlight
+                toast({
+                  title: 'Alert Selected',
+                  description: `Viewing details for alert ${targetAlertId}`,
+                });
+              }
+            }
+          } else if (targetAlertId) {
+            setHighlightedAlertId(targetAlertId);
+          }
         } catch (e) {
           console.error(e);
         }
@@ -26,7 +65,7 @@ export default function SecurityDashboard() {
       setLoading(false);
     }
     fetchSecurity();
-  }, [user]);
+  }, [user, toast]);
 
   if (user?.role !== 'Admin' && user?.role !== 'Auditor') {
     return (
@@ -114,7 +153,10 @@ export default function SecurityDashboard() {
                 <TableRow><TableCell colSpan={6} className="text-center text-slate-500">No security events found.</TableCell></TableRow>
               ) : (
                 events.map((event) => (
-                  <TableRow key={event._id}>
+                  <TableRow 
+                    key={event._id}
+                    className={highlightedAlertId === event._id || highlightedAlertId === event.id ? 'bg-primary/10' : ''}
+                  >
                     <TableCell>{new Date(event.timestamp).toLocaleString()}</TableCell>
                     <TableCell className="font-medium">{event.type}</TableCell>
                     <TableCell>

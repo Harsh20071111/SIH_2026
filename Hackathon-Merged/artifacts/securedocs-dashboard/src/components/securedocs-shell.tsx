@@ -6,6 +6,7 @@ import {
   PanelLeftOpen, Search, Settings, ShieldCheck, UploadCloud, UserRound, Users, X,
 } from 'lucide-react';
 import { navGroups, roles, type Role } from '@/lib/mock-data';
+import { useNotification } from '@/context/NotificationContext';
 
 const iconMap = {
   layout: LayoutDashboard, briefcase: BriefcaseBusiness, files: Files, clipboard: ClipboardCheck,
@@ -22,6 +23,8 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
   const visibleGroups = useMemo(() => navGroups.map((group) => ({ label: group.label, items: group.items.filter((item) => !('adminOnly' in item) || !item.adminOnly || role === 'Admin') })).filter((group) => group.items.length), [role]);
+
+  const { notifications, unreadCount, handleNotificationClick } = useNotification();
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -75,7 +78,46 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
               <span>STATUS: SECURE · 94% READINESS</span>
             </div>
             <div className="relative"><button data-testid="button-role-selector" onClick={() => setRoleOpen(!roleOpen)} className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted sm:flex"><span className="grid size-5 place-items-center rounded bg-secondary text-[9px] text-secondary-foreground">AR</span>{role}<ChevronDown size={13} className="text-muted-foreground" /></button>{roleOpen && <div className="absolute right-0 top-12 z-50 w-44 rounded-xl border border-border bg-popover p-1.5 shadow-lg">{roles.map((candidate) => <button data-testid={`button-role-${candidate.toLowerCase().replaceAll(' ', '-')}`} key={candidate} onClick={() => { setRole(candidate); setRoleOpen(false); }} className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs hover:bg-muted ${candidate === role ? 'font-bold text-primary' : ''}`}>{candidate}{candidate === role && <Check size={14} className="ml-auto" />}</button>)}</div>}</div>
-            <div className="relative"><button data-testid="button-notifications" aria-label="Open notifications" onClick={() => setNotificationsOpen(!notificationsOpen)} className="relative rounded-lg border border-border bg-card p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground"><Bell size={17} /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" /></button>{notificationsOpen && <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-popover p-4 shadow-xl"><div className="flex items-center justify-between"><h3 className="text-sm font-bold">Notifications</h3><span className="font-mono text-[10px] text-destructive">4 unread</span></div><div className="mt-3 space-y-3">{['Suspicious access pattern detected','Evidence_v3.pdf needs integrity review','12 reviews due today'].map((notice, index) => <button data-testid={`button-notification-${index}`} key={notice} className="flex w-full gap-3 border-t border-border pt-3 text-left hover:bg-muted/50"><span className={`mt-1 size-2 shrink-0 rounded-full ${index === 0 ? 'bg-destructive' : index === 1 ? 'bg-amber-500' : 'bg-cyan-500'}`} /><span><span className="block text-xs font-semibold">{notice}</span><span className="mt-0.5 block text-[10px] text-muted-foreground">{index + 1} hour{index ? 's' : ''} ago</span></span></button>)}</div><Link href="/notifications" data-testid="link-all-notifications" className="mt-3 block border-t border-border pt-3 text-center text-xs font-bold text-primary hover:underline">View all notifications</Link></div>}</div>
+            <div className="relative">
+              <button data-testid="button-notifications" aria-label={`Open notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`} onClick={() => setNotificationsOpen(!notificationsOpen)} className="relative rounded-lg border border-border bg-card p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <Bell size={17} />
+                {unreadCount > 0 && <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" />}
+              </button>
+              {notificationsOpen && (
+                <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-popover p-4 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold">Notifications</h3>
+                    {unreadCount > 0 && <span className="font-mono text-[10px] text-destructive">{unreadCount} unread</span>}
+                  </div>
+                  <div className="mt-3 space-y-3 max-h-[300px] overflow-y-auto">
+                    {notifications.slice(0, 5).map((notice) => (
+                      <button
+                        data-testid={`button-notification-${notice.id}`}
+                        key={notice.id}
+                        onClick={() => handleNotificationClick(notice, () => setNotificationsOpen(false))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleNotificationClick(notice, () => setNotificationsOpen(false));
+                          }
+                        }}
+                        className={`flex w-full gap-3 border-t border-border pt-3 text-left hover:bg-muted/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-sm ${notice.status === 'Unread' ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                        title={notice.title}
+                      >
+                        <span className={`mt-1 size-2 shrink-0 rounded-full ${notice.type === 'High Risk' ? 'bg-destructive' : notice.type === 'Integrity Alert' ? 'bg-amber-500' : 'bg-cyan-500'}`} />
+                        <span className="min-w-0">
+                          <span className="block text-xs truncate">{notice.title}</span>
+                          <span className="mt-0.5 block text-[10px] text-muted-foreground truncate">{notice.timestamp}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <Link href="/notifications" data-testid="link-all-notifications" onClick={() => setNotificationsOpen(false)} className="mt-3 block border-t border-border pt-3 text-center text-xs font-bold text-primary hover:underline">
+                    View all notifications
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link href="/profile" data-testid="link-profile-header" className="grid size-9 place-items-center rounded-full bg-[#d8b68e] text-xs font-bold text-slate-800 ring-2 ring-card sm:hidden">AR</Link>
           </div>
         </header>

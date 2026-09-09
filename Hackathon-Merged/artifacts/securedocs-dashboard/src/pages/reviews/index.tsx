@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import styles from './reviews.module.css';
 import { mockReviews, type ReviewData, type ReviewStatus, type ReviewPriority } from '@/lib/reviews-data';
 import ReviewDetailsModal from './ReviewDetailsModal';
@@ -16,6 +16,7 @@ export default function Reviews({ role }: { role: Role }) {
   const [statusFilter, setStatusFilter] = useState<ReviewStatus | 'All'>('All');
   const [priorityFilter, setPriorityFilter] = useState<ReviewPriority | 'All'>('All');
   const [reviewerFilter, setReviewerFilter] = useState<string>('All');
+  const [dueDateFilter, setDueDateFilter] = useState<'All' | 'Today'>('All');
   const [sortField, setSortField] = useState<keyof ReviewData>('submittedDate');
   const [sortAsc, setSortAsc] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,11 +24,50 @@ export default function Reviews({ role }: { role: Role }) {
 
   const itemsPerPage = 5;
 
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const filter = params.get('filter');
+    const docId = params.get('documentId');
+
+    if (filter === 'due-today') {
+      toast({
+        title: 'Filter Applied',
+        description: 'Showing reviews due today.',
+      });
+      // Check if any review has a dueDate to determine if we can use it
+      const hasDueDates = reviews.some(r => r.dueDate);
+      if (hasDueDates) {
+        setDueDateFilter('Today');
+      } else {
+        setPriorityFilter('High');
+      }
+    }
+
+    if (docId) {
+      const doc = reviews.find(r => r.id === docId || r.document === docId || r.caseId === docId);
+      if (doc) {
+        setSelectedReview(doc);
+      } else {
+        toast({
+          title: 'Not Found',
+          description: 'The requested item is no longer available.',
+          variant: 'destructive',
+        });
+      }
+    }
+  }, []);
+
   const handleResetFilters = () => {
     setSearch('');
     setStatusFilter('All');
     setPriorityFilter('All');
     setReviewerFilter('All');
+    setDueDateFilter('All');
     setCurrentPage(1);
   };
 
@@ -40,10 +80,14 @@ export default function Reviews({ role }: { role: Role }) {
       const matchStatus = statusFilter === 'All' || r.status === statusFilter;
       const matchPriority = priorityFilter === 'All' || r.priority === priorityFilter;
       const matchReviewer = reviewerFilter === 'All' || r.reviewer === reviewerFilter;
-      return matchSearch && matchStatus && matchPriority && matchReviewer;
+      
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const matchDue = dueDateFilter === 'All' || r.dueDate === today;
+      
+      return matchSearch && matchStatus && matchPriority && matchReviewer && matchDue;
     }).sort((a, b) => {
-      const fieldA = a[sortField];
-      const fieldB = b[sortField];
+      const fieldA = a[sortField] || '';
+      const fieldB = b[sortField] || '';
       if (fieldA < fieldB) return sortAsc ? -1 : 1;
       if (fieldA > fieldB) return sortAsc ? 1 : -1;
       return 0;

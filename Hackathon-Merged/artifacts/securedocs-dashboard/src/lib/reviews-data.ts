@@ -10,6 +10,7 @@ export type ReviewData = {
   version: string;
   priority: ReviewPriority;
   submittedDate: string; // ISO format or string representation like "04 Sep 2026"
+  dueDate?: string;
   status: ReviewStatus;
 };
 
@@ -23,6 +24,7 @@ export const mockReviews: ReviewData[] = [
     version: 'v3',
     priority: 'High',
     submittedDate: '04 Sep 2026',
+    dueDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     status: 'Pending',
   },
   {
@@ -34,6 +36,7 @@ export const mockReviews: ReviewData[] = [
     version: 'v2',
     priority: 'Medium',
     submittedDate: '04 Sep 2026',
+    dueDate: new Date(Date.now() + 86400000 * 2).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     status: 'Pending',
   },
   {
@@ -45,6 +48,7 @@ export const mockReviews: ReviewData[] = [
     version: 'v4',
     priority: 'High',
     submittedDate: '03 Sep 2026',
+    dueDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     status: 'In Review',
   },
   {
