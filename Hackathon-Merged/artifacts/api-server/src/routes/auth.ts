@@ -4,6 +4,7 @@ import { User } from "../models/User";
 import { signToken, requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
 import { createSecurityEvent } from "../lib/security";
+import { logger } from "../lib/logger";
 
 import mongoose from "mongoose";
 
@@ -153,7 +154,7 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const cleanIdentifier = email.trim();
+    const cleanIdentifier = String(email).trim();
     const normalizedKey = cleanIdentifier.toLowerCase();
     const demoUser = DEMO_USERS_MAP[normalizedKey];
 
@@ -166,10 +167,12 @@ router.post("/auth/login", async (req: Request, res: Response) => {
             { email: normalizedKey },
             { employeeId: { $regex: new RegExp(`^${cleanIdentifier}$`, "i") } },
           ],
-        }).maxTimeMS(3000);
+        }).maxTimeMS(5000);
       }
-    } catch (dbErr) {
-      // Database query error or offline
+    } catch (dbErr: any) {
+      // DB query failed — fall through to demo user fallback
+      logger.warn({ err: dbErr }, "DB query failed during login — falling back to demo users");
+      user = null;
     }
 
     // If user not found in DB or DB is offline, check demo users
@@ -205,7 +208,6 @@ router.post("/auth/login", async (req: Request, res: Response) => {
     }
 
     if (!user || !user.isActive) {
-      // Safely create audit/security event
       try {
         await createAuditEvent({
           action: "LOGIN_FAILED",
@@ -233,8 +235,24 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       return;
     }
 
+    // Guard: passwordHash must exist — if missing, the account is not properly set up
+    if (!user.passwordHash) {
+      logger.error({ userId: user._id }, "User has no passwordHash set");
+      res.status(401).json({
+        error: "Account configuration error. Please contact your administrator.",
+      });
+      return;
+    }
+
     // Verify password with bcrypt
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(String(password), user.passwordHash);
+    } catch (bcryptErr: any) {
+      logger.error({ err: bcryptErr, userId: user._id }, "bcrypt.compare failed");
+      res.status(500).json({ error: "Authentication error. Please try again." });
+      return;
+    }
 
     if (!isValidPassword) {
       try {
@@ -285,7 +303,6 @@ router.post("/auth/login", async (req: Request, res: Response) => {
 
     const token = signToken(tokenPayload);
 
-    // Create audit event safely
     try {
       await createAuditEvent({
         action: "LOGIN_SUCCESS",
@@ -309,15 +326,14 @@ router.post("/auth/login", async (req: Request, res: Response) => {
         employeeId: user.employeeId,
       },
     });
-  } catch (err) {
-    console.error("Login route error:", err);
-    res.status(500).json({ error: "Internal server error." });
+  } catch (err: any) {
+    logger.error({ err }, "Unhandled login route error");
+    res.status(500).json({ error: "Internal server error. Please try again." });
   }
 });
 
 /**
  * POST /api/auth/logout
- * Record logout event (stateless JWT — client discards token).
  */
 router.post("/auth/logout", requireAuth, async (req: Request, res: Response) => {
   try {
@@ -337,7 +353,6 @@ router.post("/auth/logout", requireAuth, async (req: Request, res: Response) => 
 
 /**
  * GET /api/auth/me
- * Return the current authenticated user from the JWT.
  */
 router.get("/auth/me", requireAuth, (req: Request, res: Response) => {
   res.json({ user: req.user });

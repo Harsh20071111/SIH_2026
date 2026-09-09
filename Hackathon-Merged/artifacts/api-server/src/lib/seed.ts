@@ -21,6 +21,7 @@ async function seed() {
 
   // Clear existing data
   console.log("🗑️  Clearing existing data...");
+  const { SecurityEvent } = await import("../models/SecurityEvent");
   await Promise.all([
     User.deleteMany({}),
     Case.deleteMany({}),
@@ -28,6 +29,7 @@ async function seed() {
     DocumentVersion.deleteMany({}),
     Review.deleteMany({}),
     AuditLog.deleteMany({}),
+    SecurityEvent.deleteMany({}),
   ]);
 
   // Seed users with bcrypt-hashed passwords

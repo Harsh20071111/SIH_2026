@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
@@ -20,11 +20,13 @@ export default function Login() {
   const { login, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  // If already logged in (and not using the prototype demo token), redirect
-  if (user && localStorage.getItem('securedocs_token')) {
-    setLocation('/dashboard');
-    return null;
-  }
+  // Redirect to dashboard if already authenticated — must be in an effect to avoid calling
+  // setLocation during render (React anti-pattern that causes double-render warnings).
+  useEffect(() => {
+    if (user && localStorage.getItem('securedocs_token')) {
+      setLocation('/dashboard');
+    }
+  }, [user, setLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

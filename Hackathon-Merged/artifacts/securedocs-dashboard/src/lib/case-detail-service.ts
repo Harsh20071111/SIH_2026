@@ -172,7 +172,15 @@ export async function updateCaseReview(caseId: string, reviewId: string, status:
 }
 
 export async function addCaseReviewComment(caseId: string, reviewId: string, comment: string): Promise<CaseReview> {
-  const updated = await api.patch<any>(`/reviews/${reviewId}`, { comment });
+  // The reviews PATCH endpoint requires a valid status — fetch the current review first,
+  // then re-send the existing status along with the new comment.
+  const current = await api.get<any>(`/reviews/${reviewId}`);
+  const currentStatus = current?.status;
+
+  const validStatuses = ['Approved', 'Rejected', 'Flagged'];
+  const statusToSend = validStatuses.includes(currentStatus) ? currentStatus : 'Flagged';
+
+  const updated = await api.patch<any>(`/reviews/${reviewId}`, { status: statusToSend, comment });
   return {
     id: updated._id,
     documentId: updated.documentId,

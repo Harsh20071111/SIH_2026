@@ -156,14 +156,18 @@ export const documentService = {
   },
 
   async getDocumentStats() {
-    // Stats are now part of the dashboard endpoint
-    const response = await api.get<any>('/dashboard');
-    return {
-      totalDocuments: response.stats.totalDocuments,
-      pendingReview: response.stats.pendingReviews,
-      integrityIssues: response.stats.integrityIssues,
-      restrictedDocuments: 0, // Fallback if not specifically tracked
-    };
+    try {
+      const response = await api.get<any>('/dashboard');
+      const statsData = response?.stats;
+      return {
+        totalDocuments: statsData?.totalDocuments ?? 0,
+        pendingReview: statsData?.pendingReviews ?? 0,
+        integrityIssues: statsData?.integrityIssues ?? 0,
+        restrictedDocuments: 0,
+      };
+    } catch {
+      return { totalDocuments: 0, pendingReview: 0, integrityIssues: 0, restrictedDocuments: 0 };
+    }
   },
 
   getFilterOptions() {
