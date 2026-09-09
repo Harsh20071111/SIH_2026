@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -7,11 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SecurityDashboard() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchSecurity() {
@@ -28,6 +31,20 @@ export default function SecurityDashboard() {
     fetchSecurity();
   }, [user]);
 
+  // DB stores riskLevel as uppercase: HIGH, CRITICAL, MEDIUM, LOW
+  const filteredEvents = useMemo(() => {
+    if (!search.trim()) return events;
+    const q = search.toLowerCase();
+    return events.filter(e =>
+      (e.type || '').toLowerCase().includes(q) ||
+      (e.action || '').toLowerCase().includes(q) ||
+      (e.userName || '').toLowerCase().includes(q) ||
+      (e.ipAddress || '').toLowerCase().includes(q) ||
+      (e.riskLevel || '').toLowerCase().includes(q) ||
+      (e.status || '').toLowerCase().includes(q)
+    );
+  }, [events, search]);
+
   if (user?.role !== 'Admin' && user?.role !== 'Auditor') {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
@@ -37,6 +54,24 @@ export default function SecurityDashboard() {
       </div>
     );
   }
+
+  // riskLevel from DB is uppercase — normalise for display badge
+  const riskBadgeClass = (level: string) => {
+    const l = (level || '').toUpperCase();
+    if (l === 'CRITICAL' || l === 'HIGH') return 'bg-red-100 text-red-800 border-red-200';
+    if (l === 'MEDIUM') return 'bg-amber-100 text-amber-800 border-amber-200';
+    return 'bg-blue-100 text-blue-800 border-blue-200';
+  };
+
+  const toTitleCase = (s: string) =>
+    s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+
+  const handleInvestigate = (event: any) => {
+    toast({
+      title: `Investigating: ${event.type}`,
+      description: `User: ${event.userName || 'Unknown'} · Risk: ${toTitleCase(event.riskLevel)} · ${new Date(event.timestamp).toLocaleString()}`,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -54,7 +89,7 @@ export default function SecurityDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-900">
-              {events.filter(e => e.riskLevel === 'High' && e.status !== 'Resolved').length}
+              {events.filter(e => (e.riskLevel === 'HIGH' || e.riskLevel === 'CRITICAL') && e.status !== 'Resolved').length}
             </div>
           </CardContent>
         </Card>
@@ -66,7 +101,7 @@ export default function SecurityDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-amber-900">
-              {events.filter(e => e.status === 'Monitoring').length}
+              {events.filter(e => e.status === 'Open' || e.status === 'Monitoring').length}
             </div>
           </CardContent>
         </Card>
@@ -93,7 +128,12 @@ export default function SecurityDashboard() {
           <div className="flex mb-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <Input placeholder="Search events..." className="pl-9" />
+              <Input
+                placeholder="Search events..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
           </div>
           <Table>
@@ -102,38 +142,38 @@ export default function SecurityDashboard() {
                 <TableHead>Timestamp</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Risk Level</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead>Source IP</TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center">Loading events...</TableCell></TableRow>
-              ) : events.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-slate-500">No security events found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center">Loading events...</TableCell></TableRow>
+              ) : filteredEvents.length === 0 ? (
+                <TableRow><TableCell colSpan={7} className="text-center text-slate-500">No security events found.</TableCell></TableRow>
               ) : (
-                events.map((event) => (
+                filteredEvents.map((event) => (
                   <TableRow key={event._id}>
-                    <TableCell>{new Date(event.timestamp).toLocaleString()}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{new Date(event.timestamp).toLocaleString()}</TableCell>
                     <TableCell className="font-medium">{event.type}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={
-                        event.riskLevel === 'High' ? 'bg-red-100 text-red-800 border-red-200' : 
-                        event.riskLevel === 'Medium' ? 'bg-amber-100 text-amber-800 border-amber-200' : 
-                        'bg-blue-100 text-blue-800 border-blue-200'
-                      }>
-                        {event.riskLevel}
+                      <Badge variant="outline" className={riskBadgeClass(event.riskLevel)}>
+                        {toTitleCase(event.riskLevel)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{event.sourceIp}</TableCell>
+                    <TableCell className="font-mono text-xs">{event.ipAddress || '—'}</TableCell>
+                    <TableCell className="text-xs">{event.userName || '—'}</TableCell>
                     <TableCell>
                       <Badge variant={event.status === 'Resolved' ? 'secondary' : 'default'}>
                         {event.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">Investigate</Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleInvestigate(event)}>
+                        Investigate
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
