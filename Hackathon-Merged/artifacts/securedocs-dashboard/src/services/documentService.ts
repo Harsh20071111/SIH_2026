@@ -18,6 +18,16 @@ export const documentService = {
     return docs.map((doc: any) => ({
       ...doc,
       id: doc.documentId || doc.id || doc._id,
+      versionHistory: doc.versionHistory || [
+        {
+          version: doc.version || 1,
+          date: doc.uploadDate
+            ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(doc.uploadDate))
+            : 'Unknown',
+          user: doc.uploadedBy || 'Unknown',
+          note: 'Initial upload',
+        },
+      ],
     }));
   },
 

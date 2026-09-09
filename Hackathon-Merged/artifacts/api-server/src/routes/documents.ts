@@ -25,6 +25,41 @@ function generateDocId(): string {
 }
 
 /**
+ * GET /api/documents/local-download
+ * Serve locally-stored files (fallback when Firebase is not configured).
+ * This route MUST be defined before any :id param routes.
+ */
+router.get("/documents/local-download", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const filePath = req.query.path as string;
+    if (!filePath || !filePath.startsWith("local://")) {
+      res.status(400).json({ error: "Invalid local file path." });
+      return;
+    }
+
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    const localPath = filePath.replace("local://", "");
+
+    // Security: ensure the path is within the uploads directory
+    const uploadsDir = path.join(process.cwd(), "uploads");
+    const resolved = path.resolve(localPath);
+    if (!resolved.startsWith(uploadsDir)) {
+      res.status(403).json({ error: "Access denied." });
+      return;
+    }
+
+    const buffer = await fs.readFile(resolved);
+    const filename = path.basename(resolved);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.send(buffer);
+  } catch (err) {
+    res.status(404).json({ error: "File not found locally." });
+  }
+});
+
+/**
  * GET /api/documents
  * List all documents with filtering.
  */
