@@ -77,6 +77,7 @@ export async function createAuditEvent(
   } catch (err) {
     // Audit logging should never crash the main operation
     logger.error({ err, action: input.action }, "Failed to create audit event");
+    return undefined;
   }
 }
 

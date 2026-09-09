@@ -59,7 +59,8 @@ router.get(
       const attachment = await Attachment.findOne({ attachmentId });
       
       if (!attachment) {
-        return res.status(404).json({ error: "Attachment not found" });
+        res.status(404).json({ error: "Attachment not found" });
+        return;
       }
       
       // Update download count

@@ -4,7 +4,9 @@ export type OfficerRank =
   | "SHO"
   | "SP"
   | "ForensicExpert"
-  | "Magistrate";
+  | "Magistrate"
+  | "Admin"
+  | "Auditor";
 
 export interface UserJurisdiction {
   policeStationId: string;

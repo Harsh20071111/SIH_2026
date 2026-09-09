@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Redirect } from 'wouter';
 import { usePermissions, FIRContext } from '../hooks/usePermissions';
 
 interface RouteGuardProps {
@@ -16,5 +16,5 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ do: action, on: context,
   }
 
   // Redirect to the unauthorized access page (403)
-  return <Navigate to="/403" replace />;
+  return <Redirect to="/403" replace />;
 };

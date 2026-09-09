@@ -91,6 +91,11 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       role: user.role,
       department: user.department,
       employeeId: user.employeeId,
+      policeStationId: user.policeStationId || "",
+      districtCode: user.districtCode || "",
+      stateCode: user.stateCode || "",
+      jurisdictionId: user.jurisdictionId ? user.jurisdictionId.toString() : "",
+      forensicTokens: user.forensicTokens || [],
     };
 
     const token = signToken(tokenPayload);

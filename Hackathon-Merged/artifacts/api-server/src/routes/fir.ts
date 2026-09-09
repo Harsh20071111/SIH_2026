@@ -87,7 +87,8 @@ router.post(
       const { ioId } = req.body;
       
       if (!ioId) {
-        return res.status(400).json({ error: "IO ID is required" });
+        res.status(400).json({ error: "IO ID is required" });
+        return;
       }
       
       fir.assignedIOId = ioId;

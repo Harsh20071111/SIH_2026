@@ -6,7 +6,9 @@ export type OfficerRank =
   | "SHO"               // Station House Officer / Inspector
   | "SP"                // Superintendent of Police / DCP
   | "ForensicExpert"    // Forensic / Cyber Lab
-  | "Magistrate";       // Judicial Magistrate / Court
+  | "Magistrate"        // Judicial Magistrate / Court
+  | "Admin"             // System / HQ Administrator
+  | "Auditor";          // Compliance / Vigilance Auditor
 
 export interface IUser extends Document {
   email: string;
@@ -45,7 +47,7 @@ const userSchema = new Schema<IUser>(
     role: {
       type: String,
       required: true,
-      enum: ["DutyOfficer", "IO", "SHO", "SP", "ForensicExpert", "Magistrate"],
+      enum: ["DutyOfficer", "IO", "SHO", "SP", "ForensicExpert", "Magistrate", "Admin", "Auditor"],
     },
     department: { type: String, required: true, default: "General" },
     
