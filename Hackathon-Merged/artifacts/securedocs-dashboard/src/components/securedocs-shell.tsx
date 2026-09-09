@@ -130,7 +130,7 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
                     location === item.href ||
                     (item.href.includes('/reports/integrity') && location.includes('/reports/integrity')) ||
                     (item.href.startsWith('/reviews') && location.startsWith('/reviews'));
-                  const badge = 'badge' in item ? item.badge : undefined;
+                  const badge = 'badge' in item && (item as any).badge ? String((item as any).badge) : null;
 
                   return (
                     <Link
