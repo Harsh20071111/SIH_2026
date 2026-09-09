@@ -8,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 export default function SecurityDashboard() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(null);
-  const initializedAlertRef = useRef<string | null>(null);
+  const lastProcessedSearchRef = useRef<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location] = useLocation();
 
   useEffect(() => {
     async function fetchSecurity() {
@@ -25,20 +27,17 @@ export default function SecurityDashboard() {
           const fetchedEvents = res.data || [];
           setEvents(fetchedEvents);
           
-          // Handle alert navigation
-          const params = new URLSearchParams(window.location.search);
-          const targetAlertId = params.get('alertId');
-          
-          if (targetAlertId && initializedAlertRef.current !== targetAlertId) {
-            initializedAlertRef.current = targetAlertId;
-            const found = fetchedEvents.find((e: any) => e._id === targetAlertId || e.id === targetAlertId);
-            
-            // Allow mock navigation since we know 'alert-1' is in mock-data but maybe not in API
-            if (!found && targetAlertId !== 'alert-1') {
+          // Parse URL for specific alert highlights
+          const currentSearch = window.location.search;
+          if (lastProcessedSearchRef.current !== currentSearch) {
+            lastProcessedSearchRef.current = currentSearch;
+            const params = new URLSearchParams(currentSearch);
+            const alertId = params.get('alertId');
+            if (alertId) {
+              setHighlightedAlertId(alertId);
               toast({
-                title: 'Alert not found',
-                description: 'The requested item is no longer available.',
-                variant: 'destructive',
+                title: "Security Alert Loaded",
+                description: `Viewing details for alert ${alertId}`,
               });
             } else {
               setHighlightedAlertId(targetAlertId);
@@ -65,7 +64,7 @@ export default function SecurityDashboard() {
       setLoading(false);
     }
     fetchSecurity();
-  }, [user, toast]);
+  }, [user, toast, location]);
 
   if (user?.role !== 'Admin' && user?.role !== 'Auditor') {
     return (

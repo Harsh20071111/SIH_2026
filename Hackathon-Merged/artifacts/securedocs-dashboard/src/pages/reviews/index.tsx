@@ -24,13 +24,14 @@ export default function Reviews({ role }: { role: Role }) {
 
   const itemsPerPage = 5;
 
-  const initializedRef = useRef(false);
+  const lastProcessedSearchRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    const currentSearch = window.location.search;
+    if (lastProcessedSearchRef.current === currentSearch) return;
+    lastProcessedSearchRef.current = currentSearch;
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(currentSearch);
     const filter = params.get('filter');
     const docId = params.get('documentId');
 
