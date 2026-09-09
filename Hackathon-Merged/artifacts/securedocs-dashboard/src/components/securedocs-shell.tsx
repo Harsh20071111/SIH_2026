@@ -72,21 +72,111 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
       {mobileOpen && <button data-testid="button-close-mobile-menu" aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-slate-950/30 md:hidden" />}
-      <aside className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-sidebar text-sidebar-foreground shadow-xl transition-all duration-200 ${collapsed ? 'w-[76px]' : 'w-[252px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="flex h-[76px] items-center gap-3 border-b border-sidebar-border px-5">
-          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_0_0_4px_rgba(112,220,229,.12)]"><ShieldCheck size={20} strokeWidth={2.5} /></div>
-          {!collapsed && <div className="min-w-0"><div className="text-[15px] font-bold tracking-tight text-white">SecureDocs</div><div className="font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-primary">Evidence command</div></div>}
-          <button data-testid="button-collapse-sidebar" onClick={() => setCollapsed(!collapsed)} className="ml-auto hidden rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-white md:block" title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>{collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</button>
-          <button data-testid="button-close-sidebar" onClick={() => setMobileOpen(false)} className="ml-auto rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-white md:hidden" aria-label="Close sidebar"><X size={18} /></button>
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-all duration-200 ${
+          collapsed ? 'w-[76px]' : 'w-[280px]'
+        } ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+      >
+        <div className={`flex h-[76px] items-center border-b border-sidebar-border ${collapsed ? 'justify-between px-3' : 'gap-3 px-5'}`}>
+          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_0_0_4px_rgba(112,220,229,.12)]">
+            <ShieldCheck size={20} strokeWidth={2.5} />
+          </div>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-bold tracking-tight text-white leading-snug">SecureDocs</div>
+              <div className="font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-primary leading-tight">Evidence command</div>
+            </div>
+          )}
+          <button
+            data-testid="button-collapse-sidebar"
+            onClick={() => setCollapsed(!collapsed)}
+            className="ml-auto hidden rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-white md:block shrink-0"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
+          <button
+            data-testid="button-close-sidebar"
+            onClick={() => setMobileOpen(false)}
+            className="ml-auto rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-white md:hidden shrink-0"
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
         </div>
-        {!collapsed && <div className="mx-4 mt-5 rounded-lg border border-sidebar-border bg-sidebar-accent/60 p-3"><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-sidebar-primary"><span className="size-1.5 rounded-full bg-sidebar-primary" /> Secure environment</div><div className="mt-1 text-xs text-sidebar-foreground/60">Bengaluru region · v2.4.1</div></div>}
-        <nav className="flex-1 overflow-y-auto px-3 py-5">
-          {visibleGroups.map((group) => <div key={group.label} className="mb-5"><div className={`mb-2 px-3 font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/40 ${collapsed ? 'text-center' : ''}`}>{collapsed ? '···' : group.label}</div>{group.items.map((item) => { const Icon = iconMap[item.icon as keyof typeof iconMap]; const active = location === item.href || (item.href.includes('/reports/integrity') && location.includes('/reports/integrity')) || (item.href.startsWith('/reviews') && location.startsWith('/reviews')); const badge = 'badge' in item ? item.badge : undefined; return <Link key={item.href} href={item.href} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} onClick={() => setMobileOpen(false)} className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${active ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white'} ${collapsed ? 'justify-center px-2' : ''}`} title={collapsed ? item.label : undefined}><Icon size={17} strokeWidth={active ? 2.4 : 1.8} /><span className={collapsed ? 'sr-only' : ''}>{item.label}</span>{badge && !collapsed && <span className={`ml-auto rounded px-1.5 py-0.5 font-mono text-[10px] ${active ? 'bg-black/10' : 'bg-sidebar-primary/15 text-sidebar-primary'}`}>{badge}</span>}</Link> })}</div>)}
+        {!collapsed && (
+          <div className="mx-4 mt-4 rounded-xl border border-sidebar-border bg-sidebar-accent/60 p-3 shadow-inner">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-sidebar-primary">
+              <span className="size-1.5 rounded-full bg-sidebar-primary animate-pulse" />
+              <span>Secure environment</span>
+            </div>
+            <div className="mt-1 text-xs text-sidebar-foreground/65 font-medium">Bengaluru region · v2.4.1</div>
+          </div>
+        )}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden sidebar-nav-scroll px-3.5 py-4 space-y-6">
+          {visibleGroups.map((group) => (
+            <div key={group.label} className="space-y-1">
+              <div
+                className={`mb-2 px-3 font-mono text-[9px] font-bold uppercase tracking-[.18em] text-sidebar-foreground/45 ${
+                  collapsed ? 'text-center' : ''
+                }`}
+              >
+                {collapsed ? '···' : group.label}
+              </div>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = iconMap[item.icon as keyof typeof iconMap];
+                  const active =
+                    location === item.href ||
+                    (item.href.includes('/reports/integrity') && location.includes('/reports/integrity')) ||
+                    (item.href.startsWith('/reviews') && location.startsWith('/reviews'));
+                  const badge = 'badge' in item ? item.badge : undefined;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`}
+                      onClick={() => setMobileOpen(false)}
+                      className={`group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-medium transition-all duration-150 ${
+                        active
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm font-semibold'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white'
+                      } ${collapsed ? 'justify-center px-2' : ''}`}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <Icon size={18} className="shrink-0" strokeWidth={active ? 2.3 : 1.8} />
+                      {!collapsed && (
+                        <span className="flex-1 truncate text-left tracking-normal">
+                          {item.label}
+                        </span>
+                      )}
+                      {badge && !collapsed && (
+                        <span
+                          className={`ml-auto flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 font-mono text-[10px] font-bold leading-none ${
+                            active
+                              ? 'bg-black/20 text-sidebar-primary-foreground'
+                              : 'bg-sidebar-primary/15 text-sidebar-primary group-hover:bg-sidebar-primary/25'
+                          }`}
+                        >
+                          {badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
         {!collapsed && (
-          <div className="border-t border-sidebar-border p-3 flex items-center justify-between">
-            <Link href="/profile" data-testid="link-profile-sidebar" className="flex items-center gap-3 rounded-lg p-2.5 hover:bg-sidebar-accent flex-1">
-              <div className="grid size-8 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white">
+          <div className="border-t border-sidebar-border p-3.5 flex items-center justify-between gap-2">
+            <Link
+              href="/profile"
+              data-testid="link-profile-sidebar"
+              className="flex items-center gap-3 rounded-xl p-2 hover:bg-sidebar-accent flex-1 min-w-0 transition-colors"
+            >
+              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
                 {userInitials}
               </div>
               <div className="min-w-0 flex-1">
@@ -94,14 +184,18 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
                 <div className="truncate text-[10px] text-sidebar-foreground/55">{role}</div>
               </div>
             </Link>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('logout'))} className="p-2.5 text-sidebar-foreground/60 hover:text-white rounded-lg hover:bg-sidebar-accent" title="Log out">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('logout'))}
+              className="p-2 text-sidebar-foreground/60 hover:text-white rounded-lg hover:bg-sidebar-accent shrink-0 transition-colors"
+              title="Log out"
+            >
               <LogOut size={16} />
             </button>
           </div>
         )}
       </aside>
 
-      <div className={`min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? 'md:pl-[76px]' : 'md:pl-[252px]'}`}>
+      <div className={`min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? 'md:pl-[76px]' : 'md:pl-[280px]'}`}>
         <header className="sticky top-0 z-20 flex h-[76px] items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur sm:px-6 lg:px-8">
           <button data-testid="button-open-mobile-menu" onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted md:hidden" aria-label="Open menu"><Menu size={20} /></button>
           {location === '/compliance' && (
