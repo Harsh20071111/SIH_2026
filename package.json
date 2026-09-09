@@ -11,5 +11,16 @@
     "watch:audit:live": "npm --prefix Hackathon-Merged run watch:audit:live",
     "watch:audit:cloud": "npm --prefix Hackathon-Merged run watch:audit:cloud",
     "build": "npm --prefix Hackathon-Merged run build"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.4",
+    "multer": "^2.3.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^5.1.8"
   }
 }

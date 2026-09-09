@@ -291,4 +291,7 @@ app.post(["/api/auth/login", "/auth/login"], async (req, res) => {
   }
 });
 
-module.exports = app;
+module.exports = (req, res) => {
+  return app(req, res);
+};
+module.exports.app = app;
