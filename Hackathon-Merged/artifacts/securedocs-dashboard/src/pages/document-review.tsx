@@ -331,19 +331,12 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
             {/* PDF Preview Canvas Area */}
             <div className="relative flex-1 overflow-auto bg-slate-200/70 p-4 sm:p-6" style={{ minHeight: '520px' }}>
               <div
-                className="mx-auto rounded-lg bg-white p-8 shadow-md transition-transform duration-200 origin-top"
+                className="relative mx-auto rounded-lg bg-white p-8 shadow-md transition-transform duration-200 origin-top overflow-hidden"
                 style={{
                   width: `${(zoomLevel / 100) * 580}px`,
                   minHeight: '680px',
                 }}
               >
-                {/* Watermark */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.06] select-none">
-                  <span className="rotate-[-35deg] text-6xl font-black text-red-900 tracking-widest">
-                    CONFIDENTIAL EVIDENCE
-                  </span>
-                </div>
-
                 {/* Document Header */}
                 <div className="border-b-2 border-slate-900 pb-4">
                   <div className="flex items-center justify-between">
@@ -385,15 +378,19 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                       <p>
                         The sealed physical artifact containing digital drive serial #WD-99401 was retrieved from Locker Bay 4 by Investigating Officer A on 01 Sept 2026. A secondary forensic image was extracted using hardware write-blocker Tableau T8u.
                       </p>
-                      <div className="rounded border border-slate-200 bg-slate-50/50 p-3">
-                        <div className="font-mono text-[10px] font-bold text-slate-900 mb-1">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                        <div className="font-mono text-[11px] font-bold text-slate-900 mb-1.5">
                           Cryptographic Hashes Recorded at Ingestion:
                         </div>
-                        <div className="font-mono text-[10px] break-all text-[#2563EB]">
-                          SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-                        </div>
-                        <div className="font-mono text-[10px] break-all text-slate-600 mt-1">
-                          MD5: 9e107d9d372bb6826bd81d3542a419d6
+                        <div className="space-y-1.5 font-mono text-[11px] leading-relaxed">
+                          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5 break-all text-[#2563EB]">
+                            <span className="font-bold text-slate-700 shrink-0">SHA-256:</span>
+                            <span className="select-all font-medium">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5 break-all text-slate-600">
+                            <span className="font-bold text-slate-700 shrink-0">MD5:</span>
+                            <span className="select-all font-medium">9e107d9d372bb6826bd81d3542a419d6</span>
+                          </div>
                         </div>
                       </div>
                       <p>
