@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Search, ChevronDown, Users, UserCheck, ShieldCheck, ClipboardCheck,
   Plus, Pencil, Ban, UserCog, Briefcase, KeyRound, X, CheckCircle2,
+  RotateCw, Loader2,
 } from 'lucide-react';
 import {
   defaultUsers, availableCases, userRoles, userDepartments,
   type UserData, type UserRole, type UserStatus,
 } from '@/lib/users-data';
+import { userService } from '@/services/userService';
 import type { Role } from '@/lib/mock-data';
 import styles from './users.module.css';
 
@@ -133,7 +135,8 @@ function ConfirmModal({
    ---------------------------------------------------------------- */
 export default function UserManagement({ role }: { role: Role }) {
   const [, navigate] = useLocation();
-  const [users, setUsers] = useState<UserData[]>(defaultUsers);
+  const [users, setUsers] = useState<UserData[]>(() => userService.getCachedUsers());
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'All'>('All');
   const [deptFilter, setDeptFilter] = useState<string>('All');
@@ -148,6 +151,22 @@ export default function UserManagement({ role }: { role: Role }) {
     setToast({ message, variant });
   }, []);
 
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await userService.getUsers();
+      setUsers(data);
+    } catch (e) {
+      console.error('Failed to load users:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
   // Filtered list
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -155,7 +174,8 @@ export default function UserManagement({ role }: { role: Role }) {
       const matchSearch = u.name.toLowerCase().includes(q) ||
         u.role.toLowerCase().includes(q) ||
         u.department.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q);
+        u.email.toLowerCase().includes(q) ||
+        u.employeeId.toLowerCase().includes(q);
       const matchRole = roleFilter === 'All' || u.role === roleFilter;
       const matchDept = deptFilter === 'All' || u.department === deptFilter;
       const matchStatus = statusFilter === 'All' || u.status === statusFilter;
@@ -166,7 +186,7 @@ export default function UserManagement({ role }: { role: Role }) {
   // Stats
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.status === 'Active').length;
-  const reviewers = users.filter((u) => u.role === 'Reviewer').length;
+  const reviewers = users.filter((u) => u.role === 'Reviewer' || u.role === 'Legal Reviewer').length;
   const auditors = users.filter((u) => u.role === 'Auditor').length;
 
   // Handlers
@@ -175,49 +195,74 @@ export default function UserManagement({ role }: { role: Role }) {
     setModalUser(user);
   };
 
-  const handleDisable = () => {
+  const handleDisable = async () => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, status: 'Disabled' as const } : u
-    ));
-    showToast(`${modalUser.name} has been disabled.`, 'danger');
+    try {
+      await userService.updateUser(modalUser.id, { status: 'Disabled' });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, status: 'Disabled' as const } : u
+      ));
+      showToast(`${modalUser.name} has been disabled.`, 'danger');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to disable user.', 'danger');
+    }
     setModalType(null);
   };
 
-  const handleEnable = () => {
+  const handleEnable = async () => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, status: 'Active' as const } : u
-    ));
-    showToast(`${modalUser.name} has been re-enabled.`, 'success');
+    try {
+      await userService.updateUser(modalUser.id, { status: 'Active' });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, status: 'Active' as const } : u
+      ));
+      showToast(`${modalUser.name} has been re-enabled.`, 'success');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to enable user.', 'danger');
+    }
     setModalType(null);
   };
 
   const handleResetPw = () => {
     if (!modalUser) return;
-    showToast(`Password reset for ${modalUser.name}.`, 'warning');
+    showToast(`Password reset triggered for ${modalUser.name}.`, 'warning');
     setModalType(null);
   };
 
-  const handleAssignRole = (newRole: UserRole) => {
+  const handleAssignRole = async (newRole: UserRole) => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, role: newRole } : u
-    ));
-    showToast(`Role updated to ${newRole} for ${modalUser.name}.`);
+    try {
+      await userService.updateUser(modalUser.id, { role: newRole });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, role: newRole } : u
+      ));
+      showToast(`Role updated to ${newRole} for ${modalUser.name}.`);
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update role.', 'danger');
+    }
     setModalType(null);
   };
 
-  const handleAssignCases = (cases: string[]) => {
+  const handleAssignCases = async (cases: string[]) => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, assignedCases: cases } : u
-    ));
-    showToast(`${cases.length} cases assigned to ${modalUser.name}.`);
+    try {
+      await userService.updateUser(modalUser.id, { assignedCases: cases });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, assignedCases: cases } : u
+      ));
+      showToast(`Assigned ${cases.length} cases to ${modalUser.name}.`);
+    } catch (e: any) {
+      showToast(e.message || 'Failed to assign cases.', 'danger');
+    }
     setModalType(null);
   };
 
-  const getInitials = (name: string) => name.split(' ').map((w) => w[0]).join('').toUpperCase();
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
   return (
     <div className={styles.usersPage}>
@@ -339,6 +384,17 @@ export default function UserManagement({ role }: { role: Role }) {
           <ChevronDown />
         </div>
 
+        <button
+          type="button"
+          onClick={loadUsers}
+          className={styles.btnSecondary}
+          title="Refresh user list from database"
+          style={{ height: '38px', padding: '0 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+        >
+          <RotateCw size={14} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
+
         <Link href="/users/new" className={styles.addBtn} style={{ textDecoration: 'none' }}>
           <Plus size={16} /> Add User
         </Link>
@@ -358,79 +414,92 @@ export default function UserManagement({ role }: { role: Role }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id}>
-                  <td>
-                    <div className={styles.userName}>
-                      <span className={styles.userAvatar}>{getInitials(u.name)}</span>
-                      {u.name}
-                    </div>
-                  </td>
-                  <td>{u.role}</td>
-                  <td>{u.department}</td>
-                  <td>
-                    <span className={`${styles.badge} ${u.status === 'Active' ? styles.badgeActive : styles.badgeDisabled}`}>
-                      <span className={styles.badgeDot} />
-                      {u.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                        onClick={() => navigate(`/users/${u.id}/edit`)}
-                        title="Edit"
-                      >
-                        <Pencil size={12} /> Edit
-                      </button>
-                      {u.status === 'Active' ? (
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnRed}`}
-                          onClick={() => openModal('disable', u)}
-                          title="Disable"
-                        >
-                          <Ban size={12} /> Disable
-                        </button>
-                      ) : (
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                          onClick={() => openModal('enable', u)}
-                          title="Enable"
-                        >
-                          <UserCheck size={12} /> Enable
-                        </button>
-                      )}
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                        onClick={() => openModal('assignRole', u)}
-                        title="Assign Role"
-                      >
-                        <UserCog size={12} /> Assign Role
-                      </button>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                        onClick={() => openModal('assignCases', u)}
-                        title="Assign Cases"
-                      >
-                        <Briefcase size={12} /> Assign Cases
-                      </button>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnAmber}`}
-                        onClick={() => openModal('resetPw', u)}
-                        title="Reset Password"
-                      >
-                        <KeyRound size={12} /> Reset Password
-                      </button>
+              {loading && users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className={styles.noResults} style={{ padding: '3rem 1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--color-text-secondary)' }}>
+                      <Loader2 size={20} className="animate-spin text-blue-600" />
+                      <span>Loading users from database...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {filtered.length === 0 && (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className={styles.noResults}>
                     No users found matching your criteria.
                   </td>
                 </tr>
+              ) : (
+                filtered.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div className={styles.userName}>
+                        <span className={styles.userAvatar}>{getInitials(u.name)}</span>
+                        <div>
+                          <div>{u.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{u.employeeId} · {u.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{u.role}</td>
+                    <td>{u.department}</td>
+                    <td>
+                      <span className={`${styles.badge} ${u.status === 'Active' ? styles.badgeActive : styles.badgeDisabled}`}>
+                        <span className={styles.badgeDot} />
+                        {u.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                          onClick={() => navigate(`/users/${u.id}/edit`)}
+                          title="Edit"
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                        {u.status === 'Active' ? (
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnRed}`}
+                            onClick={() => openModal('disable', u)}
+                            title="Disable"
+                          >
+                            <Ban size={12} /> Disable
+                          </button>
+                        ) : (
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                            onClick={() => openModal('enable', u)}
+                            title="Enable"
+                          >
+                            <UserCheck size={12} /> Enable
+                          </button>
+                        )}
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                          onClick={() => openModal('assignRole', u)}
+                          title="Assign Role"
+                        >
+                          <UserCog size={12} /> Assign Role
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                          onClick={() => openModal('assignCases', u)}
+                          title="Assign Cases"
+                        >
+                          <Briefcase size={12} /> Assign Cases
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnAmber}`}
+                          onClick={() => openModal('resetPw', u)}
+                          title="Reset Password"
+                        >
+                          <KeyRound size={12} /> Reset Password
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

@@ -112,6 +112,10 @@ export type AuthorizedOfficer = {
 };
 
 const authorizedOfficers: AuthorizedOfficer[] = [
+  { name: 'Officer Raj Patel', department: 'Investigation', active: true },
+  { name: 'Officer Amit Shah', department: 'Investigation', active: true },
+  { name: 'Officer Neha Patel', department: 'Investigation', active: true },
+  { name: 'Officer Vikram Rao', department: 'Investigation', active: true },
   { name: 'Officer A', department: 'Investigation', active: true },
   { name: 'Officer B', department: 'Investigation', active: true },
   { name: 'Officer C', department: 'Cyber Crime', active: true },
@@ -119,7 +123,33 @@ const authorizedOfficers: AuthorizedOfficer[] = [
 ];
 
 export function getOfficersByDepartment(department: string): AuthorizedOfficer[] {
-  return authorizedOfficers
-    .filter((officer) => officer.active && (department === 'Other' || officer.department === department))
+  let dynamicOfficers: AuthorizedOfficer[] = [];
+  try {
+    const raw = localStorage.getItem('securedocs_cached_users');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        dynamicOfficers = parsed
+          .filter((u: any) => (u.role === 'Officer' || u.role === 'Admin') && u.status === 'Active')
+          .map((u: any) => ({
+            name: u.name,
+            department: u.department || 'Investigation',
+            active: u.status === 'Active',
+          }));
+      }
+    }
+  } catch {
+    // fallback
+  }
+
+  const combined = [...dynamicOfficers];
+  for (const ao of authorizedOfficers) {
+    if (!combined.some(c => c.name.toLowerCase() === ao.name.toLowerCase())) {
+      combined.push(ao);
+    }
+  }
+
+  return combined
+    .filter((officer) => officer.active && (!department || department === 'Other' || officer.department === department))
     .map((officer) => ({ ...officer }));
 }

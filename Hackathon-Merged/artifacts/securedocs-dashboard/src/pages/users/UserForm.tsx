@@ -1,19 +1,20 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'wouter';
 import {
-  ArrowLeft, User, Briefcase, ShieldCheck, CheckCircle2, X,
+  ArrowLeft, User, Briefcase, ShieldCheck, CheckCircle2, X, Eye, EyeOff,
 } from 'lucide-react';
 import {
-  availableCases, getUserById, userRoles, userDepartments, userStatuses,
+  availableCases, userRoles, userDepartments, userStatuses,
   type UserRole, type UserDepartment, type UserStatus,
 } from '@/lib/users-data';
+import { userService } from '@/services/userService';
 import styles from './users.module.css';
 
 /* ----------------------------------------------------------------
    Toast
    ---------------------------------------------------------------- */
 function Toast({ message, variant, onDone }: { message: string; variant: 'success' | 'danger'; onDone: () => void }) {
-  useState(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); });
+  useState(() => { const t = setTimeout(onDone, 3500); return () => clearTimeout(t); });
   const cls = variant === 'success' ? styles.toastSuccess : styles.toastDanger;
   return (
     <div className={`${styles.toast} ${cls}`}>
@@ -32,6 +33,7 @@ interface FormErrors {
   email?: string;
   department?: string;
   role?: string;
+  password?: string;
 }
 
 /* ----------------------------------------------------------------
@@ -41,7 +43,6 @@ export default function UserForm() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const isEdit = !!params.id;
-  const existingUser = isEdit ? getUserById(params.id) : null;
 
   // Form state
   const [name, setName] = useState('');
@@ -50,23 +51,33 @@ export default function UserForm() {
   const [department, setDepartment] = useState<UserDepartment | ''>('');
   const [role, setRole] = useState<UserRole | ''>('');
   const [status, setStatus] = useState<UserStatus>('Active');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [assignedCases, setAssignedCases] = useState<string[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'danger' } | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Pre-fill for edit mode
   useEffect(() => {
-    if (existingUser) {
-      setName(existingUser.name);
-      setEmployeeId(existingUser.employeeId);
-      setEmail(existingUser.email);
-      setDepartment(existingUser.department);
-      setRole(existingUser.role);
-      setStatus(existingUser.status);
-      setAssignedCases([...existingUser.assignedCases]);
+    let mounted = true;
+    if (isEdit && params.id) {
+      userService.getUserById(params.id).then((u) => {
+        if (!mounted || !u) return;
+        setName(u.name || '');
+        setEmployeeId(u.employeeId || '');
+        setEmail(u.email || '');
+        setDepartment((u.department || '') as UserDepartment);
+        setRole((u.role || '') as UserRole);
+        setStatus(u.status || 'Active');
+        setAssignedCases([...(u.assignedCases || [])]);
+      });
     }
-  }, [existingUser]);
+    return () => {
+      mounted = false;
+    };
+  }, [isEdit, params.id]);
 
   const toggleCase = (id: string) => {
     setAssignedCases((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
@@ -75,11 +86,20 @@ export default function UserForm() {
   // Access level computed from role
   const accessLevel = useMemo(() => {
     switch (role) {
-      case 'Administrator': return 'Full Access';
-      case 'Reviewer': return 'Review & Read';
-      case 'Auditor': return 'Audit & Read';
-      case 'Officer': return 'Case Access';
-      default: return '—';
+      case 'Admin':
+      case 'Administrator':
+        return 'Full Access';
+      case 'Legal Reviewer':
+      case 'Reviewer':
+        return 'Review & Read';
+      case 'Auditor':
+        return 'Audit & Read';
+      case 'Officer':
+        return 'Case Access';
+      case 'Clerk':
+        return 'Filing & Upload Access';
+      default:
+        return '—';
     }
   }, [role]);
 
@@ -95,15 +115,48 @@ export default function UserForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
     if (!validate()) return;
 
-    const msg = isEdit ? 'User updated successfully' : 'User created successfully';
-    setToast({ message: msg, variant: 'success' });
+    setIsSubmitting(true);
+    try {
+      if (isEdit && params.id) {
+        await userService.updateUser(params.id, {
+          name,
+          employeeId,
+          email,
+          department: department as UserDepartment,
+          role: role as UserRole,
+          status,
+          assignedCases,
+        });
+        setToast({ message: 'User updated successfully', variant: 'success' });
+      } else {
+        await userService.createUser({
+          name,
+          employeeId,
+          email,
+          department: department as UserDepartment,
+          role: role as UserRole,
+          password: password.trim() || 'SecureDocs@2026',
+          status,
+          assignedCases,
+        });
+        setToast({ message: 'User created successfully', variant: 'success' });
+      }
 
-    // Navigate back after a short delay so the toast is visible
-    setTimeout(() => navigate('/users'), 1200);
+      // Navigate back after toast is visible
+      setTimeout(() => navigate('/users'), 1000);
+    } catch (err: any) {
+      console.error('Submit user error:', err);
+      setToast({
+        message: err.message || 'Failed to save user. Please verify your input.',
+        variant: 'danger',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -228,6 +281,45 @@ export default function UserForm() {
                     {userStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
+
+                {/* Password (only for new users or optional for edit) */}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    {isEdit ? 'New Password (Optional)' : 'Initial Password'}
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 'normal', marginLeft: '6px' }}>
+                      {isEdit ? '(leave blank to keep unchanged)' : '(default: SecureDocs@2026)'}
+                    </span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      className={styles.formInput}
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder={isEdit ? 'Enter new password' : 'Enter password (or leave blank for default)'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--color-text-secondary)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -270,8 +362,8 @@ export default function UserForm() {
             <Link href="/users" className={styles.btnSecondary} style={{ textDecoration: 'none' }}>
               Cancel
             </Link>
-            <button className={styles.btnPrimary} onClick={handleSubmit}>
-              {isEdit ? 'Update User' : 'Save User'}
+            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : isEdit ? 'Update User' : 'Save User'}
             </button>
           </div>
         </div>

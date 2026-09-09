@@ -39,18 +39,28 @@ router.post(
   requireRole("Admin"),
   async (req: Request, res: Response) => {
     try {
-      const { email, name, role, department, password, employeeId } = req.body;
+      const { email, name, department, employeeId, assignedCases } = req.body;
+      let { role, password } = req.body;
 
-      if (!email || !name || !role || !password || !employeeId) {
+      if (!email || !name || !role || !employeeId) {
         res.status(400).json({
-          error: "email, name, role, password, and employeeId are required.",
+          error: "email, name, role, and employeeId are required.",
         });
         return;
       }
 
+      // Normalize role aliases
+      if (role === "Administrator") role = "Admin";
+      if (role === "Reviewer") role = "Legal Reviewer";
+
+      // Default password if not specified
+      if (!password || !password.trim()) {
+        password = "SecureDocs@2026";
+      }
+
       // Check for existing user
       const existing = await User.findOne({
-        $or: [{ email: email.toLowerCase() }, { employeeId }],
+        $or: [{ email: email.toLowerCase().trim() }, { employeeId: employeeId.trim() }],
       });
 
       if (existing) {
@@ -64,11 +74,12 @@ router.post(
 
       const user = await User.create({
         email: email.toLowerCase().trim(),
-        name,
+        name: name.trim(),
         role,
         department: department || "General",
         passwordHash,
-        employeeId,
+        employeeId: employeeId.trim(),
+        assignedCases: Array.isArray(assignedCases) ? assignedCases : [],
         isActive: true,
       });
 
@@ -92,18 +103,19 @@ router.post(
         role: user.role,
         department: user.department,
         employeeId: user.employeeId,
+        assignedCases: user.assignedCases || [],
         isActive: user.isActive,
         createdAt: user.createdAt,
       });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to create user." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Failed to create user." });
     }
   }
 );
 
 /**
  * PATCH /api/users/:id
- * Update a user (admin only). Can update role, department, isActive, name.
+ * Update a user (admin only). Can update role, department, isActive, name, assignedCases.
  * Cannot update password through this endpoint.
  */
 router.patch(
@@ -113,13 +125,23 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, role, department, isActive } = req.body;
+      const { name, department, isActive, assignedCases, employeeId, email } = req.body;
+      let { role } = req.body;
 
       const updateFields: Record<string, unknown> = {};
       if (name !== undefined) updateFields.name = name;
-      if (role !== undefined) updateFields.role = role;
+      if (role !== undefined) {
+        if (role === "Administrator") role = "Admin";
+        if (role === "Reviewer") role = "Legal Reviewer";
+        updateFields.role = role;
+      }
       if (department !== undefined) updateFields.department = department;
       if (isActive !== undefined) updateFields.isActive = isActive;
+      if (assignedCases !== undefined && Array.isArray(assignedCases)) {
+        updateFields.assignedCases = assignedCases;
+      }
+      if (employeeId !== undefined) updateFields.employeeId = employeeId;
+      if (email !== undefined) updateFields.email = email.toLowerCase().trim();
 
       const user = await User.findByIdAndUpdate(id, updateFields, {
         new: true,
