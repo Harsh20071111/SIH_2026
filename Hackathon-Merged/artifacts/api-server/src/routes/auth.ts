@@ -320,15 +320,17 @@ router.post("/auth/login", async (req: Request, res: Response) => {
  * Record logout event (stateless JWT — client discards token).
  */
 router.post("/auth/logout", requireAuth, async (req: Request, res: Response) => {
-  await createAuditEvent({
-    action: "LOGOUT",
-    userId: req.user!.userId,
-    userName: req.user!.name,
-    userRole: req.user!.role,
-    result: "Success",
-    ipAddress: req.ip || "",
-    userAgent: req.headers["user-agent"] || "",
-  });
+  try {
+    await createAuditEvent({
+      action: "LOGOUT",
+      userId: req.user!.userId,
+      userName: req.user!.name,
+      userRole: req.user!.role,
+      result: "Success",
+      ipAddress: req.ip || "",
+      userAgent: req.headers["user-agent"] || "",
+    });
+  } catch (_) {}
 
   res.json({ message: "Logged out successfully." });
 });

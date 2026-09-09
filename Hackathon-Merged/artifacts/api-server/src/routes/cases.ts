@@ -7,7 +7,7 @@ const router: IRouter = Router();
 
 /**
  * GET /api/cases
- * List all cases (role-filtered).
+ * List all cases with filtering and pagination.
  */
 router.get("/cases", requireAuth, async (req: Request, res: Response) => {
   try {
@@ -42,12 +42,7 @@ router.get("/cases", requireAuth, async (req: Request, res: Response) => {
       Case.countDocuments(filter),
     ]);
 
-    res.json({
-      data: cases,
-      total,
-      page: pageNum,
-      totalPages: Math.ceil(total / pageSize),
-    });
+    res.json({ data: cases, total, page: pageNum, totalPages: Math.ceil(total / pageSize) });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch cases." });
   }
@@ -59,26 +54,13 @@ router.get("/cases", requireAuth, async (req: Request, res: Response) => {
  */
 router.post("/cases", requireAuth, async (req: Request, res: Response) => {
   try {
-    const {
-      caseId,
-      title,
-      type,
-      description,
-      department,
-      assignedOfficer,
-      priority,
-      startDate,
-      confidentiality,
-    } = req.body;
+    const { caseId, title, type, description, department, assignedOfficer, priority, startDate, confidentiality } = req.body;
 
     if (!caseId || !title || !type || !department || !assignedOfficer) {
-      res.status(400).json({
-        error: "caseId, title, type, department, and assignedOfficer are required.",
-      });
+      res.status(400).json({ error: "caseId, title, type, department, and assignedOfficer are required." });
       return;
     }
 
-    // Check for duplicate case ID
     const existing = await Case.findOne({ caseId });
     if (existing) {
       res.status(409).json({ error: "A case with this ID already exists." });
@@ -100,23 +82,26 @@ router.post("/cases", requireAuth, async (req: Request, res: Response) => {
       createdBy: req.user!.name,
     });
 
-    await createAuditEvent({
-      action: "CASE_CREATED",
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: newCase.caseId,
-      result: "Success",
-      ipAddress: req.ip || "",
-      metadata: {
-        title: newCase.title,
-        type: newCase.type,
-        department: newCase.department,
-        assignedOfficer: newCase.assignedOfficer,
-        priority: newCase.priority,
-        confidentiality: newCase.confidentiality,
-      },
-    });
+    // Audit — non-critical, must not block or fail the successful response
+    try {
+      await createAuditEvent({
+        action: "CASE_CREATED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: newCase.caseId,
+        result: "Success",
+        ipAddress: req.ip || "",
+        metadata: {
+          title: newCase.title,
+          type: newCase.type,
+          department: newCase.department,
+          assignedOfficer: newCase.assignedOfficer,
+          priority: newCase.priority,
+          confidentiality: newCase.confidentiality,
+        },
+      });
+    } catch (_) {}
 
     res.status(201).json(newCase);
   } catch (err) {
@@ -137,14 +122,17 @@ router.get("/cases/:id", requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    await createAuditEvent({
-      action: "CASE_VIEWED",
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: caseRecord.caseId,
-      result: "Success",
-    });
+    // Audit — non-critical
+    try {
+      await createAuditEvent({
+        action: "CASE_VIEWED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: caseRecord.caseId,
+        result: "Success",
+      });
+    } catch (_) {}
 
     res.json(caseRecord);
   } catch (err) {
@@ -180,15 +168,18 @@ router.patch("/cases/:id", requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    await createAuditEvent({
-      action: "CASE_UPDATED",
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: caseRecord.caseId,
-      result: "Success",
-      metadata: { updatedFields: Object.keys(updateFields) },
-    });
+    // Audit — non-critical
+    try {
+      await createAuditEvent({
+        action: "CASE_UPDATED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: caseRecord.caseId,
+        result: "Success",
+        metadata: { updatedFields: Object.keys(updateFields) },
+      });
+    } catch (_) {}
 
     res.json(caseRecord);
   } catch (err) {

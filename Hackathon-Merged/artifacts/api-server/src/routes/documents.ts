@@ -41,10 +41,10 @@ router.get("/documents/local-download", requireAuth, async (req: Request, res: R
     const path = await import("path");
     const localPath = filePath.replace("local://", "");
 
-    // Security: ensure the path is within the uploads directory
+    // Security: ensure the path is strictly within the uploads directory (not just a prefix match)
     const uploadsDir = path.join(process.cwd(), "uploads");
     const resolved = path.resolve(localPath);
-    if (!resolved.startsWith(uploadsDir)) {
+    if (!resolved.startsWith(uploadsDir + path.sep) && resolved !== uploadsDir) {
       res.status(403).json({ error: "Access denied." });
       return;
     }
@@ -178,26 +178,28 @@ router.post(
         size: req.file.size,
       });
 
-      // Increment case document count
-      await Case.findOneAndUpdate({ caseId }, { $inc: { documentsCount: 1 } });
+      // Increment case document count (fire-and-forget — non-critical)
+      Case.findOneAndUpdate({ caseId }, { $inc: { documentsCount: 1 } }).catch(() => {});
 
-      // Audit event
-      await createAuditEvent({
-        action: "DOCUMENT_UPLOADED",
-        userId: req.user!.userId,
-        userName: req.user!.name,
-        userRole: req.user!.role,
-        caseId,
-        documentId: docId,
-        result: "Success",
-        ipAddress: req.ip || "",
-        metadata: {
-          documentName: doc.documentName,
-          documentType,
-          hash: fileHash,
-          size: req.file.size,
-        },
-      });
+      // Audit event — wrapped so a failure here does NOT roll back the successful upload
+      try {
+        await createAuditEvent({
+          action: "DOCUMENT_UPLOADED",
+          userId: req.user!.userId,
+          userName: req.user!.name,
+          userRole: req.user!.role,
+          caseId,
+          documentId: docId,
+          result: "Success",
+          ipAddress: req.ip || "",
+          metadata: {
+            documentName: doc.documentName,
+            documentType,
+            hash: fileHash,
+            size: req.file.size,
+          },
+        });
+      } catch (_) {}
 
       res.status(201).json(doc);
     } catch (err) {
@@ -219,25 +221,28 @@ router.get("/documents/:id", requireAuth, async (req: Request, res: Response) =>
       return;
     }
 
-    // Increment access count
-    await SecureDocument.updateOne(
+    // Increment access count (fire-and-forget — non-critical)
+    SecureDocument.updateOne(
       { documentId: req.params.id },
       {
         $inc: { totalAccesses: 1 },
         lastAccessedBy: req.user!.name,
         lastAccessed: new Date(),
       }
-    );
+    ).catch(() => {});
 
-    await createAuditEvent({
-      action: "DOCUMENT_VIEWED",
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: doc.caseId,
-      documentId: doc.documentId,
-      result: "Success",
-    });
+    // Audit — non-critical, should not block or fail the response
+    try {
+      await createAuditEvent({
+        action: "DOCUMENT_VIEWED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: doc.caseId,
+        documentId: doc.documentId,
+        result: "Success",
+      });
+    } catch (_) {}
 
     res.json(doc);
   } catch (err) {
@@ -260,24 +265,40 @@ router.get("/documents/:id/download", requireAuth, async (req: Request, res: Res
 
     const url = await getSignedUrl(doc.firebaseStoragePath);
 
-    // Update access info
-    doc.totalAccesses += 1;
-    doc.lastAccessedBy = req.user!.name;
-    doc.lastAccessed = new Date();
-    await doc.save();
+    // Update access info — use updateOne to avoid save() race conditions
+    SecureDocument.updateOne(
+      { documentId: req.params.id },
+      {
+        $inc: { totalAccesses: 1 },
+        lastAccessedBy: req.user!.name,
+        lastAccessed: new Date(),
+      }
+    ).catch(() => {});
 
-    await createAuditEvent({
-      action: "DOCUMENT_DOWNLOADED",
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: doc.caseId,
-      documentId: doc.documentId,
-      result: "Success",
-      ipAddress: req.ip || "",
-    });
+    // Audit — non-critical
+    try {
+      await createAuditEvent({
+        action: "DOCUMENT_DOWNLOADED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: doc.caseId,
+        documentId: doc.documentId,
+        result: "Success",
+        ipAddress: req.ip || "",
+      });
+    } catch (_) {}
 
-    res.json({ downloadUrl: url, documentName: doc.documentName });
+    let finalUrl = url;
+    if (finalUrl.startsWith("/api/documents/local-download")) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        finalUrl = `${finalUrl}&token=${token}`;
+      }
+    }
+
+    res.json({ downloadUrl: finalUrl, documentName: doc.documentName });
   } catch (err) {
     res.status(500).json({ error: "Failed to generate download URL." });
   }
@@ -326,26 +347,33 @@ router.post("/documents/:id/verify-integrity", requireAuth, async (req: Request,
       verified = false;
     }
 
-    // Update integrity status
-    doc.integrity = verified ? "Verified" : "Failed";
-    doc.lastModified = new Date();
-    await doc.save();
+    // Update integrity status — use updateOne to avoid unguarded save()
+    try {
+      await SecureDocument.updateOne(
+        { documentId: req.params.id },
+        { integrity: verified ? "Verified" : "Failed", lastModified: new Date() }
+      );
+    } catch (_) {}
 
     const auditAction = verified ? "INTEGRITY_VERIFIED" : "INTEGRITY_ISSUE_DETECTED";
-    await createAuditEvent({
-      action: auditAction,
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: doc.caseId,
-      documentId: doc.documentId,
-      result: verified ? "Verified" : "Issue Detected",
-      metadata: {
-        storedHash: doc.hash,
-        currentHash,
-        matched: verified,
-      },
-    });
+
+    // Audit — non-critical
+    try {
+      await createAuditEvent({
+        action: auditAction,
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: doc.caseId,
+        documentId: doc.documentId,
+        result: verified ? "Verified" : "Issue Detected",
+        metadata: {
+          storedHash: doc.hash,
+          currentHash,
+          matched: verified,
+        },
+      });
+    } catch (_) {}
 
     res.json({
       verified,
