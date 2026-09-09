@@ -2,7 +2,8 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { logger } from "../lib/logger";
 
-const JWT_SECRET = process.env["JWT_SECRET"] || "securedocs-dev-secret-change-in-production";
+const JWT_SECRET: string =
+  process.env["JWT_SECRET"] || "securedocs-dev-secret-change-in-production";
 
 export interface AuthUser {
   userId: string;
@@ -35,16 +36,20 @@ export function signToken(payload: AuthUser): string {
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
+  let token = "";
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (req.query.token) {
+    token = req.query.token as string;
+  }
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!token) {
     res.status(401).json({ error: "Authentication required. Please provide a valid token." });
     return;
   }
 
-  const token = authHeader.split(" ")[1];
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as AuthUser;
     req.user = decoded;
     next();
   } catch (err) {

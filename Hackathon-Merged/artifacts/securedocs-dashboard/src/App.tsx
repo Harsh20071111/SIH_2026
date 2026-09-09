@@ -14,6 +14,7 @@ import AllDocuments from '@/pages/AllDocuments';
 import Settings from '@/pages/settings';
 import SecurityDashboard from '@/pages/security';
 import AdminUsers from '@/pages/users';
+import UserForm from '@/pages/users/UserForm';
 import ReviewQueue from '@/pages/reviews';
 import AuditLogs from '@/pages/audit-logs';
 import AuditChainVerification from '@/pages/audit-chain-verify';
@@ -69,6 +70,8 @@ function AuthenticatedApp() {
         <Route path="/settings" component={() => <Settings />} />
         <Route path="/security" component={() => <SecurityDashboard />} />
         <Route path="/users" component={() => <AdminUsers role={role} />} />
+        <Route path="/users/new" component={() => <UserForm />} />
+        <Route path="/users/:id/edit" component={() => <UserForm />} />
         <Route path="/reviews/:id" component={({ params }) => <DocumentReview id={params?.id} />} />
         <Route path="/reviews" component={() => <ReviewQueue role={role} />} />
         <Route path="/compliance" component={() => <ComplianceDashboard />} />

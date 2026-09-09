@@ -14,7 +14,7 @@ export interface IDocument extends Document {
   version: number;
   status: "Pending Review" | "Approved" | "Rejected" | "Flagged";
   integrity: "Verified" | "Warning" | "Failed";
-  confidentiality: "Public" | "Internal" | "Confidential" | "Restricted";
+  confidentiality: "Public" | "Internal" | "Confidential" | "Restricted" | "Highly Restricted";
   uploadedBy: string;
   uploadDate: Date;
   lastModified: Date;
@@ -50,7 +50,7 @@ const documentSchema = new Schema<IDocument>(
     },
     confidentiality: {
       type: String,
-      enum: ["Public", "Internal", "Confidential", "Restricted"],
+      enum: ["Public", "Internal", "Confidential", "Restricted", "Highly Restricted"],
       default: "Confidential",
     },
     uploadedBy: { type: String, required: true },

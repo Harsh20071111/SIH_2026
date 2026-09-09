@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Search, ChevronDown, Users, UserCheck, ShieldCheck, ClipboardCheck,
   Plus, Pencil, Ban, UserCog, Briefcase, KeyRound, X, CheckCircle2,
+  RotateCw, Loader2, Eye, EyeOff,
 } from 'lucide-react';
 import {
   defaultUsers, availableCases, userRoles, userDepartments,
   type UserData, type UserRole, type UserStatus,
 } from '@/lib/users-data';
+import { userService } from '@/services/userService';
 import type { Role } from '@/lib/mock-data';
 import styles from './users.module.css';
 
@@ -129,11 +131,150 @@ function ConfirmModal({
 }
 
 /* ----------------------------------------------------------------
+   Set / Reset Password Modal (Admin)
+   ---------------------------------------------------------------- */
+function SetPasswordModal({
+  user, onClose, onConfirm,
+}: {
+  user: UserData;
+  onClose: () => void;
+  onConfirm: (password: string) => Promise<void>;
+}) {
+  const [password, setPassword] = useState('SecureDocs@2026');
+  const [showPassword, setShowPassword] = useState(true);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+    let res = '';
+    for (let i = 0; i < 12; i++) {
+      res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setPassword(res);
+    setError('');
+  };
+
+  const handleSave = async () => {
+    if (!password || password.trim().length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await onConfirm(password.trim());
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHead}>
+          <h3 className={styles.modalTitle}>Set Password — {user.name}</h3>
+          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className={styles.modalBody}>
+          <p className={styles.modalMessage} style={{ marginBottom: '1rem' }}>
+            Set a credentials password for <strong>{user.email || user.name}</strong> ({user.employeeId}).
+            Since users cannot self-register or change passwords automatically, the password you set here will be their active login password.
+          </p>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem', color: 'var(--color-text-main)' }}>
+              New Password <span style={{ color: 'var(--color-danger)' }}>*</span>
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                className={styles.formInput}
+                style={{ width: '100%', paddingRight: '40px' }}
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Enter new password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError('');
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--color-text-secondary)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {error && <span className={styles.formError} style={{ display: 'block', marginTop: '4px' }}>{error}</span>}
+          </div>
+
+          {/* Quick presets */}
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={generateRandomPassword}
+              style={{
+                fontSize: '0.75rem',
+                padding: '0.3rem 0.6rem',
+                border: '1px solid var(--color-border)',
+                borderRadius: '4px',
+                background: '#F1F5F9',
+                color: '#334155',
+                cursor: 'pointer',
+                fontWeight: 500,
+              }}
+            >
+              🎲 Generate Strong Password
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPassword('SecureDocs@2026'); setError(''); }}
+              style={{
+                fontSize: '0.75rem',
+                padding: '0.3rem 0.6rem',
+                border: '1px solid var(--color-border)',
+                borderRadius: '4px',
+                background: '#F1F5F9',
+                color: '#334155',
+                cursor: 'pointer',
+                fontWeight: 500,
+              }}
+            >
+              Default: SecureDocs@2026
+            </button>
+          </div>
+        </div>
+        <div className={styles.modalFoot}>
+          <button className={styles.btnSecondary} onClick={onClose} disabled={isSubmitting}>Cancel</button>
+          <button className={styles.btnPrimary} onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Set Password'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------
    Main Page
    ---------------------------------------------------------------- */
 export default function UserManagement({ role }: { role: Role }) {
   const [, navigate] = useLocation();
-  const [users, setUsers] = useState<UserData[]>(defaultUsers);
+  const [users, setUsers] = useState<UserData[]>(() => userService.getCachedUsers());
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'All'>('All');
   const [deptFilter, setDeptFilter] = useState<string>('All');
@@ -148,6 +289,22 @@ export default function UserManagement({ role }: { role: Role }) {
     setToast({ message, variant });
   }, []);
 
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await userService.getUsers();
+      setUsers(data);
+    } catch (e) {
+      console.error('Failed to load users:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
   // Filtered list
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -155,7 +312,8 @@ export default function UserManagement({ role }: { role: Role }) {
       const matchSearch = u.name.toLowerCase().includes(q) ||
         u.role.toLowerCase().includes(q) ||
         u.department.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q);
+        u.email.toLowerCase().includes(q) ||
+        u.employeeId.toLowerCase().includes(q);
       const matchRole = roleFilter === 'All' || u.role === roleFilter;
       const matchDept = deptFilter === 'All' || u.department === deptFilter;
       const matchStatus = statusFilter === 'All' || u.status === statusFilter;
@@ -166,7 +324,7 @@ export default function UserManagement({ role }: { role: Role }) {
   // Stats
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.status === 'Active').length;
-  const reviewers = users.filter((u) => u.role === 'Reviewer').length;
+  const reviewers = users.filter((u) => u.role === 'Reviewer' || u.role === 'Legal Reviewer').length;
   const auditors = users.filter((u) => u.role === 'Auditor').length;
 
   // Handlers
@@ -175,49 +333,79 @@ export default function UserManagement({ role }: { role: Role }) {
     setModalUser(user);
   };
 
-  const handleDisable = () => {
+  const handleDisable = async () => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, status: 'Disabled' as const } : u
-    ));
-    showToast(`${modalUser.name} has been disabled.`, 'danger');
+    try {
+      await userService.updateUser(modalUser.id, { status: 'Disabled' });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, status: 'Disabled' as const } : u
+      ));
+      showToast(`${modalUser.name} has been disabled.`, 'danger');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to disable user.', 'danger');
+    }
     setModalType(null);
   };
 
-  const handleEnable = () => {
+  const handleEnable = async () => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, status: 'Active' as const } : u
-    ));
-    showToast(`${modalUser.name} has been re-enabled.`, 'success');
+    try {
+      await userService.updateUser(modalUser.id, { status: 'Active' });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, status: 'Active' as const } : u
+      ));
+      showToast(`${modalUser.name} has been re-enabled.`, 'success');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to enable user.', 'danger');
+    }
     setModalType(null);
   };
 
-  const handleResetPw = () => {
+  const handleSetPassword = async (newPassword: string) => {
     if (!modalUser) return;
-    showToast(`Password reset for ${modalUser.name}.`, 'warning');
+    try {
+      const res = await userService.resetPassword(modalUser.id, newPassword);
+      showToast(res.message || `Password successfully updated for ${modalUser.name}.`, 'success');
+      setModalType(null);
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update password.', 'danger');
+    }
+  };
+
+  const handleAssignRole = async (newRole: UserRole) => {
+    if (!modalUser) return;
+    try {
+      await userService.updateUser(modalUser.id, { role: newRole });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, role: newRole } : u
+      ));
+      showToast(`Role updated to ${newRole} for ${modalUser.name}.`);
+    } catch (e: any) {
+      showToast(e.message || 'Failed to update role.', 'danger');
+    }
     setModalType(null);
   };
 
-  const handleAssignRole = (newRole: UserRole) => {
+  const handleAssignCases = async (cases: string[]) => {
     if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, role: newRole } : u
-    ));
-    showToast(`Role updated to ${newRole} for ${modalUser.name}.`);
+    try {
+      await userService.updateUser(modalUser.id, { assignedCases: cases });
+      setUsers((prev) => prev.map((u) =>
+        u.id === modalUser.id ? { ...u, assignedCases: cases } : u
+      ));
+      showToast(`Assigned ${cases.length} cases to ${modalUser.name}.`);
+    } catch (e: any) {
+      showToast(e.message || 'Failed to assign cases.', 'danger');
+    }
     setModalType(null);
   };
 
-  const handleAssignCases = (cases: string[]) => {
-    if (!modalUser) return;
-    setUsers((prev) => prev.map((u) =>
-      u.id === modalUser.id ? { ...u, assignedCases: cases } : u
-    ));
-    showToast(`${cases.length} cases assigned to ${modalUser.name}.`);
-    setModalType(null);
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
-
-  const getInitials = (name: string) => name.split(' ').map((w) => w[0]).join('').toUpperCase();
 
   return (
     <div className={styles.usersPage}>
@@ -252,13 +440,10 @@ export default function UserManagement({ role }: { role: Role }) {
         />
       )}
       {modalType === 'resetPw' && modalUser && (
-        <ConfirmModal
-          title="Reset Password"
-          message={`Are you sure you want to reset the password for ${modalUser.name}? A new temporary password will be sent to their email.`}
-          confirmLabel="Reset Password"
-          variant="warning"
+        <SetPasswordModal
+          user={modalUser}
           onClose={() => setModalType(null)}
-          onConfirm={handleResetPw}
+          onConfirm={handleSetPassword}
         />
       )}
 
@@ -339,6 +524,17 @@ export default function UserManagement({ role }: { role: Role }) {
           <ChevronDown />
         </div>
 
+        <button
+          type="button"
+          onClick={loadUsers}
+          className={styles.btnSecondary}
+          title="Refresh user list from database"
+          style={{ height: '38px', padding: '0 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+        >
+          <RotateCw size={14} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
+
         <Link href="/users/new" className={styles.addBtn} style={{ textDecoration: 'none' }}>
           <Plus size={16} /> Add User
         </Link>
@@ -358,79 +554,92 @@ export default function UserManagement({ role }: { role: Role }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id}>
-                  <td>
-                    <div className={styles.userName}>
-                      <span className={styles.userAvatar}>{getInitials(u.name)}</span>
-                      {u.name}
-                    </div>
-                  </td>
-                  <td>{u.role}</td>
-                  <td>{u.department}</td>
-                  <td>
-                    <span className={`${styles.badge} ${u.status === 'Active' ? styles.badgeActive : styles.badgeDisabled}`}>
-                      <span className={styles.badgeDot} />
-                      {u.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                        onClick={() => navigate(`/users/${u.id}/edit`)}
-                        title="Edit"
-                      >
-                        <Pencil size={12} /> Edit
-                      </button>
-                      {u.status === 'Active' ? (
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnRed}`}
-                          onClick={() => openModal('disable', u)}
-                          title="Disable"
-                        >
-                          <Ban size={12} /> Disable
-                        </button>
-                      ) : (
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                          onClick={() => openModal('enable', u)}
-                          title="Enable"
-                        >
-                          <UserCheck size={12} /> Enable
-                        </button>
-                      )}
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                        onClick={() => openModal('assignRole', u)}
-                        title="Assign Role"
-                      >
-                        <UserCog size={12} /> Assign Role
-                      </button>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                        onClick={() => openModal('assignCases', u)}
-                        title="Assign Cases"
-                      >
-                        <Briefcase size={12} /> Assign Cases
-                      </button>
-                      <button
-                        className={`${styles.actionBtn} ${styles.actionBtnAmber}`}
-                        onClick={() => openModal('resetPw', u)}
-                        title="Reset Password"
-                      >
-                        <KeyRound size={12} /> Reset Password
-                      </button>
+              {loading && users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className={styles.noResults} style={{ padding: '3rem 1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--color-text-secondary)' }}>
+                      <Loader2 size={20} className="animate-spin text-blue-600" />
+                      <span>Loading users from database...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {filtered.length === 0 && (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className={styles.noResults}>
                     No users found matching your criteria.
                   </td>
                 </tr>
+              ) : (
+                filtered.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div className={styles.userName}>
+                        <span className={styles.userAvatar}>{getInitials(u.name)}</span>
+                        <div>
+                          <div>{u.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{u.employeeId} · {u.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{u.role}</td>
+                    <td>{u.department}</td>
+                    <td>
+                      <span className={`${styles.badge} ${u.status === 'Active' ? styles.badgeActive : styles.badgeDisabled}`}>
+                        <span className={styles.badgeDot} />
+                        {u.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                          onClick={() => navigate(`/users/${u.id}/edit`)}
+                          title="Edit"
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                        {u.status === 'Active' ? (
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnRed}`}
+                            onClick={() => openModal('disable', u)}
+                            title="Disable"
+                          >
+                            <Ban size={12} /> Disable
+                          </button>
+                        ) : (
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                            onClick={() => openModal('enable', u)}
+                            title="Enable"
+                          >
+                            <UserCheck size={12} /> Enable
+                          </button>
+                        )}
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                          onClick={() => openModal('assignRole', u)}
+                          title="Assign Role"
+                        >
+                          <UserCog size={12} /> Assign Role
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                          onClick={() => openModal('assignCases', u)}
+                          title="Assign Cases"
+                        >
+                          <Briefcase size={12} /> Assign Cases
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnAmber}`}
+                          onClick={() => openModal('resetPw', u)}
+                          title="Reset Password"
+                        >
+                          <KeyRound size={12} /> Reset Password
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

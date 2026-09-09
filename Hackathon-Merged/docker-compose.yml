@@ -1,0 +1,93 @@
+# ============================================================================
+# SecureDocs — Full-Stack Docker Setup
+# ============================================================================
+# Usage:
+#   docker compose up --build        Build & start all services
+#   docker compose up -d             Start in background
+#   docker compose down              Stop all services
+#   docker compose down -v           Stop & delete all data
+#   docker compose logs -f api       Follow API logs
+#   docker compose logs -f dashboard Follow dashboard logs
+#
+# Services:
+#   mongodb    → localhost:27017   (MongoDB 7.0)
+#   mongo-ui   → localhost:8081   (Mongo Express GUI)
+#   api        → localhost:5001   (Express API server)
+#   dashboard  → localhost:3000   (React dashboard via Nginx)
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # MongoDB — primary database
+  # --------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: securedocs-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: securedocs
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------------------------
+  # Mongo Express — database GUI (optional, for dev convenience)
+  # --------------------------------------------------------------------------
+  mongo-ui:
+    image: mongo-express:latest
+    container_name: securedocs-mongo-ui
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: "27017"
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  # --------------------------------------------------------------------------
+  # API Server — Express.js backend
+  # --------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: securedocs-api
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: production
+      PORT: "5001"
+      MONGODB_URI: mongodb://mongodb:27017/securedocs
+      JWT_SECRET: ${JWT_SECRET:-securedocs-dev-secret-change-in-production}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  # --------------------------------------------------------------------------
+  # Dashboard — React frontend served via Nginx
+  # --------------------------------------------------------------------------
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/dashboard.Dockerfile
+    container_name: securedocs-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  mongo_data:
+    driver: local

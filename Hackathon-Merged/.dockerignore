@@ -1,0 +1,35 @@
+# Dependencies (re-installed inside Docker)
+node_modules
+**/node_modules
+
+# Build outputs (rebuilt inside Docker)
+**/dist
+**/.tsbuildinfo
+*.tsbuildinfo
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+.cursor
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment (secrets should not be baked into images)
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.yml
+
+# Misc
+.cache
+.local
+*.zip
+coverage

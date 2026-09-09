@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,33 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, Key, Clock, MonitorSmartphone, MapPin, Activity } from 'lucide-react';
+import { User, Shield, Key, Clock, MonitorSmartphone, MapPin, Activity, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Profile() {
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const displayName = user?.name || 'Admin User';
+  const displayEmail = user?.email || 'admin@securedocs.gov';
+  const displayRole = user?.role || 'Admin';
+  const displayEmployeeId = user?.employeeId || 'EMP-001';
+  const displayDepartment = user?.department || 'Administration';
+
+  const userInitials = useMemo(() => {
+    if (!displayName) return 'AD';
+    const parts = displayName.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }, [displayName]);
   
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,9 +46,16 @@ export default function Profile() {
     });
   };
 
+  const resetPasswordVisibility = () => {
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
     setIsChangePasswordOpen(false);
+    resetPasswordVisibility();
     toast({
       title: "Password updated successfully.",
       description: "Your account password has been changed.",
@@ -50,13 +77,13 @@ export default function Profile() {
         <div className="bg-slate-50 border-b border-slate-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20 border-4 border-white shadow-sm">
-              <AvatarImage src="/placeholder-avatar.jpg" alt="Admin" />
-              <AvatarFallback className="bg-blue-600 text-white text-xl">AD</AvatarFallback>
+              <AvatarImage src="/placeholder-avatar.jpg" alt={displayName} />
+              <AvatarFallback className="bg-blue-600 text-white text-xl">{userInitials}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Admin</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{displayName}</h2>
               <p className="text-slate-500 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-blue-500" /> Security Administrator
+                <Shield className="h-4 w-4 text-blue-500" /> {displayRole}
               </p>
             </div>
           </div>
@@ -77,19 +104,19 @@ export default function Profile() {
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="name" className="text-right">Name</Label>
-                      <Input id="name" defaultValue="Admin User" className="col-span-3" />
+                      <Input id="name" defaultValue={displayName} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="email" className="text-right">Email</Label>
-                      <Input id="email" type="email" defaultValue="admin@securedocs.demo" className="col-span-3" />
+                      <Input id="email" type="email" defaultValue={displayEmail} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="department" className="text-right">Department</Label>
-                      <Input id="department" defaultValue="Administration" className="col-span-3" />
+                      <Input id="department" defaultValue={displayDepartment} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="role" className="text-right">Role</Label>
-                      <Input id="role" defaultValue="Administrator" className="col-span-3" disabled />
+                      <Input id="role" defaultValue={displayRole} className="col-span-3" disabled />
                     </div>
                   </div>
                   <DialogFooter>
@@ -100,7 +127,13 @@ export default function Profile() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+            <Dialog 
+              open={isChangePasswordOpen} 
+              onOpenChange={(open) => {
+                setIsChangePasswordOpen(open);
+                if (!open) resetPasswordVisibility();
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">Change Password</Button>
               </DialogTrigger>
@@ -115,19 +148,73 @@ export default function Profile() {
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="current" className="text-right">Current</Label>
-                      <Input id="current" type="password" required className="col-span-3" />
+                      <div className="col-span-3 relative">
+                        <Input 
+                          id="current" 
+                          type={showCurrentPassword ? 'text' : 'password'} 
+                          required 
+                          className="pr-10" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                        >
+                          {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="new" className="text-right">New</Label>
-                      <Input id="new" type="password" required className="col-span-3" />
+                      <div className="col-span-3 relative">
+                        <Input 
+                          id="new" 
+                          type={showNewPassword ? 'text' : 'password'} 
+                          required 
+                          className="pr-10" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                        >
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="confirm" className="text-right">Confirm</Label>
-                      <Input id="confirm" type="password" required className="col-span-3" />
+                      <div className="col-span-3 relative">
+                        <Input 
+                          id="confirm" 
+                          type={showConfirmPassword ? 'text' : 'password'} 
+                          required 
+                          className="pr-10" 
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsChangePasswordOpen(false)}>Cancel</Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsChangePasswordOpen(false);
+                        resetPasswordVisibility();
+                      }}
+                    >
+                      Cancel
+                    </Button>
                     <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Update Password</Button>
                   </DialogFooter>
                 </form>
@@ -145,15 +232,15 @@ export default function Profile() {
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Employee ID</p>
-            <p className="font-semibold text-slate-900 mt-1">EMP-001</p>
+            <p className="font-semibold text-slate-900 mt-1">{displayEmployeeId}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Department</p>
-            <p className="font-semibold text-slate-900 mt-1">Administration</p>
+            <p className="font-semibold text-slate-900 mt-1">{displayDepartment}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Role</p>
-            <p className="font-semibold text-slate-900 mt-1">Admin</p>
+            <p className="font-semibold text-slate-900 mt-1">{displayRole}</p>
           </div>
         </div>
       </Card>
@@ -172,23 +259,23 @@ export default function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
                 <div>
                   <p className="text-sm font-medium text-slate-500">Name</p>
-                  <p className="mt-1 font-medium text-slate-900">Admin User</p>
+                  <p className="mt-1 font-medium text-slate-900">{displayName}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Employee ID</p>
-                  <p className="mt-1 font-medium text-slate-900">EMP-001</p>
+                  <p className="mt-1 font-medium text-slate-900">{displayEmployeeId}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Email</p>
-                  <p className="mt-1 font-medium text-slate-900">admin@securedocs.demo</p>
+                  <p className="mt-1 font-medium text-slate-900">{displayEmail}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Role</p>
-                  <p className="mt-1 font-medium text-slate-900">Administrator</p>
+                  <p className="mt-1 font-medium text-slate-900">{displayRole}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Department</p>
-                  <p className="mt-1 font-medium text-slate-900">Administration</p>
+                  <p className="mt-1 font-medium text-slate-900">{displayDepartment}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Status</p>

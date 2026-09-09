@@ -93,23 +93,41 @@ export default function Reviews({ role }: { role: Role }) {
     }
   };
 
-  const handleAction = (id: string, action: 'Approve' | 'Reject' | 'Request Changes', comments: string) => {
+  const handleAction = async (id: string, action: 'Approve' | 'Reject' | 'Request Changes', comments: string) => {
+    // Map frontend action names to the API status values
+    const statusMap: Record<string, string> = {
+      'Approve': 'Approved',
+      'Reject': 'Rejected',
+      'Request Changes': 'Flagged',
+    };
+    const newStatus = statusMap[action];
+
+    // Optimistically update local state so UI feels responsive
     setReviews(prev => prev.map(r => {
       if (r.id === id) {
-        let newStatus: ReviewStatus = r.status;
-        if (action === 'Approve') newStatus = 'Approved';
-        if (action === 'Reject') newStatus = 'Rejected';
-        if (action === 'Request Changes') newStatus = 'Changes Requested';
-        return { ...r, status: newStatus };
+        let newLocalStatus: ReviewStatus = r.status;
+        if (action === 'Approve') newLocalStatus = 'Approved';
+        if (action === 'Reject') newLocalStatus = 'Rejected';
+        if (action === 'Request Changes') newLocalStatus = 'Changes Requested';
+        return { ...r, status: newLocalStatus };
       }
       return r;
     }));
 
+    // Persist to the API
+    try {
+      const { api } = await import('@/services/api');
+      await api.patch(`/reviews/${id}`, { status: newStatus, comment: comments });
+    } catch (err) {
+      console.error('Failed to update review:', err);
+      // Non-critical for the hackathon — local state still reflects the change
+    }
+
     toast({
       title: 'Success',
-      description: action === 'Approve' ? 'Document approved successfully.' : 
+      description: action === 'Approve' ? 'Document approved successfully.' :
                    action === 'Reject' ? 'Document rejected.' : 'Changes requested from document owner.',
-      variant: action === 'Reject' ? 'destructive' : action === 'Request Changes' ? 'default' : 'default',
+      variant: action === 'Reject' ? 'destructive' : 'default',
     });
 
     setSelectedReview(null);

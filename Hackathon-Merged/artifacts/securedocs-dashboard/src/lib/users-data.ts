@@ -1,5 +1,28 @@
-export type UserRole = 'Officer' | 'Reviewer' | 'Auditor' | 'Administrator';
-export type UserDepartment = 'Investigation' | 'Legal' | 'Audit' | 'Administration';
+export type UserRole =
+  | 'Officer'
+  | 'Legal Reviewer'
+  | 'Reviewer'
+  | 'Auditor'
+  | 'Admin'
+  | 'Administrator'
+  | 'Clerk'
+  | 'DutyOfficer'
+  | 'IO'
+  | 'SHO'
+  | 'SP'
+  | 'ForensicExpert'
+  | 'Magistrate';
+
+export type UserDepartment =
+  | 'Investigation'
+  | 'Legal'
+  | 'Audit'
+  | 'Administration'
+  | 'Cyber Crime'
+  | 'Financial Crime'
+  | 'General'
+  | string;
+
 export type UserStatus = 'Active' | 'Disabled';
 
 export interface UserData {
@@ -40,7 +63,7 @@ export const defaultUsers: UserData[] = [
     name: 'Reviewer B',
     employeeId: 'EMP-1002',
     email: 'reviewer.b@securedocs.gov.in',
-    role: 'Reviewer',
+    role: 'Legal Reviewer',
     department: 'Legal',
     status: 'Active',
     assignedCases: ['C-1024', 'C-1025'],
@@ -57,10 +80,20 @@ export const defaultUsers: UserData[] = [
   },
 ];
 
-export const userRoles: UserRole[] = ['Officer', 'Reviewer', 'Auditor', 'Administrator'];
-export const userDepartments: UserDepartment[] = ['Investigation', 'Legal', 'Audit', 'Administration'];
+export const userRoles: UserRole[] = ['Officer', 'Legal Reviewer', 'Admin', 'Clerk', 'Auditor'];
+export const userDepartments: UserDepartment[] = ['Investigation', 'Legal', 'Audit', 'Administration', 'Cyber Crime', 'Financial Crime', 'General'];
 export const userStatuses: UserStatus[] = ['Active', 'Disabled'];
 
 export function getUserById(id: string): UserData | undefined {
-  return defaultUsers.find((u) => u.id === id);
+  try {
+    const raw = localStorage.getItem('securedocs_cached_users');
+    if (raw) {
+      const parsed: UserData[] = JSON.parse(raw);
+      const found = parsed.find((u) => u.id === id || u.employeeId === id);
+      if (found) return found;
+    }
+  } catch {
+    // ignore
+  }
+  return defaultUsers.find((u) => u.id === id || u.employeeId === id);
 }

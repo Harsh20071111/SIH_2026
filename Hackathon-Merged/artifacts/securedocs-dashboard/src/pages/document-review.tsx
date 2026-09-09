@@ -329,149 +329,196 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
             </div>
 
             {/* PDF Preview Canvas Area */}
-            <div className="relative flex-1 overflow-auto bg-slate-200/70 p-4 sm:p-6" style={{ minHeight: '520px' }}>
+            <div className="relative flex-1 overflow-auto bg-slate-200/70 p-4 sm:p-6" style={{ minHeight: '540px' }}>
               <div
-                className="mx-auto rounded-lg bg-white p-8 shadow-md transition-transform duration-200 origin-top"
+                className="relative mx-auto rounded-xl bg-white p-6 sm:p-10 shadow-lg transition-transform duration-200 origin-top overflow-hidden border border-slate-200/60"
                 style={{
                   width: `${(zoomLevel / 100) * 580}px`,
-                  minHeight: '680px',
+                  minHeight: '700px',
+                  height: 'auto',
                 }}
               >
-                {/* Watermark */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.06] select-none">
-                  <span className="rotate-[-35deg] text-6xl font-black text-red-900 tracking-widest">
+                {/* Watermark: strictly in background with low opacity and zero interference with text */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center select-none overflow-hidden"
+                  style={{ opacity: 0.035 }}
+                >
+                  <span
+                    className="rotate-[-35deg] text-5xl sm:text-6xl font-black tracking-widest text-slate-700 uppercase whitespace-nowrap"
+                    style={{ userSelect: 'none' }}
+                  >
                     CONFIDENTIAL EVIDENCE
                   </span>
                 </div>
 
-                {/* Document Header */}
-                <div className="border-b-2 border-slate-900 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#2563EB]">
-                        Karnataka State Police · Forensic Sciences Division
-                      </div>
-                      <div className="mt-1 text-lg font-black tracking-tight text-slate-900">
-                        FORENSIC EVIDENCE & INTEGRITY REPORT
-                      </div>
-                    </div>
-                    <div className="text-right font-mono text-[10px] text-[#64748B]">
-                      <div>CASE: C-1024</div>
-                      <div>EXHIBIT: EX-884</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Document Metadata Bar */}
-                <div className="mt-4 grid grid-cols-3 gap-2 rounded bg-slate-50 p-2.5 font-mono text-[10px] text-slate-700">
-                  <div>
-                    <span className="font-bold text-slate-900">Chain ID:</span> CH-9021
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-900">Custodian:</span> Officer A
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-900">Version:</span> v3.0 (Final)
-                  </div>
-                </div>
-
-                {/* Simulated Content based on currentPage */}
-                <div className="mt-6 space-y-4 text-xs leading-relaxed text-slate-800">
-                  {currentPage === 1 && (
-                    <>
-                      <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1">
-                        1. Chain of Custody & Receipt Verification
-                      </h4>
-                      <p>
-                        The sealed physical artifact containing digital drive serial #WD-99401 was retrieved from Locker Bay 4 by Investigating Officer A on 01 Sept 2026. A secondary forensic image was extracted using hardware write-blocker Tableau T8u.
-                      </p>
-                      <div className="rounded border border-slate-200 bg-slate-50/50 p-3">
-                        <div className="font-mono text-[10px] font-bold text-slate-900 mb-1">
-                          Cryptographic Hashes Recorded at Ingestion:
-                        </div>
-                        <div className="font-mono text-[10px] break-all text-[#2563EB]">
-                          SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-                        </div>
-                        <div className="font-mono text-[10px] break-all text-slate-600 mt-1">
-                          MD5: 9e107d9d372bb6826bd81d3542a419d6
-                        </div>
-                      </div>
-                      <p>
-                        Both initial and computed image hashes demonstrate zero deviation. Evidence integrity coefficient stands at 1.00 (Tamper-Free).
-                      </p>
-                    </>
-                  )}
-
-                  {currentPage === 2 && (
-                    <>
-                      <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1">
-                        2. Detailed Artifact Registry & Timeline
-                      </h4>
-                      <p>
-                        Log analysis from recovered partition yields 1,248 timestamped events corresponding to the suspect timeline between 28 Aug 2026 and 31 Aug 2026.
-                      </p>
-                      <div className="space-y-1.5 font-mono text-[10px]">
-                        <div className="flex justify-between border-b border-slate-100 py-1">
-                          <span>EVT-01: File Allocation Table read</span>
-                          <span className="text-[#16A34A] font-bold">VERIFIED</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-100 py-1">
-                          <span>EVT-02: User login signature parsed</span>
-                          <span className="text-[#16A34A] font-bold">VERIFIED</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-100 py-1">
-                          <span>EVT-03: Access token cryptographic verify</span>
-                          <span className="text-[#16A34A] font-bold">VERIFIED</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {currentPage === 3 && (
-                    <>
-                      <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1">
-                        3. Cryptographic Signature Certification
-                      </h4>
-                      <p>
-                        Digital signature attached to Exhibit EX-884 was verified utilizing the public key certificate issued by the National Public Key Infrastructure Authority.
-                      </p>
-                      <div className="rounded border border-emerald-200 bg-emerald-50/60 p-3 text-[11px] text-emerald-900">
-                        <strong>Public Key Certificate Status:</strong> VALID (Expires: Dec 2028)
-                        <div className="mt-1 font-mono text-[10px]">
-                          Subject: CN=Officer A, OU=CID Cyber Unit, O=Gov of Karnataka, C=IN
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {currentPage === 4 && (
-                    <>
-                      <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1">
-                        4. Final Conclusion & Approval Docket
-                      </h4>
-                      <p>
-                        The examining team confirms that Evidence.pdf represents a true and uncorrupted record of the digital evidence collected in connection with Case C-1024.
-                      </p>
-                      <div className="mt-8 flex items-end justify-between border-t border-slate-300 pt-4">
+                {/* Document Foreground Content: relative z-10 so all text is 100% crisp and readable above watermark */}
+                <div
+                  className="relative z-10 flex flex-col justify-between"
+                  style={{ minHeight: '620px', lineHeight: 1.6 }}
+                >
+                  <div className="space-y-6">
+                    {/* Document Header */}
+                    <div className="border-b-2 border-slate-900 pb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div>
-                          <div className="font-mono text-[10px] text-slate-500">Submitted by:</div>
-                          <div className="font-bold text-slate-900">Officer A</div>
-                          <div className="font-mono text-[9px] text-slate-400">ID: SEC-8041</div>
+                          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#2563EB]">
+                            Karnataka State Police · Forensic Sciences Division
+                          </div>
+                          <div className="mt-1 text-lg sm:text-xl font-black tracking-tight text-slate-900">
+                            FORENSIC EVIDENCE & INTEGRITY REPORT
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-mono text-[10px] text-slate-500">Reviewed & Approved by:</div>
-                          <div className="font-bold text-[#16A34A]">Reviewer B (Digital Cert)</div>
-                          <div className="font-mono text-[9px] text-slate-400">01 Sept 2026 · 11:32 AM</div>
+                        <div className="font-mono text-[10px] text-[#64748B] sm:text-right shrink-0">
+                          <div><span className="font-bold text-slate-700">CASE:</span> C-1024</div>
+                          <div><span className="font-bold text-slate-700">EXHIBIT:</span> EX-884</div>
                         </div>
                       </div>
-                    </>
-                  )}
-                </div>
+                    </div>
 
-                {/* Footer Stamp */}
-                <div className="mt-10 border-t border-slate-200 pt-3 flex items-center justify-between font-mono text-[9px] text-slate-400">
-                  <span>SECUREDOCS CRYPTOGRAPHIC ENGINE v2.4</span>
-                  <span>PAGE {currentPage} / {totalPages}</span>
+                    {/* Document Metadata Bar */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-lg bg-slate-50 p-3 font-mono text-[11px] text-slate-700 border border-slate-100">
+                      <div>
+                        <span className="font-bold text-slate-900">Chain ID:</span> CH-9021
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-900">Custodian:</span> Officer A
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-900">Version:</span> v3.0 (Final)
+                      </div>
+                    </div>
+
+                    {/* Simulated Content based on currentPage */}
+                    <div className="space-y-4 text-xs text-slate-800" style={{ lineHeight: 1.6 }}>
+                      {currentPage === 1 && (
+                        <>
+                          <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1.5 text-xs">
+                            1. Chain of Custody & Receipt Verification
+                          </h4>
+                          <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                            The sealed physical artifact containing digital drive serial #WD-99401 was retrieved from Locker Bay 4 by Investigating Officer A on 01 Sept 2026. A secondary forensic image was extracted using hardware write-blocker Tableau T8u.
+                          </p>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/90 p-4 space-y-2.5 my-3">
+                            <div className="font-mono text-xs font-bold text-slate-900">
+                              Cryptographic Hashes Recorded at Ingestion:
+                            </div>
+                            <div className="space-y-2 font-mono text-[11px]" style={{ lineHeight: 1.6 }}>
+                              <div className="rounded-lg bg-white p-2.5 border border-slate-200/80">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+                                  SHA-256 Hash
+                                </div>
+                                <div
+                                  className="text-[#2563EB] font-medium select-all"
+                                  style={{
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'normal',
+                                    lineHeight: 1.6,
+                                  }}
+                                >
+                                  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                                </div>
+                              </div>
+                              <div className="rounded-lg bg-white p-2.5 border border-slate-200/80">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+                                  MD5 Hash
+                                </div>
+                                <div
+                                  className="text-slate-600 font-medium select-all"
+                                  style={{
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-all',
+                                    whiteSpace: 'normal',
+                                    lineHeight: 1.6,
+                                  }}
+                                >
+                                  9e107d9d372bb6826bd81d3542a419d6
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                            Both initial and computed image hashes demonstrate zero deviation. Evidence integrity coefficient stands at 1.00 (Tamper-Free).
+                          </p>
+                        </>
+                      )}
+
+                      {currentPage === 2 && (
+                        <>
+                          <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1.5 text-xs">
+                            2. Detailed Artifact Registry & Timeline
+                          </h4>
+                          <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                            Log analysis from recovered partition yields 1,248 timestamped events corresponding to the suspect timeline between 28 Aug 2026 and 31 Aug 2026.
+                          </p>
+                          <div className="space-y-2 font-mono text-[10px]">
+                            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
+                              <span style={{ overflowWrap: 'break-word' }}>EVT-01: File Allocation Table read</span>
+                              <span className="text-[#16A34A] font-bold shrink-0">VERIFIED</span>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
+                              <span style={{ overflowWrap: 'break-word' }}>EVT-02: User login signature parsed</span>
+                              <span className="text-[#16A34A] font-bold shrink-0">VERIFIED</span>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
+                              <span style={{ overflowWrap: 'break-word' }}>EVT-03: Access token cryptographic verify</span>
+                              <span className="text-[#16A34A] font-bold shrink-0">VERIFIED</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {currentPage === 3 && (
+                        <>
+                          <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1.5 text-xs">
+                            3. Cryptographic Signature Certification
+                          </h4>
+                          <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                            Digital signature attached to Exhibit EX-884 was verified utilizing the public key certificate issued by the National Public Key Infrastructure Authority.
+                          </p>
+                          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-[11px] text-emerald-900 space-y-1.5">
+                            <div><strong>Public Key Certificate Status:</strong> VALID (Expires: Dec 2028)</div>
+                            <div
+                              className="font-mono text-[10px]"
+                              style={{ overflowWrap: 'break-word', wordBreak: 'break-all', lineHeight: 1.6 }}
+                            >
+                              Subject: CN=Officer A, OU=CID Cyber Unit, O=Gov of Karnataka, C=IN
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {currentPage === 4 && (
+                        <>
+                          <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1.5 text-xs">
+                            4. Final Conclusion & Approval Docket
+                          </h4>
+                          <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
+                            The examining team confirms that Evidence.pdf represents a true and uncorrupted record of the digital evidence collected in connection with Case C-1024.
+                          </p>
+                          <div className="mt-8 flex flex-col sm:flex-row sm:items-end sm:justify-between border-t border-slate-300 pt-4 gap-4">
+                            <div>
+                              <div className="font-mono text-[10px] text-slate-500">Submitted by:</div>
+                              <div className="font-bold text-slate-900">Officer A</div>
+                              <div className="font-mono text-[9px] text-slate-400">ID: SEC-8041</div>
+                            </div>
+                            <div className="sm:text-right">
+                              <div className="font-mono text-[10px] text-slate-500">Reviewed & Approved by:</div>
+                              <div className="font-bold text-[#16A34A]">Reviewer B (Digital Cert)</div>
+                              <div className="font-mono text-[9px] text-slate-400">01 Sept 2026 · 11:32 AM</div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Footer Stamp */}
+                  <div className="mt-10 border-t border-slate-200 pt-3.5 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono text-[9px] text-slate-400">
+                    <span>SECUREDOCS CRYPTOGRAPHIC ENGINE v2.4</span>
+                    <span>PAGE {currentPage} / {totalPages}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -499,13 +546,22 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
               {/* Case ID */}
               <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Case ID</div>
-                <div className="mt-1 font-mono text-sm font-bold text-[#111827]">C-1024</div>
+                <div
+                  className="mt-1 font-mono text-sm font-bold text-[#111827]"
+                  style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal' }}
+                >
+                  C-1024
+                </div>
               </div>
 
               {/* Document Name */}
               <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Document Name</div>
-                <div className="mt-1 font-mono text-sm font-bold text-[#2563EB] truncate" title="Evidence.pdf">
+                <div
+                  className="mt-1 font-mono text-sm font-bold text-[#2563EB]"
+                  style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal' }}
+                  title="Evidence.pdf"
+                >
                   Evidence.pdf
                 </div>
               </div>
@@ -732,7 +788,10 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   <Hash size={18} />
                 </div>
                 <div className="mt-2 text-xs font-bold text-[#111827]">Document Hash</div>
-                <div className="text-[10px] font-mono text-[#64748B] truncate max-w-[120px]">
+                <div
+                  className="text-[10px] font-mono text-[#64748B] w-full"
+                  style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal', lineHeight: 1.4 }}
+                >
                   0xe3b0c442...
                 </div>
                 <span className="mt-2 rounded bg-blue-50 px-2 py-0.5 font-mono text-[9px] font-bold text-[#2563EB]">
@@ -1077,11 +1136,14 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 <p>
                   Full legal transcript and forensic verification log for Case C-1024. All block signatures are validated against the state evidentiary chain of custody.
                 </p>
-                <div className="rounded bg-slate-50 p-4 font-mono text-[11px] border border-slate-200">
-                  <div>Evidence Item: Forensic Disk Image WD-99401</div>
-                  <div>Ingested Date: 01 Sept 2026</div>
-                  <div>Hash (SHA-256): e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</div>
-                  <div>Status: VERIFIED & SEALED</div>
+                <div className="rounded-xl bg-slate-50 p-4 font-mono text-[11px] border border-slate-200 space-y-2">
+                  <div><span className="font-bold text-slate-700">Evidence Item:</span> Forensic Disk Image WD-99401</div>
+                  <div><span className="font-bold text-slate-700">Ingested Date:</span> 01 Sept 2026</div>
+                  <div style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal', lineHeight: 1.6 }}>
+                    <span className="font-bold text-slate-700">Hash (SHA-256):</span>{' '}
+                    <span className="text-[#2563EB] select-all font-medium">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                  </div>
+                  <div><span className="font-bold text-slate-700">Status:</span> <span className="text-[#16A34A] font-bold">VERIFIED & SEALED</span></div>
                 </div>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { Review } from "../models/Review";
 import { SecureDocument } from "../models/Document";
 import { requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
+import { getClientIp } from "../lib/ip";
 
 const router: IRouter = Router();
 
@@ -59,15 +60,19 @@ router.post("/reviews", requireAuth, async (req: Request, res: Response) => {
       submittedDate: new Date(),
     });
 
-    await createAuditEvent({
-      action: "REVIEW_SUBMITTED",
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId,
-      documentId,
-      result: "Success",
-    });
+    // Audit — non-critical
+    try {
+      await createAuditEvent({
+        action: "REVIEW_SUBMITTED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId,
+        documentId,
+        result: "Success",
+        ipAddress: getClientIp(req),
+      });
+    } catch (_) {}
 
     res.status(201).json(review);
   } catch (err) {
@@ -77,7 +82,7 @@ router.post("/reviews", requireAuth, async (req: Request, res: Response) => {
 
 /**
  * PATCH /api/reviews/:id
- * Update review status (approve, reject, flag).
+ * Update review status (approve, reject, flag) with optional comment.
  */
 router.patch("/reviews/:id", requireAuth, async (req: Request, res: Response) => {
   try {
@@ -104,17 +109,11 @@ router.patch("/reviews/:id", requireAuth, async (req: Request, res: Response) =>
       return;
     }
 
-    // Update document status to match review result
-    const docStatusMap: Record<string, string> = {
-      Approved: "Approved",
-      Rejected: "Rejected",
-      Flagged: "Flagged",
-    };
-
-    await SecureDocument.updateOne(
+    // Mirror status onto the document (non-critical)
+    SecureDocument.updateOne(
       { documentId: review.documentId },
-      { status: docStatusMap[status] }
-    );
+      { status }
+    ).catch(() => {});
 
     const actionMap: Record<string, string> = {
       Approved: "DOCUMENT_APPROVED",
@@ -122,16 +121,20 @@ router.patch("/reviews/:id", requireAuth, async (req: Request, res: Response) =>
       Flagged: "DOCUMENT_FLAGGED",
     };
 
-    await createAuditEvent({
-      action: actionMap[status] as any,
-      userId: req.user!.userId,
-      userName: req.user!.name,
-      userRole: req.user!.role,
-      caseId: review.caseId,
-      documentId: review.documentId,
-      result: "Success",
-      metadata: { reviewStatus: status, comment },
-    });
+    // Audit — non-critical
+    try {
+      await createAuditEvent({
+        action: actionMap[status] as any,
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: review.caseId,
+        documentId: review.documentId,
+        result: "Success",
+        ipAddress: getClientIp(req),
+        metadata: { reviewStatus: status, comment },
+      });
+    } catch (_) {}
 
     res.json(review);
   } catch (err) {

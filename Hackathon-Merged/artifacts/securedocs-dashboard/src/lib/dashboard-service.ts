@@ -19,10 +19,11 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     // Map backend data to UI format
     return {
       stats: [
-        { label: 'Active Cases', value: data.stats.totalCases.toString(), change: '+12%', trend: 'up' },
-        { label: 'Documents Secured', value: data.stats.totalDocuments.toString(), change: '+4.5%', trend: 'up' },
-        { label: 'Pending Reviews', value: data.stats.pendingReviews.toString(), change: '-2', trend: 'down', alert: data.stats.pendingReviews > 5 },
-        { label: 'Integrity Issues', value: data.stats.integrityIssues.toString(), change: '0', trend: 'neutral', alert: data.stats.integrityIssues > 0 },
+        { label: 'Total cases', value: data.stats.totalCases.toString(), change: 'Live total', tone: 'blue', icon: 'briefcase' },
+        { label: 'Total documents', value: data.stats.totalDocuments.toString(), change: 'Live total', tone: 'cyan', icon: 'files' },
+        { label: 'Pending reviews', value: data.stats.pendingReviews.toString(), change: `${data.stats.pendingReviews} pending`, tone: 'amber', icon: 'clipboard' },
+        { label: 'Integrity issues', value: data.stats.integrityIssues.toString(), change: 'Requires attention', tone: 'red', icon: 'shield' },
+        { label: 'Suspicious activities', value: data.stats.suspiciousActivities.toString(), change: 'Check alerts', tone: 'red', icon: 'activity' },
       ],
       documentTypes: data.documentTypes.map((dt: any) => ({
         name: dt._id || 'Other',

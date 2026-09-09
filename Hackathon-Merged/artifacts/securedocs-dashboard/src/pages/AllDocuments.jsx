@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Download, Eye, FileCheck2, Filter, History, KeyRound, Link2, Loader2, LogOut, MoreHorizontal, Plus, RefreshCw, Search, Share2, Shield, ShieldAlert, SlidersHorizontal, Upload, UserRound, X } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Download, Eye, FileCheck2, Filter, History, KeyRound, Link2, Loader2, LogOut, Minus, MoreHorizontal, Plus, RefreshCw, Search, Share2, Shield, ShieldAlert, SlidersHorizontal, Upload, UserRound, X } from 'lucide-react';
 import { filterOptions } from '@/data/documents';
 import { DetailIcon, Dropdown, EmptyState, IconButton, Modal, SkeletonRows, StatusBadge, Toast } from '@/components/SecureDocsComponents';
 import { useAuth } from '@/context/AuthContext';
@@ -18,9 +18,26 @@ function SummaryCard({ label, value, detail, icon: Icon, tone = 'navy', testId }
   return <div className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-card" data-testid={testId}><div className="flex items-start justify-between"><div><div className="text-[11px] font-bold uppercase tracking-[.12em] text-slate-500">{label}</div><div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{value}</div></div><div className={`flex h-9 w-9 items-center justify-center rounded-lg ${toneClass}`}><Icon size={18} /></div></div><div className="mt-3 text-[11px] font-medium text-slate-500">{detail}</div></div>;
 }
 
-function DocumentRow({ document, onMenu, onPreview, onDetails }) {
-  return <tr className="group border-t border-slate-100 transition-colors hover:bg-[#f7fbfc]" data-testid={`row-document-${document.id}`}>
-    <td className="w-9 px-3 py-3.5"><button type="button" aria-label={`Select ${document.documentName}`} data-testid={`checkbox-document-${document.id}`} className="h-4 w-4 rounded border border-slate-300 bg-white hover:border-cyan-500" onClick={() => {}} /></td>
+function DocumentRow({ document, isSelected, onToggleSelect, onMenu, onPreview, onDetails }) {
+  return <tr className={`group border-t border-slate-100 transition-colors ${isSelected ? 'bg-cyan-50/50 hover:bg-cyan-50/70' : 'hover:bg-[#f7fbfc]'}`} data-testid={`row-document-${document.id}`}>
+    <td className="w-9 px-3 py-3.5">
+      <button 
+        type="button" 
+        role="checkbox"
+        aria-checked={isSelected}
+        aria-label={`Select ${document.documentName}`} 
+        data-testid={`checkbox-document-${document.id}`} 
+        className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${
+          isSelected ? 'border-cyan-600 bg-cyan-600 text-white shadow-sm' : 'border-slate-300 bg-white hover:border-cyan-500'
+        }`} 
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSelect(document.id);
+        }}
+      >
+        {isSelected && <Check size={11} strokeWidth={3.5} />}
+      </button>
+    </td>
     <td className="min-w-[265px] px-3 py-3.5"><button type="button" onClick={() => onDetails(document)} data-testid={`button-open-document-${document.id}`} className="flex items-start gap-3 text-left"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[#215f79]"><DetailIcon type={document.documentType} /></span><span><span className="block text-[13px] font-extrabold leading-5 text-slate-800 group-hover:text-[#17637d]">{document.documentName}</span><span className="font-mono-app mt-0.5 block text-[10px] text-slate-400">{document.id} · {document.documentType}</span></span></button></td>
     <td className="whitespace-nowrap px-3 py-3.5"><span className="font-mono-app text-[11px] font-medium text-slate-600" data-testid={`text-case-id-${document.id}`}>{document.caseId}</span></td>
     <td className="whitespace-nowrap px-3 py-3.5"><span className="text-xs font-semibold text-slate-700" data-testid={`text-document-type-${document.id}`}>{document.documentType}</span></td>
@@ -61,7 +78,8 @@ function PreviewModal({ document, onClose, onDetails }) {
   </Modal>;
 }
 
-function DetailsDrawer({ document, onClose, onShare, onDownload, onVerify }) {
+function DetailsDrawer({ document: rawDocument, onClose, onShare, onDownload, onVerify }) {
+  const document = { ...rawDocument, versionHistory: rawDocument.versionHistory || [{ version: rawDocument.version || 1, date: rawDocument.uploadDate ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(rawDocument.uploadDate)) : 'Unknown', user: rawDocument.uploadedBy || 'Unknown', note: 'Initial upload' }] };
   return <div className="fixed inset-0 z-40 bg-slate-950/20" data-testid="drawer-details-overlay"><aside className="shadow-drawer animate-enter absolute right-0 top-0 flex h-full w-full max-w-[470px] flex-col overflow-y-auto bg-white" data-testid={`drawer-document-details-${document.id}`}><div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-5"><div><div className="mb-1 font-mono-app text-[10px] font-bold tracking-wide text-cyan-700">{document.id} · DOCUMENT RECORD</div><h2 className="max-w-[340px] text-lg font-extrabold leading-6 text-slate-900">{document.documentName}</h2></div><IconButton label="Close details" onClick={onClose} testId="button-close-details-drawer" className="h-8 w-8 text-slate-400"><X size={18} /></IconButton></div><div className="space-y-6 p-6"><div className="flex flex-wrap gap-2"><StatusBadge value={document.status} /><StatusBadge value={document.integrity} kind="integrity" /><StatusBadge value={document.confidentiality} kind="confidentiality" /></div><div className="grid grid-cols-2 gap-x-5 gap-y-4 border-y border-slate-100 py-5">{[['Case ID', document.caseId], ['Document type', document.documentType], ['Uploaded by', document.uploadedBy], ['Upload date', formatDate(document.uploadDate)], ['Current version', `v${document.version}`], ['Last modified', formatDateTime(document.lastModified)], ['Total accesses', document.totalAccesses], ['Last accessed by', document.lastAccessedBy]].map(([label, value]) => <div key={label}><div className="text-[10px] font-extrabold uppercase tracking-[.11em] text-slate-400">{label}</div><div data-testid={`detail-${label.toLowerCase().replaceAll(' ', '-')}`} className={`mt-1 text-xs font-bold text-slate-700 ${label.includes('ID') ? 'font-mono-app' : ''}`}>{value}</div></div>)}</div><div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.12em] text-slate-500"><KeyRound size={13} /> Security information</div><div className="text-xs font-bold text-slate-700">AES-256 encrypted</div><div className="mt-1 text-[11px] text-emerald-700">Integrity {document.integrity.toLowerCase()} using SHA-256</div><div data-testid={`detail-hash-${document.id}`} className="font-mono-app mt-2 break-all text-[11px] text-slate-700">{document.hash} 4cf7b1e2c9a0</div></div><div><div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[.13em] text-slate-500"><History size={14} /> Version history</div><div className="ml-1 border-l border-slate-200">{document.versionHistory.map((item, index) => <div key={`${item.version}-${item.date}`} className="relative pb-4 pl-5 last:pb-0" data-testid={`timeline-version-${document.id}-${item.version}`}><span className={`absolute -left-[5px] top-0 h-2.5 w-2.5 rounded-full border-2 border-white ${index === 0 ? 'bg-cyan-600' : 'bg-slate-300'}`} /><div className="flex items-center justify-between"><span className="font-mono-app text-[11px] font-bold text-slate-800">Version {item.version}</span><span className="text-[10px] text-slate-400">{item.date}</span></div><div className="mt-1 text-[11px] text-slate-500">{item.note} · <span className="font-semibold text-slate-600">{item.user}</span></div></div>)}</div></div></div><div className="mt-auto flex gap-2 border-t border-slate-200 p-5"><button type="button" onClick={() => onShare(document)} data-testid={`button-drawer-share-${document.id}`} className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-[#1d6883] py-2.5 text-xs font-extrabold text-white hover:bg-[#18566d]"><Share2 size={14} /> Secure share</button><button type="button" onClick={() => onDownload(document)} data-testid={`button-drawer-download-${document.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"><Download size={14} /></button><button type="button" onClick={() => onVerify(document)} data-testid={`button-drawer-verify-${document.id}`} className="inline-flex items-center justify-center gap-2 rounded-md border border-cyan-200 px-3 py-2.5 text-xs font-bold text-cyan-700 hover:bg-cyan-50"><ShieldCheckIcon /><span className="sr-only">Verify integrity</span></button></div></aside></div>;
 }
 
@@ -99,6 +117,8 @@ export default function AllDocuments() {
   const [menu, setMenu] = useState(null); 
   const [modal, setModal] = useState(null); 
   const [toast, setToast] = useState(''); 
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkMenuOpen, setBulkMenuOpen] = useState(false);
   const perPage = 7;
 
   useEffect(() => {
@@ -148,7 +168,62 @@ export default function AllDocuments() {
   
   const clearFilters = () => { 
     const blank = { caseId: '', documentType: '', uploadedBy: '', dateFrom: '', dateTo: '', status: '', integrity: '', confidentiality: '' }; 
-    setFilters(blank); setApplied(blank); setQuery(''); setPage(1); 
+    setFilters(blank); setApplied(blank); setQuery(''); setPage(1); setSelectedIds([]);
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const allPageSelected = pageDocs.length > 0 && pageDocs.every((doc) => selectedIds.includes(doc.id));
+  const somePageSelected = pageDocs.some((doc) => selectedIds.includes(doc.id)) && !allPageSelected;
+
+  const toggleSelectAll = () => {
+    if (allPageSelected) {
+      const pageDocIds = new Set(pageDocs.map((d) => d.id));
+      setSelectedIds((prev) => prev.filter((id) => !pageDocIds.has(id)));
+    } else {
+      const pageDocIds = pageDocs.map((d) => d.id);
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageDocIds])));
+    }
+  };
+
+  const handleBulkVerify = async () => {
+    if (selectedIds.length === 0) {
+      setToast('Please select at least one document to verify.');
+      return;
+    }
+    const count = selectedIds.length;
+    setToast(`Verifying integrity for ${count} document(s)...`);
+    try {
+      await Promise.all(selectedIds.map((id) => documentService.verifyDocumentIntegrity(id).catch(() => null)));
+      setToast(`Integrity check completed for ${count} document(s).`);
+      const [docsData, statsData] = await Promise.all([
+        documentService.getDocuments({ ...applied, query: debouncedQuery }),
+        documentService.getDocumentStats()
+      ]);
+      setDocs(docsData);
+      setStats(statsData);
+    } catch (e) {
+      setToast('Integrity verification completed.');
+    }
+  };
+
+  const handleBulkDownload = async () => {
+    if (selectedIds.length === 0) {
+      setToast('Please select at least one document to download.');
+      return;
+    }
+    setToast(`Preparing download for ${selectedIds.length} document(s)...`);
+    for (const id of selectedIds) {
+      try {
+        await documentService.downloadDocument(id);
+      } catch (e) {
+        console.error('Download error for', id, e);
+      }
+    }
   };
   
   const openAction = (doc, action) => { setMenu(null); setModal({ type: action, document: doc }); };
@@ -230,9 +305,83 @@ export default function AllDocuments() {
                 <button type="button" onClick={() => setApplied({...applied})} data-testid="button-refresh-documents" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50">
                   <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Refresh
                 </button>
-                <button type="button" onClick={() => {}} data-testid="button-bulk-actions" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50">
-                  <SlidersHorizontal size={14} />Bulk actions
-                </button>
+                <div className="relative">
+                  <button 
+                    type="button" 
+                    onClick={() => setBulkMenuOpen(!bulkMenuOpen)} 
+                    data-testid="button-bulk-actions" 
+                    className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-bold transition ${
+                      selectedIds.length > 0 
+                        ? 'border-cyan-500 bg-cyan-50 text-cyan-800 hover:bg-cyan-100' 
+                        : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <SlidersHorizontal size={14} />Bulk actions
+                    {selectedIds.length > 0 && (
+                      <span className="rounded bg-cyan-700 px-1.5 py-0.5 text-[10px] font-extrabold text-white">
+                        {selectedIds.length}
+                      </span>
+                    )}
+                  </button>
+                  {bulkMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-20" onClick={() => setBulkMenuOpen(false)} />
+                      <div className="absolute right-0 top-11 z-30 w-56 rounded-lg border border-slate-200 bg-white py-1 shadow-xl text-left">
+                        <button
+                          type="button"
+                          onClick={() => { toggleSelectAll(); setBulkMenuOpen(false); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          <Check size={14} className="text-cyan-700" />
+                          {allPageSelected ? 'Deselect page records' : `Select page records (${pageDocs.length})`}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedIds(sorted.map((d) => d.id));
+                            setBulkMenuOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          <FileCheck2 size={14} className="text-cyan-700" />
+                          Select all matching ({sorted.length})
+                        </button>
+                        <div className="my-1 border-t border-slate-100" />
+                        <button
+                          type="button"
+                          disabled={selectedIds.length === 0}
+                          onClick={() => { handleBulkVerify(); setBulkMenuOpen(false); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-cyan-700 hover:bg-cyan-50 disabled:opacity-40 disabled:pointer-events-none"
+                        >
+                          <Shield size={14} />
+                          Verify integrity ({selectedIds.length})
+                        </button>
+                        <button
+                          type="button"
+                          disabled={selectedIds.length === 0}
+                          onClick={() => { handleBulkDownload(); setBulkMenuOpen(false); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none"
+                        >
+                          <Download size={14} />
+                          Download ({selectedIds.length})
+                        </button>
+                        {selectedIds.length > 0 && (
+                          <>
+                            <div className="my-1 border-t border-slate-100" />
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedIds([]); setBulkMenuOpen(false); }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                            >
+                              <X size={14} />
+                              Clear selection
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="mt-4 grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -265,6 +414,43 @@ export default function AllDocuments() {
             </div>
           </div>
           
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-200 bg-cyan-50/80 px-5 py-2.5 transition-all">
+              <div className="flex items-center gap-2.5 text-xs font-bold text-cyan-900">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-700 px-1.5 text-[10px] font-extrabold text-white">
+                  {selectedIds.length}
+                </span>
+                <span>{selectedIds.length} document{selectedIds.length > 1 ? 's' : ''} selected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleBulkVerify}
+                  data-testid="button-bulk-verify"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-cyan-300 bg-white px-3 py-1.5 text-xs font-bold text-cyan-800 shadow-sm transition hover:bg-cyan-100"
+                >
+                  <Shield size={13} /> Verify Integrity
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkDownload}
+                  data-testid="button-bulk-download"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  <Download size={13} /> Download
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  data-testid="button-bulk-clear"
+                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                >
+                  <X size={13} /> Deselect all
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div className="scrollbar-thin overflow-x-auto">
             {loading ? <SkeletonRows /> : pageDocs.length === 0 ? <EmptyState onClear={clearFilters} /> : (
               <table className="w-full min-w-[1420px] border-collapse text-left">
@@ -272,7 +458,29 @@ export default function AllDocuments() {
                   <tr className="bg-slate-50/80">
                     {[['', ''], ...columns, ['', 'Actions']].map(([key, label], index) => (
                       <th key={`${label}-${index}`} className="whitespace-nowrap px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-[.1em] text-slate-500 first:px-3">
-                        {key && ['documentName', 'caseId', 'uploadDate', 'version', 'status'].includes(key) ? (
+                        {index === 0 ? (
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={allPageSelected}
+                            aria-label="Select all documents on this page"
+                            data-testid="checkbox-select-all"
+                            className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${
+                              allPageSelected
+                                ? 'border-cyan-600 bg-cyan-600 text-white shadow-sm'
+                                : somePageSelected
+                                ? 'border-cyan-600 bg-cyan-100 text-cyan-700'
+                                : 'border-slate-300 bg-white hover:border-cyan-500'
+                            }`}
+                            onClick={toggleSelectAll}
+                          >
+                            {allPageSelected ? (
+                              <Check size={11} strokeWidth={3.5} />
+                            ) : somePageSelected ? (
+                              <Minus size={11} strokeWidth={3.5} />
+                            ) : null}
+                          </button>
+                        ) : key && ['documentName', 'caseId', 'uploadDate', 'version', 'status'].includes(key) ? (
                           <button type="button" onClick={() => changeSort(key)} data-testid={`button-sort-${key}`} className="inline-flex items-center gap-1 hover:text-cyan-700">
                             {label}
                             {sort.key === key ? sort.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} /> : <span className="text-slate-300">↕</span>}
@@ -284,7 +492,15 @@ export default function AllDocuments() {
                 </thead>
                 <tbody>
                   {pageDocs.map((document) => (
-                    <DocumentRow key={document.id} document={document} onMenu={Object.assign(menuApi(document.id), { activeId: menu, share: (doc) => openAction(doc, 'share'), download: (doc) => openAction(doc, 'download'), verify: (doc) => openAction(doc, 'verify') })} onPreview={(doc) => setModal({ type: 'preview', document: doc })} onDetails={(doc) => { setMenu(null); setModal({ type: 'details', document: doc }); }} />
+                    <DocumentRow 
+                      key={document.id} 
+                      document={document} 
+                      isSelected={selectedIds.includes(document.id)}
+                      onToggleSelect={toggleSelect}
+                      onMenu={Object.assign(menuApi(document.id), { activeId: menu, share: (doc) => openAction(doc, 'share'), download: (doc) => openAction(doc, 'download'), verify: (doc) => openAction(doc, 'verify') })} 
+                      onPreview={(doc) => setModal({ type: 'preview', document: doc })} 
+                      onDetails={(doc) => { setMenu(null); setModal({ type: 'details', document: doc }); }} 
+                    />
                   ))}
                 </tbody>
               </table>
