@@ -64,6 +64,25 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
+      cors:
+        specifier: ^2.8.6
+        version: 2.8.6
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
+      mongoose:
+        specifier: ^9.9.4
+        version: 9.9.4
+      multer:
+        specifier: ^2.3.0
+        version: 2.3.0
     devDependencies:
       prettier:
         specifier: ^3.9.6

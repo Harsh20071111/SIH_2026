@@ -100,9 +100,15 @@ export const documentService = {
           versionHistory: doc.versionHistory || [
             {
               version: doc.version || 1,
-              date: doc.uploadDate
-                ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(doc.uploadDate))
-                : 'Unknown',
+              date: (() => {
+                try {
+                  const d = new Date(doc.uploadDate || doc.createdAt || Date.now());
+                  if (isNaN(d.getTime())) return 'Recently';
+                  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d);
+                } catch {
+                  return 'Recently';
+                }
+              })(),
               user: doc.uploadedBy || 'Unknown',
               note: 'Initial upload',
             },
