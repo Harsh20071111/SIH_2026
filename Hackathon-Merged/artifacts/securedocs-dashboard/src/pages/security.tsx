@@ -80,7 +80,7 @@ export default function SecurityDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-900">
-              {events.filter(e => (e.riskLevel === 'HIGH' || e.riskLevel === 'CRITICAL') && e.status !== 'Resolved').length}
+              {events.filter(e => (String(e.riskLevel).toUpperCase() === 'HIGH' || String(e.riskLevel).toUpperCase() === 'CRITICAL') && e.status !== 'Resolved').length}
             </div>
           </CardContent>
         </Card>
@@ -92,7 +92,7 @@ export default function SecurityDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-amber-900">
-              {events.filter(e => e.status === 'Open' || e.status === 'Monitoring').length}
+              {events.filter(e => e.status === 'Monitoring' || (e.status as string) === 'Open').length}
             </div>
           </CardContent>
         </Card>

@@ -46,19 +46,32 @@ function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
           This part of the app hit an error. The rest of the app is still
           running.
         </p>
-        {/* Dev only: messages can carry API responses and other internals. */}
-        {import.meta.env.DEV ? (
-          <pre className="mt-4 overflow-x-auto rounded bg-gray-100 p-3 text-left text-xs text-gray-800">
+        <details className="mt-4 text-left border border-gray-200 rounded-lg p-2 bg-gray-100">
+          <summary className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-900 select-none">
+            Error Details
+          </summary>
+          <pre className="mt-2 overflow-x-auto rounded bg-white p-3 text-left text-xs text-red-600 font-mono border border-gray-200">
             {error.message || String(error)}
           </pre>
-        ) : null}
-        <button
-          type="button"
-          onClick={resetError}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
-        >
-          Try again
-        </button>
+        </details>
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={resetError}
+            className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+          >
+            Try again
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = '/dashboard';
+            }}
+            className="rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Go to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );

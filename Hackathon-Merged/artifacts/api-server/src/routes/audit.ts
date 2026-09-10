@@ -66,4 +66,56 @@ router.get(
   }
 );
 
+/**
+ * GET /api/audit/verify
+ * Alias for verify-chain.
+ */
+router.get(
+  "/audit/verify",
+  requireAuth,
+  async (_req: Request, res: Response) => {
+    try {
+      const result = await verifyAuditChain();
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to verify audit chain." });
+    }
+  }
+);
+
+/**
+ * POST /api/audit/simulate-tamper
+ * Controlled demonstration endpoint to manually tamper with an audit record.
+ */
+router.post(
+  "/audit/simulate-tamper",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const { type } = req.body; // 'tamper' or 'repair'
+      
+      const latest = await AuditLog.findOne().sort({ timestamp: -1 });
+      if (!latest) {
+        res.status(400).json({ error: "No audit logs found." });
+        return;
+      }
+
+      if (type === "tamper") {
+        await AuditLog.updateOne({ _id: latest._id }, { $set: { action: "TAMPERED_ACTION", "metadata.originalAction": latest.action } });
+        res.json({ message: "Tampered successfully", recordId: latest._id });
+      } else if (type === "repair") {
+        // We don't easily know the original action, but we can assume it was "DOCUMENT_UPLOADED" or similar.
+        // Actually, for demo purposes, we should save the original action in metadata when tampering.
+        const originalAction = latest.metadata?.originalAction || "SYSTEM_EVENT";
+        await AuditLog.updateOne({ _id: latest._id }, { $set: { action: originalAction }, $unset: { "metadata.originalAction": "" } });
+        res.json({ message: "Repaired successfully", recordId: latest._id });
+      } else {
+        res.status(400).json({ error: "Invalid type" });
+      }
+    } catch (err) {
+      res.status(500).json({ error: "Failed to simulate tampering." });
+    }
+  }
+);
+
 export default router;

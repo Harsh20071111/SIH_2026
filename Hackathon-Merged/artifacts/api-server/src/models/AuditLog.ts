@@ -14,6 +14,9 @@ export interface IAuditLog extends Document {
   previousHash: string | null;
   eventHash: string;
   timestamp: Date;
+  sequenceNumber?: number;
+  resourceType?: string;
+  resourceId?: string;
 }
 
 const auditLogSchema = new Schema<IAuditLog>({
@@ -30,6 +33,9 @@ const auditLogSchema = new Schema<IAuditLog>({
   previousHash: { type: String, default: null },
   eventHash: { type: String, required: true },
   timestamp: { type: Date, default: Date.now, index: true },
+  sequenceNumber: { type: Number, index: true },
+  resourceType: { type: String, default: "SYSTEM", index: true },
+  resourceId: { type: String, default: "" },
 });
 
 auditLogSchema.index({ timestamp: -1 });

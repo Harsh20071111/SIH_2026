@@ -12,6 +12,7 @@
     "watch:audit:cloud": "node scripts/live-audit.mjs --cloud",
     "audit:status": "node scripts/audit-cli.mjs",
     "audit:live": "node scripts/audit-cli.mjs --live",
+    "audit:tamper-demo": "node scripts/tamper-demo.mjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"

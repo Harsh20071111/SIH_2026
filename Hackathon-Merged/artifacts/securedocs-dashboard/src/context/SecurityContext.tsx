@@ -22,8 +22,10 @@ export type SecurityEvent = {
   riskLevel: 'High' | 'Medium' | 'Low';
   riskScore: number;
   sourceIp: string;
+  ipAddress?: string;
   status: 'Monitoring' | 'Resolved';
   userId: string;
+  userName?: string;
   action: string;
   caseId: string;
   details: string;
@@ -57,6 +59,24 @@ const defaultEnabled: RiskEnabled = {
   unassignedCase: true,
   failedAttempts: true,
 };
+
+function parseTimeStringToIso(timeStr: string, baseDate = '2024-06-18'): string {
+  try {
+    const parts = (timeStr || '').trim().split(/\s+/);
+    if (parts.length === 2) {
+      const [timePart, meridiem] = parts;
+      const [rawH, rawM] = timePart.split(':').map(Number);
+      let hours = isNaN(rawH) ? 12 : rawH;
+      const minutes = isNaN(rawM) ? 0 : rawM;
+      if (meridiem.toUpperCase() === 'PM' && hours < 12) hours += 12;
+      if (meridiem.toUpperCase() === 'AM' && hours === 12) hours = 0;
+      const hh = String(hours).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+      return `${baseDate}T${hh}:${mm}:00.000Z`;
+    }
+  } catch {}
+  return new Date().toISOString();
+}
 
 const SecurityContext = createContext<SecurityContextType | undefined>(undefined);
 
@@ -136,13 +156,15 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       return {
         _id: act.id,
-        timestamp: new Date(`2024-06-18T${act.time.replace(' ', '')}`).toISOString(),
+        timestamp: parseTimeStringToIso(act.time),
         type,
         riskLevel,
         riskScore: score,
         sourceIp: `192.168.1.${100 + index}`,
+        ipAddress: `192.168.1.${100 + index}`,
         status: existingEvent ? existingEvent.status : (riskLevel === 'Low' ? 'Resolved' : 'Monitoring'),
         userId: act.user,
+        userName: act.user,
         action: act.action,
         caseId: act.caseId,
         details: `${act.action} on ${act.document}`,
