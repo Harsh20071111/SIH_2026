@@ -80,23 +80,6 @@ function parseTimeStringToIso(timeStr: string, baseDate = '2024-06-18'): string 
 
 const SecurityContext = createContext<SecurityContextType | undefined>(undefined);
 
-function parseTimeToISO(timeStr: string): string {
-  try {
-    const parts = (timeStr || '').trim().split(' ');
-    const timeParts = (parts[0] || '12:00').split(':');
-    let hours = parseInt(timeParts[0], 10) || 12;
-    const minutes = parseInt(timeParts[1] || '0', 10) || 0;
-    const ampm = (parts[1] || '').toUpperCase();
-    if (ampm === 'PM' && hours < 12) hours += 12;
-    if (ampm === 'AM' && hours === 12) hours = 0;
-    const d = new Date();
-    d.setHours(hours, minutes, 0, 0);
-    return d.toISOString();
-  } catch {
-    return new Date().toISOString();
-  }
-}
-
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [riskRules, setRiskRules] = useState<RiskRules>(() => {
     const saved = localStorage.getItem('securedocs_risk_rules');
@@ -172,11 +155,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       return {
         _id: act.id,
-<<<<<<< HEAD
         timestamp: parseTimeStringToIso(act.time),
-=======
-        timestamp: parseTimeToISO(act.time),
->>>>>>> 42a9efd (fix(security-page): resolve invalid date parsing RangeError in SecurityContext and add null-safe timestamp formatting)
         type,
         riskLevel,
         riskScore: score,
