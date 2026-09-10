@@ -3,6 +3,7 @@ import styles from './reviews.module.css';
 import { mockReviews, type ReviewData, type ReviewStatus, type ReviewPriority } from '@/lib/reviews-data';
 import ReviewDetailsModal from './ReviewDetailsModal';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/services/api';
 import { 
   Search, ChevronDown, Clock, AlertTriangle, 
   Calendar, CheckCircle, Download, ChevronLeft, ChevronRight 
@@ -116,7 +117,6 @@ export default function Reviews({ role }: { role: Role }) {
 
     // Persist to the API
     try {
-      const { api } = await import('@/services/api');
       await api.patch(`/reviews/${id}`, { status: newStatus, comment: comments });
     } catch (err) {
       console.error('Failed to update review:', err);

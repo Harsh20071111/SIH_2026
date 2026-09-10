@@ -32,7 +32,7 @@ const documentSchema = new Schema<IDocument>(
     caseId: { type: String, required: true },
     documentType: { type: String, required: true },
     description: { type: String, default: "" },
-    firebaseStoragePath: { type: String, required: true },
+    firebaseStoragePath: { type: String, default: "" },
     originalFilename: { type: String, required: true },
     mimeType: { type: String, default: "application/octet-stream" },
     size: { type: Number, default: 0 },

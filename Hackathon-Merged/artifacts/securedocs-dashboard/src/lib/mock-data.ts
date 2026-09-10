@@ -75,8 +75,8 @@ export const alerts: Alert[] = [
 export const documents = ['FIR_1024.pdf', 'Evidence_Report.pdf', 'Witness_Statement.pdf', 'Forensic_Report.pdf', 'Charge_Sheet.pdf', 'Court_Filing.pdf'];
 
 export const quickActions = [
-  { label: 'Upload document', sub: 'Add to a protected case', href: '/upload', icon: 'upload' },
-  { label: 'Review queue', sub: '12 items due today', href: '/reviews', icon: 'clipboard' },
+  { label: 'Upload document', sub: 'Add to a protected case', href: '/documents', icon: 'upload' },
+  { label: 'Review queue', sub: 'Active review queue', href: '/reviews', icon: 'clipboard' },
   { label: 'Run integrity check', sub: 'Verify chain of custody', href: '/integrity', icon: 'scan' },
   { label: 'Export report', sub: 'Generate an audit-ready brief', href: '/reports', icon: 'download' },
 ];
@@ -97,14 +97,15 @@ export const navGroups = [
       { label: 'Document Repository', href: '/documents', icon: 'files' },
       { label: 'Document Reviews', href: '/reviews', icon: 'clipboard' },
       { label: 'Security & Access', href: '/security', icon: 'lock' },
+      { label: 'User Management', href: '/users', icon: 'users' },
     ],
   },
   {
     label: 'Controls & Audits',
     items: [
+      { label: 'SHA-256 Integrity Verification', href: '/integrity', icon: 'shield' },
       { label: 'Audit Logs', href: '/audit-logs', icon: 'history' },
       { label: 'Audit Chain Verification', href: '/audit-logs/verify', icon: 'shield' },
-      { label: 'Integrity Monitoring', href: '/integrity', icon: 'shield' },
       { label: 'Compliance Dashboard', href: '/compliance', icon: 'check' },
       { label: 'Reports & Analytics', href: '/reports', icon: 'chart' },
       { label: 'One-Click Integrity Report', href: '/reports/integrity/C-1024', icon: 'clipboard' },
@@ -114,8 +115,8 @@ export const navGroups = [
     label: 'Administration',
     items: [
       { label: 'Users & Roles', href: '/users', icon: 'users', adminOnly: true },
+      { label: 'Compliance', href: '/compliance', icon: 'check', adminOnly: true },
       { label: 'System Settings', href: '/settings', icon: 'settings', adminOnly: true },
-      { label: 'Retention & Archive', href: '/retention', icon: 'history', adminOnly: true },
     ],
   },
 ] as const;

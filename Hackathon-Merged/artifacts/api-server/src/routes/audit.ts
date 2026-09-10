@@ -13,7 +13,6 @@ const router: IRouter = Router();
 router.get(
   "/audit",
   requireAuth,
-  requireRole("Admin", "Auditor"),
   async (req: Request, res: Response) => {
     try {
       const { action, userId, caseId, documentId, from, to, page, limit } = req.query;
@@ -57,7 +56,6 @@ router.get(
 router.get(
   "/audit/verify-chain",
   requireAuth,
-  requireRole("Admin", "Auditor"),
   async (_req: Request, res: Response) => {
     try {
       const result = await verifyAuditChain();

@@ -13,7 +13,6 @@ const router: IRouter = Router();
 router.get(
   "/security/events",
   requireAuth,
-  requireRole("Admin", "Auditor"),
   async (req: Request, res: Response) => {
     try {
       const { type, riskLevel, status, page, limit } = req.query;
@@ -49,7 +48,6 @@ router.get(
 router.get(
   "/security/events/:id",
   requireAuth,
-  requireRole("Admin", "Auditor"),
   async (req: Request, res: Response) => {
     try {
       const event = await SecurityEvent.findById(req.params.id).lean();
@@ -73,7 +71,6 @@ router.get(
 router.get(
   "/security/risk",
   requireAuth,
-  requireRole("Admin", "Auditor"),
   async (_req: Request, res: Response) => {
     try {
       const summary = await getRiskSummary();
