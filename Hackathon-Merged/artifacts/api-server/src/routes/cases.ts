@@ -190,4 +190,39 @@ router.patch("/cases/:id", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * DELETE /api/cases/:id
+ * Archive a case.
+ */
+router.delete("/cases/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const caseRecord = await Case.findOneAndUpdate(
+      { caseId: req.params.id },
+      { status: "Archived" },
+      { new: true }
+    );
+
+    if (!caseRecord) {
+      res.status(404).json({ error: "Case not found." });
+      return;
+    }
+
+    try {
+      await createAuditEvent({
+        action: "CASE_ARCHIVED",
+        userId: req.user!.userId,
+        userName: req.user!.name,
+        userRole: req.user!.role,
+        caseId: caseRecord.caseId,
+        result: "Success",
+        ipAddress: getClientIp(req),
+      });
+    } catch (_) {}
+
+    res.json({ message: "Case successfully archived.", case: caseRecord });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to archive case." });
+  }
+});
+
 export default router;

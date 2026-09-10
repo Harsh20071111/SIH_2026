@@ -326,6 +326,100 @@ router.get("/documents/:id/versions", requireAuth, async (req: Request, res: Res
 });
 
 /**
+ * POST /api/documents/:id/versions
+ * Upload a new version for an existing document.
+ */
+router.post(
+  "/documents/:id/versions",
+  requireAuth,
+  upload.single("file"),
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: "No file provided for new version." });
+        return;
+      }
+
+      const doc = await SecureDocument.findOne({ documentId: req.params.id });
+      if (!doc) {
+        res.status(404).json({ error: "Document not found." });
+        return;
+      }
+
+      const { changeDescription } = req.body;
+      const newVersionNum = (doc.version || 1) + 1;
+
+      // Compute SHA-256 for the new version buffer
+      const fileHash = crypto
+        .createHash("sha256")
+        .update(req.file.buffer)
+        .digest("hex");
+
+      const safeFilename = `${doc.documentId}_v${newVersionNum}_${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const storagePath = `documents/${doc.caseId}/${safeFilename}`;
+
+      const firebasePath = await uploadToFirebase(
+        req.file.buffer,
+        storagePath,
+        req.file.mimetype
+      );
+
+      // Create new version history record
+      const versionRecord = await DocumentVersion.create({
+        documentId: doc.documentId,
+        version: newVersionNum,
+        hash: fileHash,
+        firebaseStoragePath: firebasePath,
+        uploadedBy: req.user!.name,
+        changeDescription: changeDescription || `Updated to version ${newVersionNum}`,
+        size: req.file.size,
+      });
+
+      // Update the main document record
+      doc.version = newVersionNum;
+      doc.hash = fileHash;
+      doc.size = req.file.size;
+      doc.mimeType = req.file.mimetype;
+      doc.firebaseStoragePath = firebasePath;
+      doc.originalFilename = req.file.originalname;
+      doc.lastModified = new Date();
+      doc.lastAccessedBy = req.user!.name;
+      doc.lastAccessed = new Date();
+      doc.status = "Pending Review";
+      doc.integrity = "Verified";
+      await doc.save();
+
+      // Audit event
+      try {
+        await createAuditEvent({
+          action: "DOCUMENT_UPDATED",
+          userId: req.user!.userId,
+          userName: req.user!.name,
+          userRole: req.user!.role,
+          caseId: doc.caseId,
+          documentId: doc.documentId,
+          result: "Success",
+          ipAddress: getClientIp(req),
+          metadata: {
+            newVersion: newVersionNum,
+            hash: fileHash,
+            size: req.file.size,
+            changeDescription: changeDescription || `Updated to version ${newVersionNum}`,
+          },
+        });
+      } catch (_) {}
+
+      res.status(201).json({
+        document: doc,
+        version: versionRecord,
+      });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to upload new document version." });
+    }
+  }
+);
+
+/**
  * POST /api/documents/:id/verify-integrity
  * Verify document integrity by comparing stored hash with recomputed SHA-256.
  */
