@@ -93,29 +93,29 @@ export const navGroups = [
     label: 'Workspace',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: 'layout' },
+      { label: 'Cases & Investigations', href: '/cases', icon: 'briefcase' },
       { label: 'Document Repository', href: '/documents', icon: 'files' },
-      { label: 'Document Review', href: '/reviews/C-1024', icon: 'clipboard' },
-      { label: 'Access Control', href: '/security', icon: 'lock' },
-      { label: 'User Management', href: '/users', icon: 'users' },
+      { label: 'Document Reviews', href: '/reviews', icon: 'clipboard' },
+      { label: 'Security & Access', href: '/security', icon: 'lock' },
     ],
   },
   {
     label: 'Controls & Audits',
     items: [
-      { label: 'Security Monitoring', href: '/integrity', icon: 'shield' },
       { label: 'Audit Logs', href: '/audit-logs', icon: 'history' },
+      { label: 'Audit Chain Verification', href: '/audit-logs/verify', icon: 'shield' },
+      { label: 'Integrity Monitoring', href: '/integrity', icon: 'shield' },
       { label: 'Compliance Dashboard', href: '/compliance', icon: 'check' },
-      { label: 'Reports', href: '/reports', icon: 'chart' },
+      { label: 'Reports & Analytics', href: '/reports', icon: 'chart' },
       { label: 'One-Click Integrity Report', href: '/reports/integrity/C-1024', icon: 'clipboard' },
     ],
   },
   {
     label: 'Administration',
     items: [
-      { label: 'Users & roles', href: '/users', icon: 'users', adminOnly: true },
-      { label: 'Compliance', href: '/compliance', icon: 'check', adminOnly: true },
+      { label: 'Users & Roles', href: '/users', icon: 'users', adminOnly: true },
+      { label: 'System Settings', href: '/settings', icon: 'settings', adminOnly: true },
       { label: 'Retention & Archive', href: '/retention', icon: 'history', adminOnly: true },
-      { label: 'Settings', href: '/settings', icon: 'settings', adminOnly: true },
     ],
   },
 ] as const;

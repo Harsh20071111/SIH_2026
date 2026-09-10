@@ -151,7 +151,7 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
                           {item.label}
                         </span>
                       )}
-                      {badge && !collapsed && (
+                      {Boolean(badge) && !collapsed && (
                         <span
                           className={`ml-auto flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 font-mono text-[10px] font-bold leading-none ${
                             active
@@ -159,7 +159,7 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
                               : 'bg-sidebar-primary/15 text-sidebar-primary group-hover:bg-sidebar-primary/25'
                           }`}
                         >
-                          {badge}
+                          {String(badge)}
                         </span>
                       )}
                     </Link>

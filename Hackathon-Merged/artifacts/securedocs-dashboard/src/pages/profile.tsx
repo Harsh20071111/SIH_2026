@@ -50,6 +50,17 @@ export default function Profile() {
     setShowConfirmPassword(false);
   };
 
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsEditProfileOpen(false);
+    toast({
+      title: "Profile updated successfully.",
+      description: "Your profile information has been saved.",
+      variant: "default",
+      className: "bg-green-50 border-green-200 text-green-900",
+    });
+  };
+
   useEffect(() => {
     if (isChangePasswordOpen) {
       resetPasswordForm();
