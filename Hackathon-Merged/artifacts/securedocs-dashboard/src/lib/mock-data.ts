@@ -3,36 +3,36 @@ export type Role = 'Admin' | 'Officer' | 'Legal Reviewer' | 'Clerk' | 'Auditor';
 export const roles: Role[] = ['Admin', 'Officer', 'Legal Reviewer', 'Clerk', 'Auditor'];
 
 export const stats = [
-  { label: 'Total cases', value: '128', change: '+8 this month', tone: 'blue', icon: 'briefcase' },
-  { label: 'Total documents', value: '4,820', change: '+124 this month', tone: 'cyan', icon: 'files' },
-  { label: 'Pending reviews', value: '43', change: '12 due today', tone: 'amber', icon: 'clipboard' },
-  { label: 'Integrity issues', value: '3', change: 'Requires attention', tone: 'red', icon: 'shield' },
-  { label: 'Suspicious activities', value: '11', change: '3 high risk', tone: 'red', icon: 'activity' },
+  { label: 'Total cases', value: '0', change: 'Live total', tone: 'blue', icon: 'briefcase' },
+  { label: 'Total documents', value: '0', change: 'Live total', tone: 'cyan', icon: 'files' },
+  { label: 'Pending reviews', value: '0', change: '0 pending', tone: 'amber', icon: 'clipboard' },
+  { label: 'Integrity issues', value: '0', change: 'System clean', tone: 'red', icon: 'shield' },
+  { label: 'Suspicious activities', value: '0', change: 'No alerts', tone: 'red', icon: 'activity' },
 ] as const;
 
 export const documentTypes = [
-  ['FIR / Police Reports', 850],
-  ['Investigation Records', 720],
-  ['Witness Statements', 640],
-  ['Evidence Records', 910],
-  ['Forensic Reports', 430],
-  ['Court Filings', 520],
-  ['Legal Notices', 350],
-  ['Judgments', 400],
+  ['FIR / Police Reports', 0],
+  ['Investigation Records', 0],
+  ['Witness Statements', 0],
+  ['Evidence Records', 0],
+  ['Forensic Reports', 0],
+  ['Court Filings', 0],
+  ['Legal Notices', 0],
+  ['Judgments', 0],
 ] as const;
 
 export const caseStatuses = [
-  ['Active', 58, 'bg-cyan-500'],
-  ['Under Investigation', 32, 'bg-blue-700'],
-  ['Under Review', 18, 'bg-amber-500'],
-  ['Closed', 15, 'bg-emerald-500'],
-  ['Archived', 5, 'bg-slate-400'],
+  ['Active', 0, 'bg-cyan-500'],
+  ['Under Investigation', 0, 'bg-blue-700'],
+  ['Under Review', 0, 'bg-amber-500'],
+  ['Closed', 0, 'bg-emerald-500'],
+  ['Archived', 0, 'bg-slate-400'],
 ] as const;
 
 export const riskDistribution = [
-  { label: 'Low', value: 109, color: '#2f9b72' },
-  { label: 'Medium', value: 14, color: '#d49a28' },
-  { label: 'High', value: 5, color: '#c94b4b' },
+  { label: 'Low', value: 0, color: '#2f9b72' },
+  { label: 'Medium', value: 0, color: '#d49a28' },
+  { label: 'High', value: 0, color: '#c94b4b' },
 ];
 
 export type Activity = {
@@ -46,14 +46,7 @@ export type Activity = {
   status: 'Successful' | 'Verified' | 'Blocked';
 };
 
-export const activities: Activity[] = [
-  { id: 'act-1', time: '10:32 AM', user: 'Officer A', initials: 'OA', action: 'Uploaded document', document: 'Evidence.pdf', caseId: 'C-1024', status: 'Successful' },
-  { id: 'act-2', time: '10:18 AM', user: 'Reviewer B', initials: 'RB', action: 'Approved document', document: 'FIR.pdf', caseId: 'C-1024', status: 'Successful' },
-  { id: 'act-3', time: '09:45 AM', user: 'Officer C', initials: 'OC', action: 'Viewed document', document: 'WitnessStatement.pdf', caseId: 'C-1025', status: 'Successful' },
-  { id: 'act-4', time: '09:30 AM', user: 'Officer A', initials: 'OA', action: 'Downloaded document', document: 'ForensicReport.pdf', caseId: 'C-1024', status: 'Successful' },
-  { id: 'act-5', time: '09:12 AM', user: 'Unknown / Officer C', initials: 'UC', action: 'Attempted restricted access', document: 'Restricted document', caseId: 'C-1026', status: 'Blocked' },
-  { id: 'act-6', time: '08:55 AM', user: 'Auditor A', initials: 'AA', action: 'Verified document integrity', document: 'Evidence_Report.pdf', caseId: 'C-1023', status: 'Verified' },
-];
+export const activities: Activity[] = [];
 
 export type Alert = {
   id: string;
@@ -65,14 +58,9 @@ export type Alert = {
   cta: string;
 };
 
-export const alerts: Alert[] = [
-  { id: 'alert-1', severity: 'Critical', title: 'Suspicious access pattern detected', description: 'Repeated access attempts from an unrecognized device were observed against the active case workspace.', meta: '9 minutes ago · 4 attempts · C-1024', score: 91, cta: 'Investigate activity' },
-  { id: 'alert-2', severity: 'High', title: 'Document integrity issue', description: 'Hash mismatch detected on a version of Evidence_v3.pdf. Review the chain of custody before proceeding.', meta: '42 minutes ago · Evidence_v3.pdf · C-1024', cta: 'Review integrity' },
-  { id: 'alert-3', severity: 'High', title: 'Unauthorized access attempt', description: 'A restricted legal filing was requested by a user outside the assigned case team.', meta: '1 hour ago · Legal Reviewer · C-1027', cta: 'View audit log' },
-  { id: 'alert-4', severity: 'Medium', title: 'Excessive downloads', description: 'Download volume exceeded the normal threshold for one user during the last 24 hours.', meta: '3 hours ago · 34 downloads · Officer', score: 78, cta: 'Review downloads' },
-];
+export const alerts: Alert[] = [];
 
-export const documents = ['FIR_1024.pdf', 'Evidence_Report.pdf', 'Witness_Statement.pdf', 'Forensic_Report.pdf', 'Charge_Sheet.pdf', 'Court_Filing.pdf'];
+export const documents: string[] = [];
 
 export const quickActions = [
   { label: 'Upload document', sub: 'Add to a protected case', href: '/documents', icon: 'upload' },

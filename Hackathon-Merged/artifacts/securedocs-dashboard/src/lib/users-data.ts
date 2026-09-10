@@ -41,42 +41,18 @@ export interface CaseOption {
   label: string;
 }
 
-export const availableCases: CaseOption[] = [
-  { id: 'C-1024', label: 'Theft Investigation' },
-  { id: 'C-1025', label: 'Fraud Investigation' },
-  { id: 'C-1026', label: 'Financial Investigation' },
-];
+export const availableCases: CaseOption[] = [];
 
 export const defaultUsers: UserData[] = [
   {
-    id: 'USR-001',
-    name: 'Officer A',
-    employeeId: 'EMP-1001',
-    email: 'officer.a@securedocs.gov.in',
-    role: 'Officer',
-    department: 'Investigation',
+    id: '6aa29cc453a9d8e2a85689f9',
+    name: 'Harsh_2007',
+    employeeId: 'Harsh_2007',
+    email: 'harsh_2007@securedocs.gov',
+    role: 'Admin',
+    department: 'Administration',
     status: 'Active',
-    assignedCases: ['C-1024'],
-  },
-  {
-    id: 'USR-002',
-    name: 'Reviewer B',
-    employeeId: 'EMP-1002',
-    email: 'reviewer.b@securedocs.gov.in',
-    role: 'Legal Reviewer',
-    department: 'Legal',
-    status: 'Active',
-    assignedCases: ['C-1024', 'C-1025'],
-  },
-  {
-    id: 'USR-003',
-    name: 'Auditor C',
-    employeeId: 'EMP-1003',
-    email: 'auditor.c@securedocs.gov.in',
-    role: 'Auditor',
-    department: 'Audit',
-    status: 'Active',
-    assignedCases: ['C-1026'],
+    assignedCases: [],
   },
 ];
 
