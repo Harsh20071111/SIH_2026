@@ -184,7 +184,28 @@ export default function AuditChainVerification() {
     return () => clearInterval(id);
   }, []);
 
-  const handleAction = (msg: string) => toast({ title: msg, duration: 3000 });
+  const handleAction = (msg: string) => {
+    toast({ title: msg, duration: 3000 });
+    if (msg.includes('audit report')) {
+      import('@/lib/exportUtils').then(({ generateAndDownloadFile, getMockPdfContent }) => {
+        generateAndDownloadFile(
+          'audit-report.pdf',
+          getMockPdfContent('Audit Chain Verification Report', 'Detailed audit logs and chain verification results.'),
+          'application/pdf',
+          () => toast({ title: 'Export Complete', description: 'Audit report downloaded successfully.' })
+        );
+      });
+    } else if (msg.includes('forensic report')) {
+      import('@/lib/exportUtils').then(({ generateAndDownloadFile, getMockPdfContent }) => {
+        generateAndDownloadFile(
+          'forensic-analysis.pdf',
+          getMockPdfContent('Forensic Analysis Report', 'Deep-dive anomaly analysis and system state.'),
+          'application/pdf',
+          () => toast({ title: 'Export Complete', description: 'Forensic report downloaded successfully.' })
+        );
+      });
+    }
+  };
   const integrity = isTampered ? 60 : 100;
 
   return (

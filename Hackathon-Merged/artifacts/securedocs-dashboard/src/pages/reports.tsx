@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
+import { generateAndDownloadFile, getMockPdfContent, getMockExcelContent, getMockCsvContent, getMockZipContent } from '@/lib/exportUtils';
 import {
   FileText, ShieldCheck, ShieldAlert, Download, FileSpreadsheet,
   FileCode, Archive, Calendar, Clock, CheckCircle2, AlertTriangle,
@@ -150,9 +151,43 @@ export default function Reports() {
 
   const handleExport = (format: string) => {
     toast({
-      title: `Exporting ${format} Report Package`,
-      description: `Compressing and downloading operational telemetry as ${format}...`,
+      title: `Exporting ${format} Report`,
+      description: `Generating and downloading ${format}...`,
     });
+    
+    let content: string | Blob;
+    let mimeType: string;
+    let extension: string;
+    
+    switch (format) {
+      case 'PDF':
+        content = getMockPdfContent('Operational Telemetry Report', 'Consolidated logs and system health.');
+        mimeType = 'application/pdf';
+        extension = 'pdf';
+        break;
+      case 'Excel':
+        content = getMockExcelContent('Operational Telemetry Report');
+        mimeType = 'application/vnd.ms-excel';
+        extension = 'xls';
+        break;
+      case 'CSV':
+        content = getMockCsvContent('Operational Telemetry Report');
+        mimeType = 'text/csv';
+        extension = 'csv';
+        break;
+      default: // Archive
+        content = getMockZipContent();
+        mimeType = 'application/zip';
+        extension = 'zip';
+    }
+    
+    generateAndDownloadFile(
+      `export-${format.toLowerCase().replace(/ /g, '-')}.${extension}`,
+      content,
+      mimeType,
+      () => toast({ title: 'Export Complete', description: `${format} successfully downloaded.` }),
+      () => toast({ title: 'Export Failed', description: `Could not download ${format}.`, variant: 'destructive' })
+    );
   };
 
   const handleAction = (label: string, desc: string) => {

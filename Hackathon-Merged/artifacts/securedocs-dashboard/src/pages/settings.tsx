@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Shield, AlertTriangle, FileText, Clock, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { useSecurity } from '@/context/SecurityContext';
 
 export default function Settings() {
   const { toast } = useToast();
@@ -18,20 +19,13 @@ export default function Settings() {
   const [sessionTimeout, setSessionTimeout] = useState('30');
   const [maxAttempts, setMaxAttempts] = useState('5');
   
-  // Risk Engine State
-  const [riskPoints, setRiskPoints] = useState({
-    unusualTime: 20,
-    excessiveDownloads: 25,
-    unassignedCase: 30,
-    failedAttempts: 20
-  });
-
-  const [riskEnabled, setRiskEnabled] = useState({
-    unusualTime: true,
-    excessiveDownloads: true,
-    unassignedCase: true,
-    failedAttempts: true
-  });
+  // Risk Engine State from Global Context
+  const { 
+    riskRules: riskPoints, 
+    setRiskRules: setRiskPoints, 
+    riskEnabled, 
+    setRiskEnabled 
+  } = useSecurity();
 
   // Document Settings State
   const [maxFileSize, setMaxFileSize] = useState('50');
