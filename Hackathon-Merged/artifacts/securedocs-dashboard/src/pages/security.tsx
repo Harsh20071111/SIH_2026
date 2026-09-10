@@ -36,7 +36,20 @@ export default function SecurityDashboard() {
     );
   }, [events, search]);
 
-  if (user?.role !== 'Admin' && user?.role !== 'Auditor') {
+  const formatTimestamp = (ts?: string) => {
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+    } catch {
+      return '—';
+    }
+  };
+
+  const userRole = (user?.role || '').toLowerCase();
+  const isAllowed = userRole === 'admin' || userRole === 'administrator' || userRole === 'auditor';
+
+  if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
         <ShieldAlert className="h-16 w-16 text-red-500" />
@@ -60,7 +73,7 @@ export default function SecurityDashboard() {
   const handleInvestigate = (event: any) => {
     toast({
       title: `Investigating: ${event.type}`,
-      description: `User: ${event.userName || 'Unknown'} · Risk: ${toTitleCase(event.riskLevel)} · ${new Date(event.timestamp).toLocaleString()}`,
+      description: `User: ${event.userName || event.userId || 'Unknown'} · Risk: ${toTitleCase(event.riskLevel)} · ${formatTimestamp(event.timestamp)}`,
     });
   };
 
@@ -148,15 +161,15 @@ export default function SecurityDashboard() {
               ) : (
                 filteredEvents.map((event) => (
                   <TableRow key={event._id}>
-                    <TableCell className="text-xs whitespace-nowrap">{new Date(event.timestamp).toLocaleString()}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatTimestamp(event.timestamp)}</TableCell>
                     <TableCell className="font-medium">{event.type}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={riskBadgeClass(event.riskLevel)}>
                         {toTitleCase(event.riskLevel)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{event.ipAddress || '—'}</TableCell>
-                    <TableCell className="text-xs">{event.userName || '—'}</TableCell>
+                    <TableCell className="font-mono text-xs">{event.ipAddress || event.sourceIp || '—'}</TableCell>
+                    <TableCell className="text-xs">{event.userName || event.userId || '—'}</TableCell>
                     <TableCell>
                       <Badge variant={event.status === 'Resolved' ? 'secondary' : 'default'}>
                         {event.status}

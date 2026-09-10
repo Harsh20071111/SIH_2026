@@ -19,16 +19,16 @@ export type SecurityEvent = {
   _id: string;
   timestamp: string;
   type: string;
-  riskLevel: 'High' | 'Medium' | 'Low';
+  riskLevel: 'High' | 'Medium' | 'Low' | 'HIGH' | 'CRITICAL' | 'MEDIUM' | 'LOW' | string;
   riskScore: number;
-  sourceIp: string;
+  sourceIp?: string;
   ipAddress?: string;
-  status: 'Monitoring' | 'Resolved';
-  userId: string;
+  status: 'Monitoring' | 'Resolved' | 'Open' | 'Investigating' | string;
+  userId?: string;
   userName?: string;
   action: string;
-  caseId: string;
-  details: string;
+  caseId?: string;
+  details?: string;
 };
 
 type SecurityContextType = {
@@ -80,6 +80,23 @@ function parseTimeStringToIso(timeStr: string, baseDate = '2024-06-18'): string 
 
 const SecurityContext = createContext<SecurityContextType | undefined>(undefined);
 
+function parseTimeToISO(timeStr: string): string {
+  try {
+    const parts = (timeStr || '').trim().split(' ');
+    const timeParts = (parts[0] || '12:00').split(':');
+    let hours = parseInt(timeParts[0], 10) || 12;
+    const minutes = parseInt(timeParts[1] || '0', 10) || 0;
+    const ampm = (parts[1] || '').toUpperCase();
+    if (ampm === 'PM' && hours < 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+    const d = new Date();
+    d.setHours(hours, minutes, 0, 0);
+    return d.toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [riskRules, setRiskRules] = useState<RiskRules>(() => {
     const saved = localStorage.getItem('securedocs_risk_rules');
@@ -121,10 +138,9 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         type = 'Failed Attempt';
       }
       if (act.action.includes('Downloaded') && riskEnabled.excessiveDownloads) {
-        // mock logic: if user is Officer A, apply download risk
         if (act.user === 'Officer A') {
-            score += riskRules.excessiveDownloads;
-            type = 'Excessive Downloads';
+          score += riskRules.excessiveDownloads;
+          type = 'Excessive Downloads';
         }
       }
       if (act.action.includes('Attempted restricted') && riskEnabled.unassignedCase) {
@@ -133,8 +149,8 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       // Simulate unusual time (e.g. before 9am or after 6pm)
-      const hour = parseInt(act.time.split(':')[0]);
-      const ampm = act.time.split(' ')[1];
+      const hour = parseInt(act.time.split(':')[0], 10) || 12;
+      const ampm = (act.time.split(' ')[1] || '').toUpperCase();
       if (riskEnabled.unusualTime) {
         if ((ampm === 'AM' && hour < 9) || (ampm === 'PM' && hour > 6)) {
           score += riskRules.unusualTime;
@@ -156,7 +172,11 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       return {
         _id: act.id,
+<<<<<<< HEAD
         timestamp: parseTimeStringToIso(act.time),
+=======
+        timestamp: parseTimeToISO(act.time),
+>>>>>>> 42a9efd (fix(security-page): resolve invalid date parsing RangeError in SecurityContext and add null-safe timestamp formatting)
         type,
         riskLevel,
         riskScore: score,
