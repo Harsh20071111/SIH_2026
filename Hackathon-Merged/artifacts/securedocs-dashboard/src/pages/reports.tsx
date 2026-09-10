@@ -123,6 +123,8 @@ export default function Reports() {
   const [selectedFormat, setSelectedFormat] = useState<'PDF' | 'Excel' | 'CSV'>('PDF');
   const [currentTime, setCurrentTime] = useState<string>('');
 
+  const [reportsList, setReportsList] = useState<RecentReport[]>(RECENT_REPORTS);
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -142,11 +144,68 @@ export default function Reports() {
 
     setTimeout(() => {
       setGeneratingReport(null);
-      toast({
-        title: "Report Generated Successfully",
-        description: `${reportTitle} is ready. Download initiated.`,
-      });
-    }, 1800);
+
+      const fmt = selectedFormat;
+      let content: string | Blob;
+      let mimeType: string;
+      let extension: string;
+
+      if (fmt === 'PDF') {
+        content = getMockPdfContent(reportTitle, 'Official cryptographically sealed report compiled by SecureDocs.');
+        mimeType = 'application/pdf';
+        extension = 'pdf';
+      } else if (fmt === 'Excel') {
+        content = getMockExcelContent(reportTitle);
+        mimeType = 'application/vnd.ms-excel';
+        extension = 'xls';
+      } else {
+        content = getMockCsvContent(reportTitle);
+        mimeType = 'text/csv';
+        extension = 'csv';
+      }
+
+      const reportId = `RPT-${Math.floor(1022 + Math.random() * 900)}`;
+      const safeFilename = `${reportTitle.replace(/[^a-zA-Z0-9_-]/g, '_')}_${reportId}.${extension}`;
+
+      generateAndDownloadFile(
+        safeFilename,
+        content,
+        mimeType,
+        () => {
+          toast({
+            title: "Report Generated & Saved",
+            description: `Saved to your device's Downloads folder and added to the Recent Reports archive.`,
+          });
+        },
+        () => {
+          toast({
+            title: "Export Failed",
+            description: "Could not initiate local browser download.",
+            variant: "destructive",
+          });
+        }
+      );
+
+      let reportType: RecentReport['type'] = 'Integrity';
+      if (reportTitle.toLowerCase().includes('audit')) reportType = 'Audit';
+      else if (reportTitle.toLowerCase().includes('security')) reportType = 'Security';
+      else if (reportTitle.toLowerCase().includes('case')) reportType = 'Case';
+
+      const newReport: RecentReport = {
+        id: reportId,
+        name: reportTitle,
+        type: reportType,
+        generatedBy: 'Auditor (You)',
+        role: 'Auditor',
+        date: 'Today · Just now',
+        size: fmt === 'PDF' ? '3.8 MB' : fmt === 'Excel' ? '1.4 MB' : '450 KB',
+        status: 'Completed',
+        format: fmt,
+        hash: `${Math.random().toString(16).substring(2, 8)}...${Math.random().toString(16).substring(2, 6)}`,
+      };
+
+      setReportsList((prev) => [newReport, ...prev]);
+    }, 1200);
   };
 
   const handleExport = (format: string) => {
@@ -185,8 +244,36 @@ export default function Reports() {
       `export-${format.toLowerCase().replace(/ /g, '-')}.${extension}`,
       content,
       mimeType,
-      () => toast({ title: 'Export Complete', description: `${format} successfully downloaded.` }),
+      () => toast({ title: 'Export Complete', description: `${format} successfully saved to Downloads folder.` }),
       () => toast({ title: 'Export Failed', description: `Could not download ${format}.`, variant: 'destructive' })
+    );
+  };
+
+  const handleDownloadExisting = (rpt: RecentReport) => {
+    let content: string | Blob;
+    let mimeType: string;
+    let extension: string;
+
+    if (rpt.format === 'PDF') {
+      content = getMockPdfContent(rpt.name, `Cryptographically sealed archival copy of ${rpt.name} (${rpt.id}).`);
+      mimeType = 'application/pdf';
+      extension = 'pdf';
+    } else if (rpt.format === 'Excel') {
+      content = getMockExcelContent(rpt.name);
+      mimeType = 'application/vnd.ms-excel';
+      extension = 'xls';
+    } else {
+      content = getMockCsvContent(rpt.name);
+      mimeType = 'text/csv';
+      extension = 'csv';
+    }
+
+    generateAndDownloadFile(
+      `${rpt.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${rpt.id}.${extension}`,
+      content,
+      mimeType,
+      () => toast({ title: 'Download Complete', description: `${rpt.name} downloaded to Downloads folder.` }),
+      () => toast({ title: 'Download Failed', description: 'Could not download file.', variant: 'destructive' })
     );
   };
 
@@ -197,7 +284,7 @@ export default function Reports() {
     });
   };
 
-  const filteredReports = RECENT_REPORTS.filter((rpt) => {
+  const filteredReports = reportsList.filter((rpt) => {
     const matchesTab = activeTab === 'All' || rpt.type === activeTab;
     const matchesSearch = rpt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           rpt.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1068,7 +1155,7 @@ export default function Reports() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => handleAction("Downloading Report", `Downloading ${rpt.name} (${rpt.format})...`)}
+                        onClick={() => handleDownloadExisting(rpt)}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-[#111827] shadow-xs hover:bg-[#2563EB] hover:text-white hover:border-[#2563EB] transition"
                       >
                         <Download size={13} />
