@@ -340,7 +340,7 @@ function UploadModal({ onClose, onUpload }) {
               data-testid="select-upload-document-type"
               className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-xs outline-none focus:border-cyan-500"
             >
-              {filterOptions.documentType.map((item) => (
+              {(filterOptions?.documentType || []).map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
@@ -354,7 +354,7 @@ function UploadModal({ onClose, onUpload }) {
             data-testid="select-upload-confidentiality"
             className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-xs outline-none focus:border-cyan-500"
           >
-            {filterOptions.confidentiality.map((item) => (
+            {(filterOptions?.confidentiality || []).map((item) => (
               <option key={item}>{item}</option>
             ))}
           </select>
@@ -1117,12 +1117,12 @@ export default function AllDocuments() {
               </div>
             </div>
             <div className="mt-4 grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              <SelectField label="Case ID" value={filters.caseId} onChange={(value) => setFilters({ ...filters, caseId: value })} options={caseIdOptions} testId="select-filter-case-id" />
-              <SelectField label="Document Type" value={filters.documentType} onChange={(value) => setFilters({ ...filters, documentType: value })} options={filterOptions.documentType} testId="select-filter-document-type" />
-              <SelectField label="Uploaded By" value={filters.uploadedBy} onChange={(value) => setFilters({ ...filters, uploadedBy: value })} options={filterOptions.uploadedBy} testId="select-filter-uploader" />
-              <SelectField label="Status" value={filters.status} onChange={(value) => setFilters({ ...filters, status: value })} options={filterOptions.status} testId="select-filter-status" />
-              <SelectField label="Integrity" value={filters.integrity} onChange={(value) => setFilters({ ...filters, integrity: value })} options={filterOptions.integrity} testId="select-filter-integrity" />
-              <SelectField label="Confidentiality" value={filters.confidentiality} onChange={(value) => setFilters({ ...filters, confidentiality: value })} options={filterOptions.confidentiality} testId="select-filter-confidentiality" />
+              <SelectField label="Case ID" value={filters.caseId} onChange={(value) => setFilters({ ...filters, caseId: value })} options={caseIdOptions || []} testId="select-filter-case-id" />
+              <SelectField label="Document Type" value={filters.documentType} onChange={(value) => setFilters({ ...filters, documentType: value })} options={filterOptions?.documentType || []} testId="select-filter-document-type" />
+              <SelectField label="Uploaded By" value={filters.uploadedBy} onChange={(value) => setFilters({ ...filters, uploadedBy: value })} options={filterOptions?.uploadedBy || []} testId="select-filter-uploader" />
+              <SelectField label="Status" value={filters.status} onChange={(value) => setFilters({ ...filters, status: value })} options={filterOptions?.status || []} testId="select-filter-status" />
+              <SelectField label="Integrity" value={filters.integrity} onChange={(value) => setFilters({ ...filters, integrity: value })} options={filterOptions?.integrity || []} testId="select-filter-integrity" />
+              <SelectField label="Confidentiality" value={filters.confidentiality} onChange={(value) => setFilters({ ...filters, confidentiality: value })} options={filterOptions?.confidentiality || []} testId="select-filter-confidentiality" />
             </div>
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 py-3">
               <Filter size={14} className="text-slate-400" />
