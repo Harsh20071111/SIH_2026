@@ -99,6 +99,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Document Reviews', href: '/reviews', icon: 'clipboard', roles: ['Legal Reviewer', 'Admin', 'Officer', 'Clerk', 'Auditor'] },
       { label: 'Security & Access', href: '/security', icon: 'lock', roles: ['Admin', 'Auditor'] },
       { label: 'User Management', href: '/users', icon: 'users', roles: ['Admin'] },
+      { label: 'User Approvals', href: '/users', icon: 'users', roles: ['Legal Reviewer'] },
     ],
   },
   {

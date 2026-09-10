@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import {
   Search, ChevronDown, Users, UserCheck, ShieldCheck, ClipboardCheck,
   Plus, Pencil, Ban, UserCog, Briefcase, KeyRound, X, CheckCircle2,
-  RotateCw, Loader2, Eye, EyeOff,
+  RotateCw, Loader2, Eye, EyeOff, FileText, ExternalLink,
 } from 'lucide-react';
 import {
   defaultUsers, availableCases, userRoles, userDepartments,
@@ -268,6 +268,79 @@ function SetPasswordModal({
   );
 }
 
+/* ----------------------------------------------------------------
+   View Verification Documents Modal
+   ---------------------------------------------------------------- */
+function ViewDocsModal({
+  user, onClose,
+}: { user: UserData; onClose: () => void }) {
+  const docs = user.verificationDocuments || [];
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalBox} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
+        <div className={styles.modalHead}>
+          <h3 className={styles.modalTitle}>Verification Documents — {user.name}</h3>
+          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className={styles.modalBody}>
+          <p className={styles.modalMessage} style={{ marginBottom: '1rem' }}>
+            ID and government verification documents submitted for <strong>{user.name}</strong> ({user.employeeId}).
+          </p>
+          {docs.length === 0 ? (
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No documents uploaded for this user.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {docs.map((docUrl, idx) => {
+                const fileName = docUrl.split('/').pop()?.split('?')[0] || `Document ${idx + 1}`;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      background: '#F8FAFC',
+                      borderRadius: '6px',
+                      border: '1px solid var(--color-border)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                      <FileText size={18} style={{ color: '#2563EB', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', fontWeight: 500, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {decodeURIComponent(fileName)}
+                      </span>
+                    </div>
+                    <a
+                      href={docUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.btnSecondary}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <ExternalLink size={12} /> View / Download
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className={styles.modalFoot}>
+          <button className={styles.btnPrimary} onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 import { useAuth } from '@/context/AuthContext';
 import AccessDenied from '@/pages/access-denied';
 
@@ -278,10 +351,13 @@ export default function UserManagement({ role }: { role: Role }) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
 
-  if ((user?.role || role) !== 'Admin') {
+  const currentRole = user?.role || role;
+  if (currentRole !== 'Admin' && currentRole !== 'Legal Reviewer') {
     return <AccessDenied />;
   }
-  const [users, setUsers] = useState<UserData[]>(() => userService.getCachedUsers());
+  const isLegalReviewer = currentRole === 'Legal Reviewer';
+
+  const [users, setUsers] = useState<UserData[]>(() => isLegalReviewer ? [] : userService.getCachedUsers());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'All'>('All');
@@ -289,7 +365,7 @@ export default function UserManagement({ role }: { role: Role }) {
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'All'>('All');
 
   // Modal state
-  const [modalType, setModalType] = useState<'assignRole' | 'assignCases' | 'disable' | 'enable' | 'resetPw' | null>(null);
+  const [modalType, setModalType] = useState<'assignRole' | 'assignCases' | 'disable' | 'enable' | 'resetPw' | 'viewDocs' | null>(null);
   const [modalUser, setModalUser] = useState<UserData | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'danger' | 'warning' } | null>(null);
 
@@ -300,14 +376,14 @@ export default function UserManagement({ role }: { role: Role }) {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await userService.getUsers();
+      const data = isLegalReviewer ? await userService.getPendingUsers() : await userService.getUsers();
       setUsers(data);
     } catch (e) {
       console.error('Failed to load users:', e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isLegalReviewer]);
 
   useEffect(() => {
     loadUsers();
@@ -408,6 +484,26 @@ export default function UserManagement({ role }: { role: Role }) {
     setModalType(null);
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      await userService.approveUser(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      showToast('User approved successfully.', 'success');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to approve user.', 'danger');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await userService.rejectUser(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      showToast('User rejected successfully.', 'success');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to reject user.', 'danger');
+    }
+  };
+
   const getInitials = (name: string) => {
     if (!name) return 'U';
     const parts = name.trim().split(/\s+/);
@@ -454,20 +550,36 @@ export default function UserManagement({ role }: { role: Role }) {
           onConfirm={handleSetPassword}
         />
       )}
+      {modalType === 'viewDocs' && modalUser && (
+        <ViewDocsModal
+          user={modalUser}
+          onClose={() => setModalType(null)}
+        />
+      )}
 
       {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
-          <h1 className={styles.pageTitle}>User Management</h1>
-          <span className={styles.pageSubtitle}>Manage authorized users, roles and case assignments</span>
+          <h1 className={styles.pageTitle}>{isLegalReviewer ? 'Pending Approvals' : 'User Management'}</h1>
+          <span className={styles.pageSubtitle}>
+            {isLegalReviewer ? 'Review and approve new user accounts' : 'Manage system access and roles'}
+          </span>
         </div>
+        {!isLegalReviewer && (
+          <div className={styles.pageHeaderRight}>
+            <Link href="/users/add" className={styles.btnPrimary} style={{ textDecoration: 'none' }}>
+              <Plus size={16} style={{ marginRight: '6px' }} /> Add New User
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Summary cards */}
-      <div className={styles.summaryGrid}>
-        <div className={styles.summaryCard}>
-          <div className={styles.summaryCardHeader}>
-            <Users size={16} className={styles.summaryCardIcon} />
+      {!isLegalReviewer && (
+        <div className={styles.summaryGrid}>
+          <div className={styles.summaryCard}>
+            <div className={styles.summaryCardHeader}>
+              <Users size={16} className={styles.summaryCardIcon} />
             <span className={styles.summaryCardLabel}>Total Users</span>
           </div>
           <p className={styles.summaryCardValue}>{totalUsers}</p>
@@ -494,6 +606,7 @@ export default function UserManagement({ role }: { role: Role }) {
           <p className={styles.summaryCardValue}>{auditors}</p>
         </div>
       </div>
+    )}
 
       {/* Toolbar */}
       <div className={styles.toolbar}>
@@ -543,9 +656,11 @@ export default function UserManagement({ role }: { role: Role }) {
           Refresh
         </button>
 
-        <Link href="/users/new" className={styles.addBtn} style={{ textDecoration: 'none' }}>
-          <Plus size={16} /> Add User
-        </Link>
+        {!isLegalReviewer && (
+          <Link href="/users/new" className={styles.addBtn} style={{ textDecoration: 'none' }}>
+            <Plus size={16} /> Add User
+          </Link>
+        )}
       </div>
 
       {/* Users table */}
@@ -557,7 +672,7 @@ export default function UserManagement({ role }: { role: Role }) {
                 <th>Name</th>
                 <th>Role</th>
                 <th>Department</th>
-                <th>Status</th>
+                <th>{isLegalReviewer ? 'Approval Status' : 'Status & Approval'}</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -592,58 +707,103 @@ export default function UserManagement({ role }: { role: Role }) {
                     <td>{u.role}</td>
                     <td>{u.department}</td>
                     <td>
-                      <span className={`${styles.badge} ${u.status === 'Active' ? styles.badgeActive : styles.badgeDisabled}`}>
-                        <span className={styles.badgeDot} />
-                        {u.status}
-                      </span>
+                      {isLegalReviewer ? (
+                        <span className={`${styles.badge} ${u.approvalStatus === 'Pending' ? styles.badgeWarning : u.approvalStatus === 'Approved' ? styles.badgeActive : styles.badgeDisabled}`}>
+                          <span className={styles.badgeDot} />
+                          {u.approvalStatus || 'Pending'}
+                        </span>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span className={`${styles.badge} ${u.status === 'Active' ? styles.badgeActive : styles.badgeDisabled}`}>
+                            <span className={styles.badgeDot} />
+                            {u.status}
+                          </span>
+                          {u.approvalStatus && u.approvalStatus !== 'Approved' && (
+                            <span className={`${styles.badge} ${u.approvalStatus === 'Pending' ? styles.badgeWarning : styles.badgeDisabled}`} style={{ fontSize: '10px', padding: '1px 6px' }}>
+                              <span className={styles.badgeDot} />
+                              {u.approvalStatus}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div className={styles.actions}>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                          onClick={() => navigate(`/users/${u.id}/edit`)}
-                          title="Edit"
-                        >
-                          <Pencil size={12} /> Edit
-                        </button>
-                        {u.status === 'Active' ? (
-                          <button
-                            className={`${styles.actionBtn} ${styles.actionBtnRed}`}
-                            onClick={() => openModal('disable', u)}
-                            title="Disable"
-                          >
-                            <Ban size={12} /> Disable
-                          </button>
+                        {isLegalReviewer ? (
+                          <>
+                            {u.verificationDocuments && u.verificationDocuments.length > 0 && (
+                              <button
+                                className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                                onClick={() => openModal('viewDocs', u)}
+                                title="View Documents"
+                              >
+                                <FileText size={12} /> View Docs ({u.verificationDocuments.length})
+                              </button>
+                            )}
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnGreen}`}
+                              onClick={() => handleApprove(u.id)}
+                              title="Approve"
+                            >
+                              <CheckCircle2 size={12} /> Approve
+                            </button>
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnRed}`}
+                              onClick={() => handleReject(u.id)}
+                              title="Reject"
+                            >
+                              <Ban size={12} /> Reject
+                            </button>
+                          </>
                         ) : (
-                          <button
-                            className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                            onClick={() => openModal('enable', u)}
-                            title="Enable"
-                          >
-                            <UserCheck size={12} /> Enable
-                          </button>
+                          <>
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                              onClick={() => navigate(`/users/${u.id}/edit`)}
+                              title="Edit"
+                            >
+                              <Pencil size={12} /> Edit
+                            </button>
+                            {u.status === 'Active' ? (
+                              <button
+                                className={`${styles.actionBtn} ${styles.actionBtnRed}`}
+                                onClick={() => openModal('disable', u)}
+                                title="Disable"
+                              >
+                                <Ban size={12} /> Disable
+                              </button>
+                            ) : (
+                              <button
+                                className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                                onClick={() => openModal('enable', u)}
+                                title="Enable"
+                              >
+                                <UserCheck size={12} /> Enable
+                              </button>
+                            )}
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                              onClick={() => openModal('assignRole', u)}
+                              title="Assign Role"
+                            >
+                              <UserCog size={12} /> Assign Role
+                            </button>
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
+                              onClick={() => openModal('assignCases', u)}
+                              title="Assign Cases"
+                            >
+                              <Briefcase size={12} /> Assign Cases
+                            </button>
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnAmber}`}
+                              onClick={() => openModal('resetPw', u)}
+                              title="Reset Password"
+                            >
+                              <KeyRound size={12} /> Reset Password
+                            </button>
+                          </>
                         )}
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                          onClick={() => openModal('assignRole', u)}
-                          title="Assign Role"
-                        >
-                          <UserCog size={12} /> Assign Role
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnBlue}`}
-                          onClick={() => openModal('assignCases', u)}
-                          title="Assign Cases"
-                        >
-                          <Briefcase size={12} /> Assign Cases
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnAmber}`}
-                          onClick={() => openModal('resetPw', u)}
-                          title="Reset Password"
-                        >
-                          <KeyRound size={12} /> Reset Password
-                        </button>
                       </div>
                     </td>
                   </tr>

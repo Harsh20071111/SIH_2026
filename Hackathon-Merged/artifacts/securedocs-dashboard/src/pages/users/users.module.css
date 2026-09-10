@@ -338,6 +338,11 @@
   color: #B91C1C;
 }
 
+.badgeWarning {
+  background-color: rgba(217, 119, 6, 0.1);
+  color: #B45309;
+}
+
 .badgeDot {
   width: 0.375rem;
   height: 0.375rem;
@@ -346,6 +351,10 @@
 
 .badgeActive .badgeDot {
   background-color: var(--color-success);
+}
+
+.badgeWarning .badgeDot {
+  background-color: #D97706;
 }
 
 .badgeDisabled .badgeDot {
@@ -886,4 +895,11 @@
   .formFooter .btnSecondary {
     width: 100%;
   }
+}
+.actionBtnGreen {
+  color: #16A34A;
+}
+.actionBtnGreen:hover {
+  background: #DCFCE7;
+  color: #15803D;
 }

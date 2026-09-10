@@ -58,6 +58,7 @@ export default function UserForm() {
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'danger' } | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [documents, setDocuments] = useState<File[]>([]);
 
   // Pre-fill for edit mode
   useEffect(() => {
@@ -151,6 +152,7 @@ export default function UserForm() {
           password: password.trim() || 'SecureDocs@2026',
           status,
           assignedCases,
+          documents: documents.length > 0 ? documents : undefined,
         });
         setToast({ message: 'User created successfully', variant: 'success' });
       }
@@ -330,6 +332,33 @@ export default function UserForm() {
                   </div>
                   {submitted && errors.password && <span className={styles.formError}>{errors.password}</span>}
                 </div>
+
+                {/* Verification Documents (New Users Only) */}
+                {!isEdit && (
+                  <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                    <label className={styles.formLabel}>
+                      Verification Documents (ID Proof, etc.)
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 'normal', marginLeft: '6px' }}>
+                        (Optional, helps with legal review)
+                      </span>
+                    </label>
+                    <input
+                      type="file"
+                      multiple
+                      className={styles.formInput}
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          setDocuments(Array.from(e.target.files));
+                        }
+                      }}
+                    />
+                    {documents.length > 0 && (
+                      <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                        Selected: {documents.map(d => d.name).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

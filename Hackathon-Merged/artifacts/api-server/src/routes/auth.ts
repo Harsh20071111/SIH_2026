@@ -96,7 +96,67 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       return;
     }
 
-    if (!user || !user.isActive) {
+    if (!user) {
+      try {
+        await createAuditEvent({
+          action: "LOGIN_FAILED",
+          userName: email,
+          result: "Failed",
+          ipAddress: getClientIp(req),
+          userAgent: req.headers["user-agent"] || "",
+          metadata: { reason: "Invalid credentials" },
+        });
+
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const { AuditLog } = await import("../models/AuditLog");
+        const failedCount = await AuditLog.countDocuments({
+          action: "LOGIN_FAILED",
+          userName: email,
+          timestamp: { $gte: fifteenMinsAgo },
+        });
+
+        if (failedCount >= 5) {
+          await createSecurityEvent({
+            type: "BRUTE_FORCE_ATTACK",
+            action: `${failedCount} consecutive failed login attempts detected`,
+            userName: email,
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] || "",
+          });
+        } else {
+          await createSecurityEvent({
+            type: "LOGIN_FAILED",
+            action: "Failed login attempt",
+            userName: email,
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] || "",
+          });
+        }
+      } catch (err) {
+        logger.error({ err }, "Error recording login failure events");
+      }
+
+      res.status(401).json({
+        error: "Invalid credentials. Please check your email and password.",
+      });
+      return;
+    }
+
+    if (user.approvalStatus === "Pending") {
+      res.status(401).json({
+        error: "Your account is pending legal review.",
+      });
+      return;
+    }
+
+    if (user.approvalStatus === "Rejected") {
+      res.status(401).json({
+        error: "Your account creation was rejected by the legal reviewer.",
+      });
+      return;
+    }
+
+    if (!user.isActive) {
       try {
         await createAuditEvent({
           action: "LOGIN_FAILED",

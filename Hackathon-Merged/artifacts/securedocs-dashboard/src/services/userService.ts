@@ -48,6 +48,8 @@ function mapBackendUser(u: any): UserData {
     department: (u.department || 'General') as UserDepartment,
     status: u.isActive === false ? 'Disabled' : 'Active',
     assignedCases: Array.isArray(u.assignedCases) ? u.assignedCases : [],
+    approvalStatus: u.approvalStatus || 'Approved',
+    verificationDocuments: u.verificationDocuments || [],
   };
 }
 
@@ -92,6 +94,18 @@ export const userService = {
     return fallback;
   },
 
+  async getPendingUsers(): Promise<UserData[]> {
+    try {
+      const response = await api.get<any[]>('/users/pending');
+      if (Array.isArray(response)) {
+        return response.map(mapBackendUser);
+      }
+    } catch (err) {
+      console.warn('Could not fetch pending users from backend API:', err);
+    }
+    return [];
+  },
+
   /**
    * Get single user by ID
    */
@@ -121,19 +135,36 @@ export const userService = {
     password?: string;
     assignedCases?: string[];
     status?: UserStatus;
+    documents?: File[];
   }): Promise<UserData> {
     let createdUser: UserData;
 
     try {
-      const res = await api.post<any>('/users', {
-        name: data.name.trim(),
-        employeeId: data.employeeId.trim(),
-        email: data.email.toLowerCase().trim(),
-        role: data.role,
-        department: data.department,
-        password: data.password || 'SecureDocs@2026',
-        assignedCases: data.assignedCases || [],
-      });
+      let payload: any;
+
+      if (data.documents && data.documents.length > 0) {
+        payload = new FormData();
+        payload.append('name', data.name.trim());
+        payload.append('employeeId', data.employeeId.trim());
+        payload.append('email', data.email.toLowerCase().trim());
+        payload.append('role', data.role);
+        payload.append('department', data.department);
+        payload.append('password', data.password || 'SecureDocs@2026');
+        data.assignedCases?.forEach(caseId => payload.append('assignedCases[]', caseId));
+        data.documents.forEach(file => payload.append('documents', file));
+      } else {
+        payload = {
+          name: data.name.trim(),
+          employeeId: data.employeeId.trim(),
+          email: data.email.toLowerCase().trim(),
+          role: data.role,
+          department: data.department,
+          password: data.password || 'SecureDocs@2026',
+          assignedCases: data.assignedCases || [],
+        };
+      }
+
+      const res = await api.post<any>('/users', payload);
 
       createdUser = mapBackendUser(res);
     } catch (err: any) {
@@ -260,5 +291,29 @@ export const userService = {
 
     // For local users or fallback
     return { success: true, message: 'Password updated successfully for local user.' };
+  },
+
+  async approveUser(id: string): Promise<UserData> {
+    const res = await api.post<any>(`/users/${id}/approve`, {});
+    const approvedUser = mapBackendUser(res);
+    
+    // Update local cache
+    const cached = getStoredCache();
+    const updatedCache = cached.map(u => u.id === id ? { ...u, approvalStatus: 'Approved' as const } : u);
+    saveStoredCache(updatedCache);
+
+    return approvedUser;
+  },
+
+  async rejectUser(id: string): Promise<UserData> {
+    const res = await api.post<any>(`/users/${id}/reject`, {});
+    const rejectedUser = mapBackendUser(res);
+
+    // Update local cache
+    const cached = getStoredCache();
+    const updatedCache = cached.map(u => u.id === id ? { ...u, approvalStatus: 'Rejected' as const, status: 'Disabled' as const } : u);
+    saveStoredCache(updatedCache);
+
+    return rejectedUser;
   },
 };

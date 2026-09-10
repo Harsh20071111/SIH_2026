@@ -82,10 +82,10 @@ function AuthenticatedApp() {
         <Route path="/security/activity/:id" component={() => hasRole('Admin', 'Auditor') ? <ComingSoon title="Security activity analysis" /> : <AccessDenied />} />
         <Route path="/security" component={() => hasRole('Admin', 'Auditor') ? <SecurityDashboard /> : <AccessDenied />} />
         
-        {/* User Management */}
+        {/* User Management & Approvals */}
         <Route path="/users/new" component={() => hasRole('Admin') ? <UserForm /> : <AccessDenied />} />
         <Route path="/users/:id/edit" component={() => hasRole('Admin') ? <UserForm /> : <AccessDenied />} />
-        <Route path="/users" component={() => hasRole('Admin') ? <AdminUsers role={role} /> : <AccessDenied />} />
+        <Route path="/users" component={() => hasRole('Admin', 'Legal Reviewer') ? <AdminUsers role={role} /> : <AccessDenied />} />
         
         {/* Controls & Audits */}
         <Route path="/audit-logs/verify" component={() => hasRole('Admin', 'Auditor') ? <AuditChainVerification /> : <AccessDenied />} />

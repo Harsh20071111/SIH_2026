@@ -34,6 +34,8 @@ export interface UserData {
   department: UserDepartment;
   status: UserStatus;
   assignedCases: string[];
+  approvalStatus?: 'Pending' | 'Approved' | 'Rejected';
+  verificationDocuments?: string[];
 }
 
 export interface CaseOption {
