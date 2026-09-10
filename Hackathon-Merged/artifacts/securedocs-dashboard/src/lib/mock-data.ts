@@ -88,35 +88,48 @@ export const systemStatus = [
   ['Audit logging', 'Operational', 'Capturing events'],
 ];
 
-export const navGroups = [
+export type NavItem = {
+  label: string;
+  href: string;
+  icon: string;
+  roles?: Role[];
+  adminOnly?: boolean;
+};
+
+export type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+export const navGroups: NavGroup[] = [
   {
     label: 'Workspace',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: 'layout' },
-      { label: 'Cases & Investigations', href: '/cases', icon: 'briefcase' },
-      { label: 'Document Repository', href: '/documents', icon: 'files' },
-      { label: 'Document Reviews', href: '/reviews', icon: 'clipboard' },
-      { label: 'Security & Access', href: '/security', icon: 'lock' },
-      { label: 'User Management', href: '/users', icon: 'users' },
+      { label: 'Dashboard', href: '/dashboard', icon: 'layout', roles: ['Admin', 'Officer', 'Legal Reviewer', 'Clerk', 'Auditor'] },
+      { label: 'Cases & Investigations', href: '/cases', icon: 'briefcase', roles: ['Admin', 'Officer', 'Legal Reviewer', 'Clerk', 'Auditor'] },
+      { label: 'Document Repository', href: '/documents', icon: 'files', roles: ['Admin', 'Officer', 'Legal Reviewer', 'Clerk', 'Auditor'] },
+      { label: 'Document Reviews', href: '/reviews', icon: 'clipboard', roles: ['Legal Reviewer', 'Admin', 'Officer', 'Clerk', 'Auditor'] },
+      { label: 'Security & Access', href: '/security', icon: 'lock', roles: ['Admin', 'Auditor'] },
+      { label: 'User Management', href: '/users', icon: 'users', roles: ['Admin'] },
     ],
   },
   {
     label: 'Controls & Audits',
     items: [
-      { label: 'SHA-256 Integrity Verification', href: '/integrity', icon: 'shield' },
-      { label: 'Audit Logs', href: '/audit-logs', icon: 'history' },
-      { label: 'Audit Chain Verification', href: '/audit-logs/verify', icon: 'shield' },
-      { label: 'Compliance Dashboard', href: '/compliance', icon: 'check' },
-      { label: 'Reports & Analytics', href: '/reports', icon: 'chart' },
-      { label: 'One-Click Integrity Report', href: '/reports/integrity/C-1024', icon: 'clipboard' },
+      { label: 'SHA-256 Integrity Verification', href: '/integrity', icon: 'shield', roles: ['Admin', 'Officer', 'Legal Reviewer', 'Auditor', 'Clerk'] },
+      { label: 'Audit Logs', href: '/audit-logs', icon: 'history', roles: ['Admin', 'Auditor'] },
+      { label: 'Audit Chain Verification', href: '/audit-logs/verify', icon: 'shield', roles: ['Admin', 'Auditor'] },
+      { label: 'Compliance Dashboard', href: '/compliance', icon: 'check', roles: ['Admin', 'Auditor'] },
+      { label: 'Reports & Analytics', href: '/reports', icon: 'chart', roles: ['Admin', 'Auditor', 'Officer', 'Legal Reviewer', 'Clerk'] },
+      { label: 'One-Click Integrity Report', href: '/reports/integrity/C-1024', icon: 'clipboard', roles: ['Admin', 'Auditor', 'Officer', 'Legal Reviewer', 'Clerk'] },
     ],
   },
   {
     label: 'Administration',
     items: [
-      { label: 'Users & Roles', href: '/users', icon: 'users', adminOnly: true },
-      { label: 'Compliance', href: '/compliance', icon: 'check', adminOnly: true },
-      { label: 'System Settings', href: '/settings', icon: 'settings', adminOnly: true },
+      { label: 'Users & Roles', href: '/users', icon: 'users', roles: ['Admin'], adminOnly: true },
+      { label: 'Compliance', href: '/compliance', icon: 'check', roles: ['Admin'], adminOnly: true },
+      { label: 'System Settings', href: '/settings', icon: 'settings', roles: ['Admin'], adminOnly: true },
     ],
   },
-] as const;
+];

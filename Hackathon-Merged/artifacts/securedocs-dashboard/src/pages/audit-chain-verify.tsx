@@ -169,13 +169,21 @@ function FooterStat({ icon: Icon, label, value, tone, sub }: { icon: any; label:
   );
 }
 
+import { useAuth } from '@/context/AuthContext';
+import AccessDenied from '@/pages/access-denied';
+
 /* ================================================================
    MAIN PAGE COMPONENT
    ================================================================ */
 export default function AuditChainVerification() {
+  const { user } = useAuth();
   const [isTampered, setIsTampered] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
   const { toast } = useToast();
+
+  if (user?.role !== 'Admin' && user?.role !== 'Auditor') {
+    return <AccessDenied />;
+  }
 
   useEffect(() => {
     const tick = () => setCurrentTime(new Date().toLocaleTimeString('en-GB', { hour12: false }));

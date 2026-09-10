@@ -54,104 +54,60 @@ function AuthenticatedApp() {
   
   const shellRoutes = ['/dashboard', '/cases', '/documents', '/upload', '/reviews', '/security', '/integrity', '/audit-logs', '/audit-logs/verify', '/reports', '/users', '/compliance', '/settings', '/notifications', '/profile'];
   
+  // RBAC Helper
+  const hasRole = (...allowedRoles: Role[]) => allowedRoles.includes(role);
+
   return (
     <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
       <Switch>
         <Route path="/" component={() => <Dashboard search={search} />} />
         <Route path="/dashboard" component={() => <Dashboard search={search} />} />
-        <Route path="/cases/new" component={() => <NewCase role={role} />} />
+        
+        {/* Cases */}
+        <Route path="/cases/new" component={() => hasRole('Admin', 'Officer') ? <NewCase role={role} /> : <AccessDenied />} />
         <Route path="/cases/:id/timeline" component={() => <ComingSoon title="Case Timeline" />} />
-        <Route path="/documents/:id" component={() => <ComingSoon title="Document workspace" />} />
-        <Route path="/security/activity/:id" component={() => <ComingSoon title="Security activity analysis" />} />
-        <Route path="/cases/:id/edit" component={() => <EditCase role={role} />} />
+        <Route path="/cases/:id/edit" component={() => hasRole('Admin', 'Officer') ? <EditCase role={role} /> : <AccessDenied />} />
         <Route path="/cases/:id" component={() => <CaseDetail role={role} />} />
         <Route path="/cases" component={() => <Cases role={role} search={search} setSearch={setSearch} />} />
+        
+        {/* Documents */}
+        <Route path="/documents/:id" component={() => <ComingSoon title="Document workspace" />} />
         <Route path="/documents" component={() => <AllDocuments />} />
-        <Route path="/settings" component={() => <Settings />} />
-        <Route path="/security" component={() => <SecurityDashboard />} />
-        <Route path="/users" component={() => <AdminUsers role={role} />} />
-        <Route path="/users/new" component={() => <UserForm />} />
-        <Route path="/users/:id/edit" component={() => <UserForm />} />
+        
+        {/* Reviews */}
         <Route path="/reviews/:id" component={({ params }) => <DocumentReview id={params?.id} />} />
         <Route path="/reviews" component={() => <ReviewQueue role={role} />} />
-        <Route path="/compliance" component={() => <ComplianceDashboard />} />
+        
+        {/* Security & Activity Analysis */}
+        <Route path="/security/activity/:id" component={() => hasRole('Admin', 'Auditor') ? <ComingSoon title="Security activity analysis" /> : <AccessDenied />} />
+        <Route path="/security" component={() => hasRole('Admin', 'Auditor') ? <SecurityDashboard /> : <AccessDenied />} />
+        
+        {/* User Management */}
+        <Route path="/users/new" component={() => hasRole('Admin') ? <UserForm /> : <AccessDenied />} />
+        <Route path="/users/:id/edit" component={() => hasRole('Admin') ? <UserForm /> : <AccessDenied />} />
+        <Route path="/users" component={() => hasRole('Admin') ? <AdminUsers role={role} /> : <AccessDenied />} />
+        
+        {/* Controls & Audits */}
+        <Route path="/audit-logs/verify" component={() => hasRole('Admin', 'Auditor') ? <AuditChainVerification /> : <AccessDenied />} />
+        <Route path="/audit-logs" component={() => hasRole('Admin', 'Auditor') ? <AuditLogs /> : <AccessDenied />} />
+        <Route path="/compliance" component={() => hasRole('Admin', 'Auditor') ? <ComplianceDashboard /> : <AccessDenied />} />
+        <Route path="/integrity" component={() => <IntegrityVerification />} />
+        
+        {/* Reports */}
         <Route path="/reports/integrity/:id" component={({ params }) => <OneClickIntegrityReport id={params?.id} />} />
         <Route path="/reports/integrity" component={() => <OneClickIntegrityReport id="C-1024" />} />
-        <Route path="/audit-logs/verify" component={() => <AuditChainVerification />} />
-        <Route path="/audit-logs" component={() => <AuditLogs />} />
-        <Route path="/integrity" component={() => <IntegrityVerification />} />
         <Route path="/reports" component={() => <Reports />} />
-        <Route path="/403" component={() => <AccessDenied />} />
+        
+        {/* Settings & Profile */}
+        <Route path="/settings" component={() => hasRole('Admin') ? <Settings /> : <AccessDenied />} />
         <Route path="/profile" component={() => <Profile />} />
-        {shellRoutes.filter((route) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/audit-logs/verify', '/integrity', '/reports', '/compliance', '/403', '/profile'].includes(route)).map((route) => <Route key={route} path={route} component={() => <ComingSoon title={route.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />)}
+        <Route path="/403" component={() => <AccessDenied />} />
+        
+        {shellRoutes.filter((r) => !['/dashboard', '/cases', '/documents', '/settings', '/security', '/users', '/reviews', '/audit-logs', '/audit-logs/verify', '/integrity', '/reports', '/compliance', '/403', '/profile'].includes(r)).map((r) => (
+          <Route key={r} path={r} component={() => <ComingSoon title={r.slice(1).split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')} />} />
+        ))}
         <Route component={NotFound} />
       </Switch>
-    </SecureDocsShell>
-  );
-}
-
-function PublicAuditChainPage() {
-  const [search, setSearch] = useState('');
-  const role: Role = 'Auditor';
-  const setRole = () => {};
-  return (
-    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
-      <AuditChainVerification />
-    </SecureDocsShell>
-  );
-}
-
-function PublicCompliancePage() {
-  const [search, setSearch] = useState('');
-  const role: Role = 'Auditor';
-  const setRole = () => {};
-  return (
-    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
-      <ComplianceDashboard />
-    </SecureDocsShell>
-  );
-}
-
-function PublicReportsPage() {
-  const [search, setSearch] = useState('');
-  const role: Role = 'Auditor';
-  const setRole = () => {};
-  return (
-    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
-      <Reports />
-    </SecureDocsShell>
-  );
-}
-
-function PublicIntegrityReportPage({ params }: { params?: { id?: string } }) {
-  const [search, setSearch] = useState('');
-  const role: Role = 'Auditor';
-  const setRole = () => {};
-  return (
-    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
-      <OneClickIntegrityReport id={params?.id || 'C-1024'} />
-    </SecureDocsShell>
-  );
-}
-
-function PublicAccessDeniedPage() {
-  const [search, setSearch] = useState('');
-  const role: Role = 'Officer';
-  const setRole = () => {};
-  return (
-    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
-      <AccessDenied />
-    </SecureDocsShell>
-  );
-}
-
-function PublicDocumentReviewPage({ params }: { params?: { id?: string } }) {
-  const [search, setSearch] = useState('');
-  const role: Role = 'Legal Reviewer';
-  const setRole = () => {};
-  return (
-    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
-      <DocumentReview id={params?.id || 'C-1024'} />
     </SecureDocsShell>
   );
 }
@@ -161,13 +117,6 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
-      <Route path="/audit-logs/verify" component={PublicAuditChainPage} />
-      <Route path="/compliance" component={PublicCompliancePage} />
-      <Route path="/reports/integrity/:id" component={({ params }) => <PublicIntegrityReportPage params={params} />} />
-      <Route path="/reports/integrity" component={() => <PublicIntegrityReportPage params={{ id: 'C-1024' }} />} />
-      <Route path="/reports" component={PublicReportsPage} />
-      <Route path="/403" component={PublicAccessDeniedPage} />
-      <Route path="/reviews/:id" component={({ params }) => <PublicDocumentReviewPage params={params} />} />
       <Route>
         <ProtectedRoute>
           <AuthenticatedApp />

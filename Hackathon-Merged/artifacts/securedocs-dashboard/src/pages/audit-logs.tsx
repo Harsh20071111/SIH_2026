@@ -44,6 +44,7 @@ import {
 import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import AccessDenied from '@/pages/access-denied';
 
 // ── Realistic Forensic Mock Logs (Fallback & Standalone Demo) ──────────────
 const FALLBACK_AUDIT_LOGS = [
@@ -284,6 +285,10 @@ export default function AuditLogs() {
 
   const { user } = useAuth();
   const { toast } = useToast();
+
+  if (user?.role !== 'Admin' && user?.role !== 'Auditor') {
+    return <AccessDenied />;
+  }
 
   const fetchLogs = async () => {
     setLoading(true);

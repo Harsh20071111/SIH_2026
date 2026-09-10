@@ -67,7 +67,18 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
     return userDisplayName.substring(0, 2).toUpperCase();
   }, [userDisplayName]);
 
-  const visibleGroups = useMemo(() => navGroups.map((group) => ({ label: group.label, items: group.items.filter((item) => !('adminOnly' in item) || !item.adminOnly || role === 'Admin') })).filter((group) => group.items.length), [role]);
+  const visibleGroups = useMemo(() => {
+    return navGroups
+      .map((group) => ({
+        label: group.label,
+        items: group.items.filter((item) => {
+          if (item.adminOnly && role !== 'Admin') return false;
+          if (item.roles && !item.roles.includes(role)) return false;
+          return true;
+        }),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [role]);
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">

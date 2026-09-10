@@ -53,8 +53,10 @@ const statuses: CaseStatus[] = ['Active', 'Under Investigation', 'Under Review',
 const risks: CaseRisk[] = ['High', 'Medium', 'Low'];
 const priorities: CasePriority[] = ['High', 'Medium', 'Low'];
 
-function isVisibleToRole(item: CaseRecord, role: Role) {
-  return canViewCase(item, role);
+import { useAuth } from '@/context/AuthContext';
+
+function isVisibleToRole(item: CaseRecord, role: Role, user?: any) {
+  return canViewCase(item, role, user);
 }
 
 function relativeTime(timestamp: string) {
@@ -146,6 +148,7 @@ function FilterSelect({ label, value, options, onChange }: { label: string; valu
 }
 
 export default function Cases({ role, search, setSearch }: CasesProps) {
+  const { user } = useAuth();
   const { data, isLoading, error, retry, update, archive } = useCases();
   const [draftFilters, setDraftFilters] = useState<FilterState>(blankFilters);
   const [appliedFilters, setAppliedFilters] = useState<FilterState>(blankFilters);
@@ -157,7 +160,7 @@ export default function Cases({ role, search, setSearch }: CasesProps) {
   const canEdit = role === 'Admin' || role === 'Officer';
   const canArchive = role === 'Admin';
 
-  const roleCases = useMemo(() => data.filter((item) => isVisibleToRole(item, role)), [data, role]);
+  const roleCases = useMemo(() => data.filter((item) => isVisibleToRole(item, role, user)), [data, role, user]);
   const options = useMemo(() => ({
     types: [...new Set(roleCases.map((item) => item.type))].sort(),
     officers: [...new Set(roleCases.map((item) => item.officer).filter(Boolean))].sort() as string[],

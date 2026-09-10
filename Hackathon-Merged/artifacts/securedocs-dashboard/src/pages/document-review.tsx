@@ -45,15 +45,19 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
+import { useAuth } from '@/context/AuthContext';
+
 interface DocumentReviewProps {
   id?: string;
 }
 
 type ActionStatus = 'idle' | 'approved' | 'flagged' | 'rejected';
 
-export default function DocumentReview({ id = 'DOC-2026-001' }: DocumentReviewProps) {
+export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const canTakeDecision = user?.role === 'Legal Reviewer';
 
   const [loading, setLoading] = useState(true);
   const [docData, setDocData] = useState<any>({
@@ -739,16 +743,28 @@ export default function DocumentReview({ id = 'DOC-2026-001' }: DocumentReviewPr
               </p>
             </div>
 
+            {!canTakeDecision && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+                <AlertTriangle size={17} className="text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Role Access Notice:</span> Only authorized <span className="font-semibold underline">Legal Reviewers</span> can approve, flag, or reject documents. Your role is <span className="font-semibold">{user?.role || 'Guest'}</span> (read-only verification).
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {/* APPROVE (Green) */}
               <button
                 type="button"
                 data-testid="button-approve-doc"
+                disabled={!canTakeDecision}
                 onClick={() => handleAction('approved')}
-                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3.5 text-center transition-all shadow-sm active:scale-[0.98] ${
-                  actionStatus === 'approved'
-                    ? 'border-[#16A34A] bg-[#16A34A] text-white ring-4 ring-emerald-500/20'
-                    : 'border-[#16A34A]/30 bg-emerald-50/50 text-[#16A34A] hover:bg-[#16A34A] hover:text-white'
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3.5 text-center transition-all shadow-sm ${
+                  !canTakeDecision
+                    ? 'opacity-40 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                    : actionStatus === 'approved'
+                    ? 'border-[#16A34A] bg-[#16A34A] text-white ring-4 ring-emerald-500/20 active:scale-[0.98]'
+                    : 'border-[#16A34A]/30 bg-emerald-50/50 text-[#16A34A] hover:bg-[#16A34A] hover:text-white active:scale-[0.98]'
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-sm font-black tracking-wide">
@@ -762,11 +778,14 @@ export default function DocumentReview({ id = 'DOC-2026-001' }: DocumentReviewPr
               <button
                 type="button"
                 data-testid="button-flag-doc"
+                disabled={!canTakeDecision}
                 onClick={() => handleAction('flagged')}
-                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3.5 text-center transition-all shadow-sm active:scale-[0.98] ${
-                  actionStatus === 'flagged'
-                    ? 'border-[#F59E0B] bg-[#F59E0B] text-white ring-4 ring-amber-500/20'
-                    : 'border-[#F59E0B]/30 bg-amber-50/50 text-[#F59E0B] hover:bg-[#F59E0B] hover:text-white'
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3.5 text-center transition-all shadow-sm ${
+                  !canTakeDecision
+                    ? 'opacity-40 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                    : actionStatus === 'flagged'
+                    ? 'border-[#F59E0B] bg-[#F59E0B] text-white ring-4 ring-amber-500/20 active:scale-[0.98]'
+                    : 'border-[#F59E0B]/30 bg-amber-50/50 text-[#F59E0B] hover:bg-[#F59E0B] hover:text-white active:scale-[0.98]'
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-sm font-black tracking-wide">
@@ -780,11 +799,14 @@ export default function DocumentReview({ id = 'DOC-2026-001' }: DocumentReviewPr
               <button
                 type="button"
                 data-testid="button-reject-doc"
+                disabled={!canTakeDecision}
                 onClick={() => handleAction('rejected')}
-                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3.5 text-center transition-all shadow-sm active:scale-[0.98] ${
-                  actionStatus === 'rejected'
-                    ? 'border-[#DC2626] bg-[#DC2626] text-white ring-4 ring-red-500/20'
-                    : 'border-[#DC2626]/30 bg-red-50/50 text-[#DC2626] hover:bg-[#DC2626] hover:text-white'
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3.5 text-center transition-all shadow-sm ${
+                  !canTakeDecision
+                    ? 'opacity-40 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                    : actionStatus === 'rejected'
+                    ? 'border-[#DC2626] bg-[#DC2626] text-white ring-4 ring-red-500/20 active:scale-[0.98]'
+                    : 'border-[#DC2626]/30 bg-red-50/50 text-[#DC2626] hover:bg-[#DC2626] hover:text-white active:scale-[0.98]'
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-sm font-black tracking-wide">

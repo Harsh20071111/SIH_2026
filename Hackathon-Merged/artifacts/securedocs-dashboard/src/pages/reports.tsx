@@ -9,6 +9,7 @@ import {
   X, Sparkles, FolderArchive, Layers, Database, FileCheck2, Printer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 /* ================================================================
    DATA TYPES & DEFINITIONS
@@ -115,6 +116,7 @@ const MONTHLY_VOLUME = [
 ];
 
 export default function Reports() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -122,6 +124,7 @@ export default function Reports() {
   const [modalType, setModalType] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<'PDF' | 'Excel' | 'CSV'>('PDF');
   const [currentTime, setCurrentTime] = useState<string>('');
+  const isFullAccess = user?.role === 'Admin' || user?.role === 'Auditor';
 
   const [reportsList, setReportsList] = useState<RecentReport[]>(RECENT_REPORTS);
 
@@ -304,6 +307,12 @@ export default function Reports() {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2563EB]/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-[#2563EB]">
               <span className="size-1.5 rounded-full bg-[#2563EB]" />
               Secure Docs Intelligence & Telemetry
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold ${
+              isFullAccess ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+            }`}>
+              <span className={`size-1.5 rounded-full ${isFullAccess ? 'bg-emerald-600' : 'bg-amber-600'}`} />
+              {isFullAccess ? 'Full Clearance (Admin / Auditor)' : `Limited Role View (${user?.role || 'User'})`}
             </span>
             <span className="hidden items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-[10px] font-medium text-[#64748B] sm:inline-flex">
               Clock: {currentTime || 'Active'}

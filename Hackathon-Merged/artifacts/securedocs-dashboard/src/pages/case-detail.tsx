@@ -23,9 +23,9 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof FileText }> = [
 const dateLabel = (value?: string) => value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not recorded';
 const timeLabel = (value: string) => new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 const chipClass = (value: string) => value === 'High' || value === 'Flagged' || value === 'Issue detected' || value === 'Blocked' ? 'border-red-200 bg-red-50 text-red-700' : value === 'Medium' || value === 'Pending' || value === 'Warning' || value === 'Pending Review' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700';
-const canReview = (role: Role) => role === 'Admin' || role === 'Legal Reviewer';
+const canReview = (role: Role) => role === 'Legal Reviewer';
 const canUpload = (role: Role) => role === 'Admin' || role === 'Officer' || role === 'Clerk';
-const canVerify = (role: Role) => role === 'Admin' || role === 'Auditor';
+const canVerify = (role: Role) => role === 'Admin' || role === 'Auditor' || role === 'Legal Reviewer' || role === 'Officer';
 
 function Pill({ children, tone }: { children: ReactNode; tone?: string }) {
   return <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[.12em] ${tone ? chipClass(tone) : 'border-border bg-muted text-muted-foreground'}`}><span className="size-1.5 rounded-full bg-current" />{children}</span>;

@@ -171,11 +171,40 @@ export default function Login() {
                   {isLoading ? 'Authenticating...' : 'LOGIN'}
                 </Button>
               </form>
+
+              {/* Quick Demo Logins for each RBAC Role */}
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Quick Demo Access (One-Click)
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { label: 'Admin', email: 'admin@securedocs.gov', icon: '👑', color: 'hover:border-purple-300 hover:bg-purple-50' },
+                    { label: 'Officer', email: 'raj.patel@securedocs.gov', icon: '👮', color: 'hover:border-blue-300 hover:bg-blue-50' },
+                    { label: 'Legal Reviewer', email: 'mehta@securedocs.gov', icon: '⚖️', color: 'hover:border-indigo-300 hover:bg-indigo-50' },
+                    { label: 'Clerk', email: 'clerk@securedocs.gov', icon: '🗂️', color: 'hover:border-emerald-300 hover:bg-emerald-50' },
+                    { label: 'Auditor', email: 'auditor@securedocs.gov', icon: '🔍', color: 'hover:border-amber-300 hover:bg-amber-50' },
+                  ].map((demo) => (
+                    <button
+                      key={demo.label}
+                      type="button"
+                      onClick={() => {
+                        setIdentifier(demo.email);
+                        setPassword('password123');
+                      }}
+                      className={`flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/70 p-2 text-left text-xs font-semibold text-slate-700 transition ${demo.color}`}
+                    >
+                      <span>{demo.icon}</span>
+                      <span className="truncate">{demo.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
             <CardFooter className="flex justify-center border-t border-slate-100 pt-6 text-xs text-slate-500">
               <div className="flex items-center gap-1.5">
                 <Lock className="h-3 w-3" />
-                <span>Protected by SecureDocs Encryption</span>
+                <span>Protected by SecureDocs Encryption · Demo password: password123</span>
               </div>
             </CardFooter>
           </Card>

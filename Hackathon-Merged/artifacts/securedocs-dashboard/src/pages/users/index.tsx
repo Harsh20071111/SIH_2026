@@ -268,11 +268,19 @@ function SetPasswordModal({
   );
 }
 
+import { useAuth } from '@/context/AuthContext';
+import AccessDenied from '@/pages/access-denied';
+
 /* ----------------------------------------------------------------
    Main Page
    ---------------------------------------------------------------- */
 export default function UserManagement({ role }: { role: Role }) {
+  const { user } = useAuth();
   const [, navigate] = useLocation();
+
+  if ((user?.role || role) !== 'Admin') {
+    return <AccessDenied />;
+  }
   const [users, setUsers] = useState<UserData[]>(() => userService.getCachedUsers());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
