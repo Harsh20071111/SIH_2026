@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,17 +41,6 @@ export default function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsEditProfileOpen(false);
-    toast({
-      title: "Profile updated successfully.",
-      description: "Your profile information has been saved.",
-      variant: "default",
-      className: "bg-green-50 border-green-200 text-green-900",
-    });
-  };
-
   const resetPasswordForm = () => {
     setCurrentPassword('');
     setNewPassword('');
@@ -60,6 +49,12 @@ export default function Profile() {
     setShowNewPassword(false);
     setShowConfirmPassword(false);
   };
+
+  useEffect(() => {
+    if (isChangePasswordOpen) {
+      resetPasswordForm();
+    }
+  }, [isChangePasswordOpen]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,19 +195,28 @@ export default function Profile() {
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleUpdatePassword} autoComplete="off">
+                  {/* Invisible Honeypot Trap for Browser Password Autofill */}
+                  <div style={{ opacity: 0, position: 'absolute', top: -9999, left: -9999, height: 0, width: 0, overflow: 'hidden' }} aria-hidden="true" tabIndex={-1}>
+                    <input type="text" name="fake_user_field" tabIndex={-1} autoComplete="username" />
+                    <input type="password" name="fake_pass_field" tabIndex={-1} autoComplete="current-password" />
+                  </div>
+
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="current" className="text-right">Current</Label>
+                      <Label htmlFor="sec_curr_pass" className="text-right">Current</Label>
                       <div className="col-span-3 relative">
                         <Input 
-                          id="current"
-                          name="current-password"
+                          id="sec_curr_pass"
+                          name="sec_custom_curr_pass"
                           type={showCurrentPassword ? 'text' : 'password'} 
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
-                          autoComplete="off"
+                          autoComplete="new-password"
+                          data-lpignore="true"
+                          data-1p-ignore="true"
+                          data-form-type="other"
                           required 
-                          className="pr-10" 
+                          className="pr-10 bg-white" 
                           placeholder="••••••••••••"
                         />
                         <button 
@@ -226,17 +230,20 @@ export default function Profile() {
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="new" className="text-right">New</Label>
+                      <Label htmlFor="sec_new_pass" className="text-right">New</Label>
                       <div className="col-span-3 relative">
                         <Input 
-                          id="new"
-                          name="new-password"
+                          id="sec_new_pass"
+                          name="sec_custom_new_pass"
                           type={showNewPassword ? 'text' : 'password'} 
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           autoComplete="new-password"
+                          data-lpignore="true"
+                          data-1p-ignore="true"
+                          data-form-type="other"
                           required 
-                          className="pr-10" 
+                          className="pr-10 bg-white" 
                           placeholder="••••••••••••"
                         />
                         <button 
@@ -250,17 +257,20 @@ export default function Profile() {
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="confirm" className="text-right">Confirm</Label>
+                      <Label htmlFor="sec_conf_pass" className="text-right">Confirm</Label>
                       <div className="col-span-3 relative">
                         <Input 
-                          id="confirm"
-                          name="confirm-new-password"
+                          id="sec_conf_pass"
+                          name="sec_custom_conf_pass"
                           type={showConfirmPassword ? 'text' : 'password'} 
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           autoComplete="new-password"
+                          data-lpignore="true"
+                          data-1p-ignore="true"
+                          data-form-type="other"
                           required 
-                          className="pr-10" 
+                          className="pr-10 bg-white" 
                           placeholder="••••••••••••"
                         />
                         <button 
