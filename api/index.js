@@ -660,6 +660,75 @@ app.post(["/api/documents/:id/verify-integrity", "/documents/:id/verify-integrit
   }
 });
 
+app.patch(["/api/documents/:id", "/documents/:id"], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, comment, reviewer } = req.body;
+
+    let normalizedStatus = status;
+    if (status === "Changes Requested") normalizedStatus = "Flagged";
+    if (status === "Pending") normalizedStatus = "Pending Review";
+
+    const updateFields = {
+      lastModified: new Date(),
+      lastAccessed: new Date()
+    };
+    if (normalizedStatus) updateFields.status = normalizedStatus;
+    if (reviewer) updateFields.lastAccessedBy = reviewer;
+
+    const doc = await SecureDocument.findOneAndUpdate(
+      { $or: [{ documentId: id }, { _id: mongoose.Types.ObjectId.isValid(id) ? id : null }] },
+      { $set: updateFields },
+      { new: true }
+    ).lean();
+
+    if (!doc) return res.status(404).json({ error: "Document not found" });
+
+    // Mirror to Review collection
+    const reviewStatusMap = {
+      "Pending Review": "Pending",
+      "Under Review": "In Review",
+      "Approved": "Approved",
+      "Rejected": "Rejected",
+      "Flagged": "Flagged"
+    };
+    const revStatus = reviewStatusMap[normalizedStatus] || normalizedStatus;
+
+    Review.findOneAndUpdate(
+      { documentId: doc.documentId },
+      {
+        $set: {
+          status: revStatus,
+          comment: comment || "",
+          reviewer: reviewer || "Assigned Reviewer",
+          reviewedDate: new Date()
+        }
+      }
+    ).catch(() => {});
+
+    // Audit log
+    const auditActionMap = {
+      "Approved": "DOCUMENT_APPROVED",
+      "Rejected": "DOCUMENT_REJECTED",
+      "Flagged": "DOCUMENT_FLAGGED",
+      "Pending Review": "DOCUMENT_STATUS_RESET"
+    };
+    const action = auditActionMap[normalizedStatus] || "DOCUMENT_STATUS_UPDATED";
+
+    await recordAudit({
+      action,
+      userName: reviewer || "Reviewer",
+      documentId: doc.documentId,
+      caseId: doc.caseId,
+      details: `Document ${doc.documentName} status updated to ${normalizedStatus}${comment ? ` (${comment})` : ""}`
+    });
+
+    return res.json({ ...doc, id: doc.documentId || doc._id, fileBuffer: undefined });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to update document status", details: err.message });
+  }
+});
+
 // -------------------------------------------------------------
 // Reviews Routes
 // -------------------------------------------------------------

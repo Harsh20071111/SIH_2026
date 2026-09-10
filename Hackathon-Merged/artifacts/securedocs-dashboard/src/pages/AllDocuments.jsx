@@ -235,6 +235,13 @@ function DocumentRow({ document, isSelected, onToggleSelect, onMenu, onPreview, 
               className="absolute right-0 top-8 z-20 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 text-left shadow-xl"
               data-testid={`menu-document-${docId}`}
             >
+              <a
+                href={`/reviews/${docId}`}
+                data-testid={`menu-review-${docId}`}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-[#2563EB] hover:bg-blue-50"
+              >
+                <FileCheck2 size={14} /> Review document
+              </a>
               <button
                 type="button"
                 onClick={() => onPreview(document)}
@@ -465,6 +472,13 @@ function PreviewModal({ document, onClose, onDetails }) {
           >
             Open full details <ChevronRight size={14} />
           </button>
+          <a
+            href={`/reviews/${docId}`}
+            data-testid={`button-preview-review-${docId}`}
+            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2563EB] py-2 text-xs font-bold text-white hover:bg-[#1D4ED8]"
+          >
+            <FileCheck2 size={14} /> Open review workspace
+          </a>
         </div>
       </div>
     </Modal>
@@ -563,6 +577,13 @@ function DetailsDrawer({ document: rawDocument, onClose, onShare, onDownload, on
           </div>
         </div>
         <div className="mt-auto flex gap-2 border-t border-slate-200 p-5">
+          <a
+            href={`/reviews/${docId}`}
+            data-testid={`button-drawer-review-${docId}`}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-[#2563EB] px-3.5 py-2.5 text-xs font-bold text-white hover:bg-[#1D4ED8]"
+          >
+            <FileCheck2 size={14} /> Review
+          </a>
           <button
             type="button"
             onClick={() => onShare(document)}

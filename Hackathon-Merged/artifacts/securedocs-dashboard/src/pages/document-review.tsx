@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   ShieldCheck,
@@ -30,12 +30,12 @@ import {
   FileBadge,
   Eye,
   Layers,
-  ArrowRight,
-  CheckCircle,
-  ExternalLink,
   Sparkles,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { documentService } from '@/services/documentService';
 import {
   Dialog,
   DialogContent,
@@ -51,18 +51,34 @@ interface DocumentReviewProps {
 
 type ActionStatus = 'idle' | 'approved' | 'flagged' | 'rejected';
 
-export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
+export default function DocumentReview({ id = 'DOC-2026-001' }: DocumentReviewProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // Document state
+  const [loading, setLoading] = useState(true);
+  const [docData, setDocData] = useState<any>({
+    id: id,
+    documentId: id,
+    documentName: 'Evidence.pdf',
+    caseId: 'C-1024',
+    documentType: 'FIR / Police Reports',
+    uploadedBy: 'Officer Raj Patel',
+    uploadDate: '01 Sept 2026',
+    version: 1,
+    hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    confidentiality: 'Confidential',
+    integrity: 'Verified',
+    status: 'Pending Review',
+  });
+
+  // Document canvas state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const totalPages = 4;
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Review interaction state
-  const [actionStatus, setActionStatus] = useState<ActionStatus>('approved'); // Default to approved so approval workflow is visible by default or selectable
+  const [actionStatus, setActionStatus] = useState<ActionStatus>('idle');
   const [reviewComments, setReviewComments] = useState<string>(
     'Document hash verified against immutable ledger. Chain of custody is intact and forensic stamps match Bangalore Forensic Lab serial #BFL-902-E.'
   );
@@ -75,22 +91,66 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
   // Dynamic review history items
   const [reviewHistory, setReviewHistory] = useState([
     {
-      reviewer: 'Reviewer A',
+      reviewer: 'System Validator',
       action: 'Reviewed',
       timestamp: '01 Sept 2026 09:15 AM',
-      comments: 'Preliminary integrity scan passed. Escalated to Senior Legal Reviewer.',
+      comments: 'Cryptographic SHA-256 integrity scan passed. Ingestion completed.',
       badgeColor: 'bg-blue-50 text-[#2563EB] border-blue-200',
-    },
-    {
-      reviewer: 'Reviewer B',
-      action: 'Approved',
-      timestamp: '01 Sept 2026 11:32 AM',
-      comments: 'Digital signature verified. Chain of custody confirmed for evidentiary submission.',
-      badgeColor: 'bg-emerald-50 text-[#16A34A] border-emerald-200',
     },
   ]);
 
-  const handleAction = (status: ActionStatus) => {
+  // Fetch live document metadata on mount and id change
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDoc() {
+      setLoading(true);
+      try {
+        const data = await documentService.getDocumentById(id);
+        if (data && isMounted) {
+          let formattedDate = '01 Sept 2026';
+          if (data.uploadDate || data.createdAt) {
+            try {
+              const d = new Date(data.uploadDate || data.createdAt);
+              if (!isNaN(d.getTime())) {
+                formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+              }
+            } catch {}
+          }
+
+          const parsed = {
+            ...data,
+            id: data.documentId || data.id || id,
+            documentId: data.documentId || data.id || id,
+            documentName: data.documentName || data.name || 'Evidence.pdf',
+            caseId: data.caseId || 'C-1024',
+            documentType: data.documentType || 'Evidence Record',
+            uploadedBy: data.uploadedBy || 'Investigating Officer',
+            uploadDate: formattedDate,
+            version: data.version || 1,
+            hash: data.hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            confidentiality: data.confidentiality || 'Confidential',
+            integrity: data.integrity || 'Verified',
+            status: data.status || 'Pending Review',
+          };
+          setDocData(parsed);
+
+          const rawStatus = (data.status || '').toLowerCase();
+          if (rawStatus.includes('approved')) setActionStatus('approved');
+          else if (rawStatus.includes('rejected')) setActionStatus('rejected');
+          else if (rawStatus.includes('flag') || rawStatus.includes('changes')) setActionStatus('flagged');
+          else setActionStatus('idle');
+        }
+      } catch (err) {
+        console.error('Failed to load document metadata:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadDoc();
+    return () => { isMounted = false; };
+  }, [id]);
+
+  const handleAction = async (status: ActionStatus) => {
     setActionStatus(status);
     const now = new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
@@ -100,14 +160,29 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
       minute: '2-digit',
     });
 
+    const statusMap: Record<ActionStatus, string> = {
+      approved: 'Approved',
+      flagged: 'Flagged',
+      rejected: 'Rejected',
+      idle: 'Pending Review',
+    };
+    const newDbStatus = statusMap[status];
+
+    try {
+      await documentService.updateDocumentStatus(docData.documentId || id, newDbStatus, reviewComments, 'Legal Reviewer');
+      setDocData((prev: any) => ({ ...prev, status: newDbStatus }));
+    } catch (err) {
+      console.error('Failed to persist review status change:', err);
+    }
+
     if (status === 'approved') {
       toast({
         title: 'Document Approved',
-        description: 'Evidence.pdf has been cryptographically signed and approved.',
+        description: `${docData.documentName} has been cryptographically signed and approved.`,
       });
       setReviewHistory((prev) => [
         {
-          reviewer: 'Reviewer B (You)',
+          reviewer: 'Legal Reviewer (You)',
           action: 'Approved',
           timestamp: now,
           comments: reviewComments || 'Approved with digital signature.',
@@ -118,11 +193,11 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
     } else if (status === 'flagged') {
       toast({
         title: 'Document Flagged for Review',
-        description: 'Notice dispatched to Senior Examiner and Case Officer.',
+        description: `Notice dispatched to Senior Examiner for ${docData.documentName}.`,
       });
       setReviewHistory((prev) => [
         {
-          reviewer: 'Reviewer B (You)',
+          reviewer: 'Legal Reviewer (You)',
           action: 'Flagged',
           timestamp: now,
           comments: reviewComments || 'Flagged for procedural re-examination.',
@@ -133,12 +208,12 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
     } else if (status === 'rejected') {
       toast({
         title: 'Document Rejected',
-        description: 'Access restriction enforced. Audit event emitted.',
+        description: `Access restriction enforced for ${docData.documentName}. Audit event emitted.`,
         variant: 'destructive',
       });
       setReviewHistory((prev) => [
         {
-          reviewer: 'Reviewer B (You)',
+          reviewer: 'Legal Reviewer (You)',
           action: 'Rejected',
           timestamp: now,
           comments: reviewComments || 'Rejected due to validation discrepancy.',
@@ -159,12 +234,12 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
   const handleExportReview = () => {
     toast({
       title: 'Export Generated',
-      description: 'Downloading cryptographically signed review brief (JSON/PDF).',
+      description: `Downloading cryptographically signed review brief for ${docData.documentName}.`,
     });
   };
 
   const handleShareCopy = () => {
-    navigator.clipboard.writeText(`https://securedocs.gov.in/reviews/${id}?token=SEC-AUD-403`);
+    navigator.clipboard.writeText(`https://securedocs.gov.in/reviews/${docData.documentId || id}?token=SEC-AUD-403`);
     setCopiedLink(true);
     toast({
       title: 'Secure Link Copied',
@@ -178,20 +253,24 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
       {/* HEADER SECTION */}
       <div className="flex flex-col gap-4 border-b border-[#E2E8F0] pb-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#2563EB]">
               <FileCheck2 size={13} />
-              CASE {id} · ACTIVE REVIEW
+              CASE {docData.caseId} · {docData.documentId}
             </span>
             <span className="inline-flex items-center gap-1 rounded bg-[#0B1220] px-2 py-0.5 font-mono text-[11px] font-bold text-white">
               CLEARANCE LEVEL 3+
             </span>
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">
+              {docData.documentType}
+            </span>
           </div>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-[#111827] sm:text-3xl">
-            DOCUMENT REVIEW
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-[#111827] sm:text-3xl flex items-center gap-2">
+            <span>{docData.documentName}</span>
+            {loading && <Loader2 size={20} className="animate-spin text-[#2563EB]" />}
           </h1>
           <p className="mt-1 text-sm text-[#64748B]">
-            Review, verify, approve, flag, or reject secure documents with full audit traceability.
+            Review, verify, approve, flag, or reject repository documents with cryptographic SHA-256 audit traceability.
           </p>
         </div>
 
@@ -227,10 +306,19 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
 
           <button
             type="button"
-            onClick={() => setLocation('/documents')}
+            onClick={() => setLocation('/reviews')}
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-xs font-bold text-[#111827] shadow-2xs hover:bg-slate-50"
           >
             <ChevronLeft size={16} />
+            <span>Review Queue</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLocation('/documents')}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#FFFFFF] px-3.5 py-2 text-xs font-bold text-[#111827] shadow-2xs hover:bg-slate-50"
+          >
+            <FileText size={15} className="text-[#2563EB]" />
             <span>Repository</span>
           </button>
         </div>
@@ -245,7 +333,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
               <div className="flex items-center gap-2">
                 <FileText size={16} className="text-[#2563EB]" />
-                <span className="font-mono text-xs font-bold text-[#111827]">Evidence.pdf Preview</span>
+                <span className="font-mono text-xs font-bold text-[#111827]">{docData.documentName} Preview</span>
                 <span className="rounded bg-emerald-100 px-2 py-0.5 font-mono text-[10px] font-bold text-[#16A34A]">
                   PAGE {currentPage} OF {totalPages}
                 </span>
@@ -338,7 +426,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   height: 'auto',
                 }}
               >
-                {/* Watermark: strictly in background with low opacity and zero interference with text */}
+                {/* Watermark: background styling */}
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center select-none overflow-hidden"
@@ -352,7 +440,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   </span>
                 </div>
 
-                {/* Document Foreground Content: relative z-10 so all text is 100% crisp and readable above watermark */}
+                {/* Document Foreground Content */}
                 <div
                   className="relative z-10 flex flex-col justify-between"
                   style={{ minHeight: '620px', lineHeight: 1.6 }}
@@ -363,15 +451,15 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div>
                           <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#2563EB]">
-                            Karnataka State Police · Forensic Sciences Division
+                            SecureDocs Official Repository Archive
                           </div>
                           <div className="mt-1 text-lg sm:text-xl font-black tracking-tight text-slate-900">
-                            FORENSIC EVIDENCE & INTEGRITY REPORT
+                            {docData.documentName.toUpperCase()}
                           </div>
                         </div>
                         <div className="font-mono text-[10px] text-[#64748B] sm:text-right shrink-0">
-                          <div><span className="font-bold text-slate-700">CASE:</span> C-1024</div>
-                          <div><span className="font-bold text-slate-700">EXHIBIT:</span> EX-884</div>
+                          <div><span className="font-bold text-slate-700">CASE:</span> {docData.caseId}</div>
+                          <div><span className="font-bold text-slate-700">DOC ID:</span> {docData.documentId}</div>
                         </div>
                       </div>
                     </div>
@@ -379,25 +467,25 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                     {/* Document Metadata Bar */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-lg bg-slate-50 p-3 font-mono text-[11px] text-slate-700 border border-slate-100">
                       <div>
-                        <span className="font-bold text-slate-900">Chain ID:</span> CH-9021
+                        <span className="font-bold text-slate-900">Type:</span> {docData.documentType}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900">Custodian:</span> Officer A
+                        <span className="font-bold text-slate-900">Custodian:</span> {docData.uploadedBy}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900">Version:</span> v3.0 (Final)
+                        <span className="font-bold text-slate-900">Version:</span> v{docData.version}.0 (Active)
                       </div>
                     </div>
 
-                    {/* Simulated Content based on currentPage */}
+                    {/* Dynamic Simulated Content based on currentPage */}
                     <div className="space-y-4 text-xs text-slate-800" style={{ lineHeight: 1.6 }}>
                       {currentPage === 1 && (
                         <>
                           <h4 className="font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200 pb-1.5 text-xs">
-                            1. Chain of Custody & Receipt Verification
+                            1. Evidentiary Record & Ingestion Verification
                           </h4>
                           <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            The sealed physical artifact containing digital drive serial #WD-99401 was retrieved from Locker Bay 4 by Investigating Officer A on 01 Sept 2026. A secondary forensic image was extracted using hardware write-blocker Tableau T8u.
+                            The document {docData.documentName} was uploaded and registered under Case {docData.caseId} by {docData.uploadedBy} on {docData.uploadDate}. Cryptographic integrity hashing was executed automatically at the ingestion gateway.
                           </p>
                           <div className="rounded-xl border border-slate-200 bg-slate-50/90 p-4 space-y-2.5 my-3">
                             <div className="font-mono text-xs font-bold text-slate-900">
@@ -406,7 +494,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                             <div className="space-y-2 font-mono text-[11px]" style={{ lineHeight: 1.6 }}>
                               <div className="rounded-lg bg-white p-2.5 border border-slate-200/80">
                                 <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
-                                  SHA-256 Hash
+                                  SHA-256 Ledger Hash
                                 </div>
                                 <div
                                   className="text-[#2563EB] font-medium select-all"
@@ -417,29 +505,13 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                                     lineHeight: 1.6,
                                   }}
                                 >
-                                  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-                                </div>
-                              </div>
-                              <div className="rounded-lg bg-white p-2.5 border border-slate-200/80">
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
-                                  MD5 Hash
-                                </div>
-                                <div
-                                  className="text-slate-600 font-medium select-all"
-                                  style={{
-                                    overflowWrap: 'break-word',
-                                    wordBreak: 'break-all',
-                                    whiteSpace: 'normal',
-                                    lineHeight: 1.6,
-                                  }}
-                                >
-                                  9e107d9d372bb6826bd81d3542a419d6
+                                  {docData.hash}
                                 </div>
                               </div>
                             </div>
                           </div>
                           <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            Both initial and computed image hashes demonstrate zero deviation. Evidence integrity coefficient stands at 1.00 (Tamper-Free).
+                            Security Classification: <span className="font-bold">{docData.confidentiality}</span> · Integrity Status: <span className="text-[#16A34A] font-bold">{docData.integrity}</span>.
                           </p>
                         </>
                       )}
@@ -450,20 +522,20 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                             2. Detailed Artifact Registry & Timeline
                           </h4>
                           <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            Log analysis from recovered partition yields 1,248 timestamped events corresponding to the suspect timeline between 28 Aug 2026 and 31 Aug 2026.
+                            Immutable transaction blocks recorded for {docData.documentId} under Case ID {docData.caseId}:
                           </p>
                           <div className="space-y-2 font-mono text-[10px]">
                             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
-                              <span style={{ overflowWrap: 'break-word' }}>EVT-01: File Allocation Table read</span>
+                              <span style={{ overflowWrap: 'break-word' }}>EVT-01: Document ingestion into MongoDB</span>
+                              <span className="text-[#16A34A] font-bold shrink-0">COMPLETED</span>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
+                              <span style={{ overflowWrap: 'break-word' }}>EVT-02: Cryptographic SHA-256 seal computed</span>
                               <span className="text-[#16A34A] font-bold shrink-0">VERIFIED</span>
                             </div>
                             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
-                              <span style={{ overflowWrap: 'break-word' }}>EVT-02: User login signature parsed</span>
-                              <span className="text-[#16A34A] font-bold shrink-0">VERIFIED</span>
-                            </div>
-                            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 py-1.5 gap-2">
-                              <span style={{ overflowWrap: 'break-word' }}>EVT-03: Access token cryptographic verify</span>
-                              <span className="text-[#16A34A] font-bold shrink-0">VERIFIED</span>
+                              <span style={{ overflowWrap: 'break-word' }}>EVT-03: Legal Review Queue dispatch</span>
+                              <span className="text-[#2563EB] font-bold shrink-0">ACTIVE</span>
                             </div>
                           </div>
                         </>
@@ -475,15 +547,15 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                             3. Cryptographic Signature Certification
                           </h4>
                           <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            Digital signature attached to Exhibit EX-884 was verified utilizing the public key certificate issued by the National Public Key Infrastructure Authority.
+                            Digital signature and public key validation for {docData.documentName}.
                           </p>
                           <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-[11px] text-emerald-900 space-y-1.5">
-                            <div><strong>Public Key Certificate Status:</strong> VALID (Expires: Dec 2028)</div>
+                            <div><strong>Public Key Certificate Status:</strong> VALID (PKI Ledger Linked)</div>
                             <div
                               className="font-mono text-[10px]"
                               style={{ overflowWrap: 'break-word', wordBreak: 'break-all', lineHeight: 1.6 }}
                             >
-                              Subject: CN=Officer A, OU=CID Cyber Unit, O=Gov of Karnataka, C=IN
+                              Subject: CN={docData.uploadedBy}, OU=SecureDocs Legal System, C=IN
                             </div>
                           </div>
                         </>
@@ -495,18 +567,18 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                             4. Final Conclusion & Approval Docket
                           </h4>
                           <p style={{ lineHeight: 1.6, overflowWrap: 'break-word', whiteSpace: 'normal' }}>
-                            The examining team confirms that Evidence.pdf represents a true and uncorrupted record of the digital evidence collected in connection with Case C-1024.
+                            The reviewing team confirms that {docData.documentName} represents a true and uncorrupted record of the digital evidence collected for Case {docData.caseId}.
                           </p>
                           <div className="mt-8 flex flex-col sm:flex-row sm:items-end sm:justify-between border-t border-slate-300 pt-4 gap-4">
                             <div>
                               <div className="font-mono text-[10px] text-slate-500">Submitted by:</div>
-                              <div className="font-bold text-slate-900">Officer A</div>
-                              <div className="font-mono text-[9px] text-slate-400">ID: SEC-8041</div>
+                              <div className="font-bold text-slate-900">{docData.uploadedBy}</div>
+                              <div className="font-mono text-[9px] text-slate-400">Date: {docData.uploadDate}</div>
                             </div>
                             <div className="sm:text-right">
-                              <div className="font-mono text-[10px] text-slate-500">Reviewed & Approved by:</div>
-                              <div className="font-bold text-[#16A34A]">Reviewer B (Digital Cert)</div>
-                              <div className="font-mono text-[9px] text-slate-400">01 Sept 2026 · 11:32 AM</div>
+                              <div className="font-mono text-[10px] text-slate-500">Current Status:</div>
+                              <div className="font-bold text-[#16A34A]">{docData.status}</div>
+                              <div className="font-mono text-[9px] text-slate-400">Authorized Reviewer</div>
                             </div>
                           </div>
                         </>
@@ -516,7 +588,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
 
                   {/* Footer Stamp */}
                   <div className="mt-10 border-t border-slate-200 pt-3.5 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono text-[9px] text-slate-400">
-                    <span>SECUREDOCS CRYPTOGRAPHIC ENGINE v2.4</span>
+                    <span>SECUREDOCS CRYPTOGRAPHIC ENGINE v2.4 · {docData.documentId}</span>
                     <span>PAGE {currentPage} / {totalPages}</span>
                   </div>
                 </div>
@@ -525,7 +597,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
           </div>
         </div>
 
-        {/* RIGHT PANEL – Document Information, Comments, and Review Actions (5 cols on desktop) */}
+        {/* RIGHT PANEL – Document Information, Comments, and Review Actions */}
         <div className="space-y-6 lg:col-span-5">
           
           {/* SECTION 1 (Right): DOCUMENT INFORMATION */}
@@ -538,7 +610,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 </h2>
               </div>
               <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-[#16A34A]">
-                VALIDATED
+                {docData.integrity.toUpperCase()}
               </span>
             </div>
 
@@ -550,7 +622,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   className="mt-1 font-mono text-sm font-bold text-[#111827]"
                   style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal' }}
                 >
-                  C-1024
+                  {docData.caseId}
                 </div>
               </div>
 
@@ -560,9 +632,9 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 <div
                   className="mt-1 font-mono text-sm font-bold text-[#2563EB]"
                   style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal' }}
-                  title="Evidence.pdf"
+                  title={docData.documentName}
                 >
-                  Evidence.pdf
+                  {docData.documentName}
                 </div>
               </div>
 
@@ -578,7 +650,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
               {/* Version */}
               <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Version</div>
-                <div className="mt-1 font-mono text-xs font-bold text-[#111827]">v3</div>
+                <div className="mt-1 font-mono text-xs font-bold text-[#111827]">v{docData.version}</div>
               </div>
 
               {/* Uploaded By */}
@@ -586,14 +658,14 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Uploaded By</div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#111827]">
                   <User size={13} className="text-[#64748B]" />
-                  <span>Officer A</span>
+                  <span>{docData.uploadedBy}</span>
                 </div>
               </div>
 
               {/* Upload Date */}
               <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Upload Date</div>
-                <div className="mt-1 font-mono text-xs font-bold text-[#111827]">01 Sept 2026</div>
+                <div className="mt-1 font-mono text-xs font-bold text-[#111827]">{docData.uploadDate}</div>
               </div>
 
               {/* Document Classification */}
@@ -601,7 +673,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Classification</div>
                 <div className="mt-1">
                   <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#F59E0B] border border-amber-200">
-                    Confidential
+                    {docData.confidentiality}
                   </span>
                 </div>
               </div>
@@ -611,7 +683,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 <div className="text-[10px] font-semibold uppercase text-[#64748B]">Security Status</div>
                 <div className="mt-1 flex items-center gap-1 font-mono text-xs font-bold text-[#16A34A]">
                   <ShieldCheck size={14} />
-                  <span>Verified</span>
+                  <span>{docData.integrity}</span>
                 </div>
               </div>
             </div>
@@ -663,7 +735,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 Review Actions
               </h3>
               <p className="mt-1 text-xs text-[#64748B]">
-                Execute formal decision with digital signature enforcement.
+                Execute formal decision with MongoDB persistence & audit log generation.
               </p>
             </div>
 
@@ -743,16 +815,16 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
             </span>
           </div>
 
-          {/* Connected timeline steps: Reviewer B -> Digital Approval -> Timestamp -> Document Hash -> Audit Log */}
+          {/* Connected timeline steps */}
           <div className="relative">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-5">
-              {/* Step 1: Reviewer B */}
+              {/* Step 1: Reviewer */}
               <div className="relative flex flex-col items-center rounded-xl border border-[#E2E8F0] bg-white p-4 text-center shadow-2xs">
                 <div className="grid size-10 place-items-center rounded-full bg-blue-100 text-[#2563EB] font-bold">
                   <User size={18} />
                 </div>
-                <div className="mt-2 text-xs font-bold text-[#111827]">Reviewer B</div>
-                <div className="text-[10px] text-[#64748B]">Senior Reviewer</div>
+                <div className="mt-2 text-xs font-bold text-[#111827]">Legal Reviewer</div>
+                <div className="text-[10px] text-[#64748B]">Authorized Officer</div>
                 <span className="mt-2 rounded bg-blue-50 px-2 py-0.5 font-mono text-[9px] font-bold text-[#2563EB]">
                   AUTHORIZED
                 </span>
@@ -776,7 +848,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   <Clock size={18} />
                 </div>
                 <div className="mt-2 text-xs font-bold text-[#111827]">Timestamp</div>
-                <div className="text-[10px] font-mono text-[#64748B]">01 Sept 2026 11:32 AM</div>
+                <div className="text-[10px] font-mono text-[#64748B]">{docData.uploadDate}</div>
                 <span className="mt-2 rounded bg-slate-100 px-2 py-0.5 font-mono text-[9px] font-bold text-slate-700">
                   NTP SYNCED
                 </span>
@@ -792,7 +864,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   className="text-[10px] font-mono text-[#64748B] w-full"
                   style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal', lineHeight: 1.4 }}
                 >
-                  0xe3b0c442...
+                  {docData.hash ? `${docData.hash.slice(0, 10)}...` : '0xe3b0c442...'}
                 </div>
                 <span className="mt-2 rounded bg-blue-50 px-2 py-0.5 font-mono text-[9px] font-bold text-[#2563EB]">
                   MATCHED
@@ -805,7 +877,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                   <Check size={20} strokeWidth={2.5} />
                 </div>
                 <div className="mt-2 text-xs font-bold text-[#111827]">Audit Log</div>
-                <div className="text-[10px] font-mono text-[#16A34A]">EVT-8824 Generated</div>
+                <div className="text-[10px] font-mono text-[#16A34A]">EVT-APPROVED Generated</div>
                 <span className="mt-2 rounded bg-emerald-200/80 px-2 py-0.5 font-mono text-[9px] font-bold text-emerald-900">
                   IMMUTABLE
                 </span>
@@ -833,21 +905,21 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
 
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-              <span className="text-xs font-medium text-[#64748B]">Reviewer:</span>
-              <span className="text-xs font-bold text-[#111827]">Reviewer B</span>
+              <span className="text-xs font-medium text-[#64748B]">Custodian / Uploader:</span>
+              <span className="text-xs font-bold text-[#111827]">{docData.uploadedBy}</span>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-              <span className="text-xs font-medium text-[#64748B]">Approval Status:</span>
+              <span className="text-xs font-medium text-[#64748B]">Current Review Status:</span>
               <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 font-mono text-xs font-bold text-[#16A34A] border border-emerald-200">
                 <CheckCircle2 size={12} />
-                Approved
+                {docData.status}
               </span>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-              <span className="text-xs font-medium text-[#64748B]">Approval Timestamp:</span>
-              <span className="font-mono text-xs font-bold text-[#111827]">01 Sept 2026 11:32 AM</span>
+              <span className="text-xs font-medium text-[#64748B]">Registration Timestamp:</span>
+              <span className="font-mono text-xs font-bold text-[#111827]">{docData.uploadDate}</span>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
@@ -862,21 +934,21 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
               <span className="text-xs font-medium text-[#64748B]">Hash Verification:</span>
               <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-[#16A34A]">
                 <CheckCircle2 size={14} />
-                Passed
+                Passed (SHA-256)
               </span>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-              <span className="text-xs font-medium text-[#64748B]">Audit Entry:</span>
+              <span className="text-xs font-medium text-[#64748B]">Repository Record:</span>
               <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-[#2563EB]">
                 <Layers size={14} />
-                Created (#EVT-8824)
+                {docData.documentId}
               </span>
             </div>
           </div>
         </div>
 
-        {/* SECTION 6 – SECURITY VERIFICATION (Status Cards) */}
+        {/* SECTION 6 – SECURITY VERIFICATION */}
         <div className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] p-6 shadow-sm lg:col-span-6">
           <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
             <div className="flex items-center gap-2">
@@ -897,7 +969,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
               <div className="mt-2 flex items-center justify-between">
                 <span className="font-mono text-sm font-bold text-[#111827]">Integrity Check</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[11px] font-bold text-[#16A34A]">
-                  🟢 Verified
+                  🟢 {docData.integrity}
                 </span>
               </div>
             </div>
@@ -917,7 +989,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
             <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
               <div className="text-[11px] font-semibold text-[#64748B]">Version Verification</div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="font-mono text-sm font-bold text-[#111827]">v3 Final Release</span>
+                <span className="font-mono text-sm font-bold text-[#111827]">v{docData.version} Active Release</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[11px] font-bold text-[#16A34A]">
                   🟢 Valid
                 </span>
@@ -939,7 +1011,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
             <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:col-span-2">
               <div className="text-[11px] font-semibold text-[#64748B]">Access Control</div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="font-mono text-sm font-bold text-[#111827]">Role Based ACL (Level 3+)</span>
+                <span className="font-mono text-sm font-bold text-[#111827]">Classification: {docData.confidentiality}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#16A34A]">
                   🟢 Protected
                 </span>
@@ -1020,11 +1092,11 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
 
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-5">
           {[
-            { step: 'Review Opened', time: '11:28 AM', status: 'Captured', icon: Eye },
-            { step: 'Comments Added', time: '11:30 AM', status: 'Logged', icon: FileText },
-            { step: 'Approval Submitted', time: '11:32 AM', status: 'Signed', icon: Send },
-            { step: 'Hash Verified', time: '11:32 AM', status: '0 Deviation', icon: Hash },
-            { step: 'Audit Record Generated', time: '11:32 AM', status: 'Immutable', icon: ShieldCheck },
+            { step: 'Review Opened', time: 'Active', status: 'Captured', icon: Eye },
+            { step: 'Comments Added', time: 'Active', status: 'Logged', icon: FileText },
+            { step: 'Decision Recorded', time: 'Live', status: docData.status, icon: Send },
+            { step: 'Hash Verified', time: 'Live', status: '0 Deviation', icon: Hash },
+            { step: 'Audit Record Generated', time: 'Live', status: 'Immutable', icon: ShieldCheck },
           ].map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -1122,28 +1194,28 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
         <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-[#111827] flex items-center justify-between">
-              <span>Evidence.pdf — High Resolution Full Screen Preview</span>
+              <span>{docData.documentName} — Full Screen Evidentiary Preview</span>
               <span className="font-mono text-xs text-[#64748B]">Page {currentPage} of {totalPages}</span>
             </DialogTitle>
           </DialogHeader>
           <div className="rounded-lg bg-slate-100 p-6 flex justify-center">
             <div className="w-full max-w-2xl bg-white p-8 rounded shadow-lg border border-slate-200">
               <div className="border-b-2 border-slate-900 pb-4">
-                <div className="font-mono text-[10px] text-[#2563EB]">KARNATAKA STATE POLICE · EVIDENCE ARCHIVE</div>
-                <div className="text-lg font-black text-slate-900">EXHIBIT EX-884 · DIGITAL EVIDENCE LEDGER</div>
+                <div className="font-mono text-[10px] text-[#2563EB]">SECUREDOCS EVIDENCE ARCHIVE · {docData.caseId}</div>
+                <div className="text-lg font-black text-slate-900">{docData.documentName}</div>
               </div>
               <div className="mt-6 space-y-4 text-xs leading-relaxed text-slate-800">
                 <p>
-                  Full legal transcript and forensic verification log for Case C-1024. All block signatures are validated against the state evidentiary chain of custody.
+                  Official evidentiary document details and cryptographic ledger validation record for Case {docData.caseId}.
                 </p>
                 <div className="rounded-xl bg-slate-50 p-4 font-mono text-[11px] border border-slate-200 space-y-2">
-                  <div><span className="font-bold text-slate-700">Evidence Item:</span> Forensic Disk Image WD-99401</div>
-                  <div><span className="font-bold text-slate-700">Ingested Date:</span> 01 Sept 2026</div>
+                  <div><span className="font-bold text-slate-700">Document ID:</span> {docData.documentId}</div>
+                  <div><span className="font-bold text-slate-700">Ingested Date:</span> {docData.uploadDate}</div>
                   <div style={{ overflowWrap: 'break-word', wordBreak: 'break-all', whiteSpace: 'normal', lineHeight: 1.6 }}>
                     <span className="font-bold text-slate-700">Hash (SHA-256):</span>{' '}
-                    <span className="text-[#2563EB] select-all font-medium">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                    <span className="text-[#2563EB] select-all font-medium">{docData.hash}</span>
                   </div>
-                  <div><span className="font-bold text-slate-700">Status:</span> <span className="text-[#16A34A] font-bold">VERIFIED & SEALED</span></div>
+                  <div><span className="font-bold text-slate-700">Status:</span> <span className="text-[#16A34A] font-bold">{docData.status}</span></div>
                 </div>
               </div>
             </div>
@@ -1186,7 +1258,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 <input
                   type="text"
                   readOnly
-                  value={`https://securedocs.gov.in/reviews/${id}?token=SEC-AUD-403`}
+                  value={`https://securedocs.gov.in/reviews/${docData.documentId || id}?token=SEC-AUD-403`}
                   className="flex-1 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-2.5 font-mono text-[11px] text-[#111827] outline-none"
                 />
                 <button
@@ -1239,12 +1311,20 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
           <div className="space-y-3 py-2 text-xs">
             <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 space-y-2">
               <div className="flex items-center justify-between font-semibold">
+                <span className="text-[#64748B]">Document:</span>
+                <span className="text-[#111827]">{docData.documentName}</span>
+              </div>
+              <div className="flex items-center justify-between font-semibold">
+                <span className="text-[#64748B]">Case ID:</span>
+                <span className="text-[#111827]">{docData.caseId}</span>
+              </div>
+              <div className="flex items-center justify-between font-semibold">
                 <span className="text-[#64748B]">Report Type:</span>
                 <span className="text-[#111827]">Comprehensive Evidentiary Review</span>
               </div>
               <div className="flex items-center justify-between font-semibold">
                 <span className="text-[#64748B]">Signee:</span>
-                <span className="text-[#16A34A]">Reviewer B (Verified)</span>
+                <span className="text-[#16A34A]">Legal Reviewer (Verified)</span>
               </div>
               <div className="flex items-center justify-between font-semibold">
                 <span className="text-[#64748B]">Format:</span>
@@ -1260,7 +1340,7 @@ export default function DocumentReview({ id = 'C-1024' }: DocumentReviewProps) {
                 setReportModalOpen(false);
                 toast({
                   title: 'Report Compiled',
-                  description: 'Evidentiary_Review_C-1024.pdf downloaded.',
+                  description: `Evidentiary_Review_${docData.documentId || id}.pdf downloaded.`,
                 });
               }}
               className="w-full rounded-lg bg-[#2563EB] px-4 py-2 text-xs font-bold text-white hover:bg-[#1D4ED8]"

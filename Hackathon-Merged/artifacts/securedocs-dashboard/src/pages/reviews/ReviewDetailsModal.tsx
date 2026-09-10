@@ -60,10 +60,16 @@ export default function ReviewDetailsModal({ review, role, onClose, onAction }: 
             <div className={styles.docPreview}>
               <FileText className={styles.docIcon} />
               <div className={styles.docName}>{review.document}</div>
-              <div className={styles.docMeta}>Version {review.version}</div>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button className={styles.secondaryButton}>Preview Document</button>
-                <button className={styles.secondaryButton}>Fullscreen</button>
+              <div className={styles.docMeta}>Version {review.version} · {review.id}</div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <a 
+                  href={`/reviews/${review.id}`}
+                  className={styles.primaryButton}
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', fontSize: '12px' }}
+                >
+                  <FileText size={13} />
+                  <span>Open Full Review Workspace</span>
+                </a>
               </div>
             </div>
 

@@ -4,6 +4,7 @@ import multer from "multer";
 import { SecureDocument } from "../models/Document";
 import { DocumentVersion } from "../models/DocumentVersion";
 import { Case } from "../models/Case";
+import { Review } from "../models/Review";
 import { requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
 import { getClientIp } from "../lib/ip";
@@ -391,6 +392,98 @@ router.post("/documents/:id/verify-integrity", requireAuth, async (req: Request,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to verify integrity." });
+  }
+});
+
+/**
+ * PATCH /api/documents/:id
+ * Update document status (Pending Review, Approved, Rejected, Flagged), comments, and reviewer.
+ */
+router.patch("/documents/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { status, comment, reviewer } = req.body;
+
+    const validStatuses = ["Pending Review", "Approved", "Rejected", "Flagged", "Under Review", "Changes Requested"];
+    if (status && !validStatuses.includes(status)) {
+      res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+      return;
+    }
+
+    // Normalize status names for consistent database storage
+    let normalizedStatus = status;
+    if (status === "Changes Requested") normalizedStatus = "Flagged";
+    if (status === "Pending") normalizedStatus = "Pending Review";
+
+    const updateFields: Record<string, unknown> = {
+      lastModified: new Date(),
+    };
+    if (normalizedStatus) updateFields.status = normalizedStatus;
+    if (reviewer || req.user?.name) updateFields.lastAccessedBy = reviewer || req.user?.name;
+    updateFields.lastAccessed = new Date();
+
+    const doc = await SecureDocument.findOneAndUpdate(
+      { $or: [{ documentId: req.params.id }, { _id: req.params.id }] },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!doc) {
+      res.status(404).json({ error: "Document not found." });
+      return;
+    }
+
+    // Mirror to Review collection
+    const reviewStatusMap: Record<string, string> = {
+      "Pending Review": "Pending",
+      "Under Review": "In Review",
+      "Approved": "Approved",
+      "Rejected": "Rejected",
+      "Flagged": "Flagged",
+    };
+    const reviewStatus = reviewStatusMap[normalizedStatus] || normalizedStatus;
+
+    Review.findOneAndUpdate(
+      { documentId: doc.documentId },
+      {
+        $set: {
+          status: reviewStatus,
+          comment: comment || "",
+          reviewer: reviewer || req.user?.name || "Assigned Reviewer",
+          reviewedDate: new Date(),
+        },
+      }
+    ).catch(() => {});
+
+    // Audit log
+    const auditActionMap: Record<string, string> = {
+      "Approved": "DOCUMENT_APPROVED",
+      "Rejected": "DOCUMENT_REJECTED",
+      "Flagged": "DOCUMENT_FLAGGED",
+      "Pending Review": "DOCUMENT_STATUS_RESET",
+    };
+    const auditAction = auditActionMap[normalizedStatus] || "DOCUMENT_STATUS_UPDATED";
+
+    try {
+      await createAuditEvent({
+        action: auditAction as any,
+        userId: req.user?.userId || "",
+        userName: reviewer || req.user?.name || req.user?.email || "Reviewer",
+        userRole: req.user?.role || "Legal Reviewer",
+        caseId: doc.caseId,
+        documentId: doc.documentId,
+        result: "Success",
+        ipAddress: getClientIp(req),
+        metadata: {
+          previousStatus: doc.status,
+          newStatus: normalizedStatus,
+          comment: comment || "",
+        },
+      });
+    } catch (_) {}
+
+    res.json(doc);
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "Failed to update document status." });
   }
 });
 

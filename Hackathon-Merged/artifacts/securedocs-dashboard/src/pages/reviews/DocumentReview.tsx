@@ -194,13 +194,13 @@ function PdfViewer() {
   );
 }
 
-/* ----------------------------------------------------------------
-   Main DocumentReview Page
-   ---------------------------------------------------------------- */
+import { documentService } from '@/services/documentService';
+
 export default function DocumentReview({ role }: { role: Role }) {
   const params = useParams<{ id: string }>();
   const reviewId = params.id ?? 'RV-2048';
-  const data = useMemo(() => getReviewById(reviewId), [reviewId]);
+  const defaultData = useMemo(() => getReviewById(reviewId), [reviewId]);
+  const [data, setData] = useState<any>(defaultData);
 
   // Page state
   const [status, setStatus] = useState<ReviewStatus>('Pending');
@@ -208,10 +208,37 @@ export default function DocumentReview({ role }: { role: Role }) {
   const [modal, setModal] = useState<ModalKind>(null);
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'warning' | 'danger' } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([
-    { date: data.uploadDate, text: `${data.submittedBy} uploaded document`, type: 'info' },
-    { date: data.uploadDate, text: `${data.reviewer} opened document`, type: 'info' },
-    { date: data.lastVerified, text: 'Integrity verified', type: 'success' },
+    { date: defaultData.uploadDate, text: `${defaultData.submittedBy} uploaded document`, type: 'info' },
+    { date: defaultData.uploadDate, text: `${defaultData.reviewer} opened document`, type: 'info' },
+    { date: defaultData.lastVerified, text: 'Integrity verified', type: 'success' },
   ]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const doc = await documentService.getDocumentById(reviewId);
+        if (doc) {
+          setData({
+            ...defaultData,
+            ...doc,
+            document: doc.documentName || doc.name || defaultData.document,
+            caseId: doc.caseId || defaultData.caseId,
+            documentType: doc.documentType || defaultData.documentType,
+            submittedBy: doc.uploadedBy || defaultData.submittedBy,
+            uploadDate: doc.uploadDate || defaultData.uploadDate,
+            version: `v${doc.version || 1}`,
+            originalHash: doc.hash || defaultData.originalHash,
+            currentHash: doc.hash || defaultData.currentHash,
+          });
+          const rawStatus = (doc.status || '').toLowerCase();
+          if (rawStatus.includes('approved')) setStatus('Approved');
+          else if (rawStatus.includes('rejected')) setStatus('Rejected');
+          else if (rawStatus.includes('flag') || rawStatus.includes('changes')) setStatus('Flagged');
+        }
+      } catch {}
+    }
+    load();
+  }, [reviewId]);
 
   const maxChars = 500;
   const charsLeft = maxChars - comment.length;
@@ -227,21 +254,27 @@ export default function DocumentReview({ role }: { role: Role }) {
   }, []);
 
   const handleConfirm = useCallback((reason: string) => {
+    let newDbStatus = 'Approved';
     if (modal === 'approve') {
       setStatus('Approved');
+      newDbStatus = 'Approved';
       showToast('Document approved successfully.', 'success');
       addHistory('Document approved by reviewer', 'success');
     } else if (modal === 'flag') {
       setStatus('Flagged');
+      newDbStatus = 'Flagged';
       showToast('Document flagged for further review.', 'warning');
       addHistory(`Document flagged: ${reason}`, 'warning');
     } else if (modal === 'reject') {
       setStatus('Rejected');
+      newDbStatus = 'Rejected';
       showToast('Document rejected.', 'danger');
       addHistory(`Document rejected: ${reason}`, 'danger');
     }
+
+    documentService.updateDocumentStatus(reviewId, newDbStatus, reason).catch(() => {});
     setModal(null);
-  }, [modal, showToast, addHistory]);
+  }, [modal, showToast, addHistory, reviewId]);
 
   // Status badge helpers
   const statusLabel = `Review Status: ${status}`;
