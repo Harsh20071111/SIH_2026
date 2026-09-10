@@ -47,9 +47,8 @@ function AuthenticatedApp() {
   // Set the role state based on the authenticated user's role, default to Officer if not found
   const role: Role = (user?.role as Role) || 'Officer';
   
-  // Note: setRole is preserved for SecureDocsShell compatibility if it changes the UI mock state
-  const setRole = (newRole: Role) => {
-    // Usually this would update backend/user context, kept here for API compatibility with SecureDocsShell
+  const setRole = (_newRole: Role) => {
+    // API compatibility with SecureDocsShell
   };
   
   const shellRoutes = ['/dashboard', '/cases', '/documents', '/upload', '/reviews', '/security', '/integrity', '/audit-logs', '/audit-logs/verify', '/reports', '/users', '/compliance', '/settings', '/notifications', '/profile'];
