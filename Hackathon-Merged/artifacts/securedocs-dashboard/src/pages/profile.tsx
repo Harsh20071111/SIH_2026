@@ -207,11 +207,12 @@ export default function Profile() {
                       <div className="col-span-3 relative">
                         <Input 
                           id="sec_curr_pass"
-                          name="sec_custom_curr_pass"
-                          type={showCurrentPassword ? 'text' : 'password'} 
+                          name="sec_curr_pass_plain"
+                          type="text"
+                          style={{ WebkitTextSecurity: showCurrentPassword ? 'none' : 'disc' } as React.CSSProperties}
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
-                          autoComplete="new-password"
+                          autoComplete="off"
                           data-lpignore="true"
                           data-1p-ignore="true"
                           data-form-type="other"
@@ -234,11 +235,12 @@ export default function Profile() {
                       <div className="col-span-3 relative">
                         <Input 
                           id="sec_new_pass"
-                          name="sec_custom_new_pass"
-                          type={showNewPassword ? 'text' : 'password'} 
+                          name="sec_new_pass_plain"
+                          type="text"
+                          style={{ WebkitTextSecurity: showNewPassword ? 'none' : 'disc' } as React.CSSProperties}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          autoComplete="new-password"
+                          autoComplete="off"
                           data-lpignore="true"
                           data-1p-ignore="true"
                           data-form-type="other"
@@ -261,11 +263,12 @@ export default function Profile() {
                       <div className="col-span-3 relative">
                         <Input 
                           id="sec_conf_pass"
-                          name="sec_custom_conf_pass"
-                          type={showConfirmPassword ? 'text' : 'password'} 
+                          name="sec_conf_pass_plain"
+                          type="text"
+                          style={{ WebkitTextSecurity: showConfirmPassword ? 'none' : 'disc' } as React.CSSProperties}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          autoComplete="new-password"
+                          autoComplete="off"
                           data-lpignore="true"
                           data-1p-ignore="true"
                           data-form-type="other"
