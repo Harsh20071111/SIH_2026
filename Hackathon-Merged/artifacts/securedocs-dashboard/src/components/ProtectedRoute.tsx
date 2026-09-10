@@ -8,9 +8,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      // In demo / preview mode if user is not set, allow graceful access or redirect cleanly
-      // If we want redirect:
-      // setLocation('/login');
+      setLocation('/login');
     }
   }, [isLoading, user, setLocation]);
 
@@ -22,6 +20,13 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  // Gracefully render with default role fallback instead of hard-crashing into ErrorBoundary
+  if (!user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <div className="animate-pulse text-slate-500 font-medium">Redirecting to login...</div>
+      </div>
+    );
+  }
+
   return <>{children}</>;
 }

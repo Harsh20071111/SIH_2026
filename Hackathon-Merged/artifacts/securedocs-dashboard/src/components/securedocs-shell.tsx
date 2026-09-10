@@ -17,12 +17,38 @@ const iconMap = {
 type ShellProps = { children: ReactNode; role: Role; setRole: (role: Role) => void; search: string; setSearch: (value: string) => void };
 
 export function SecureDocsShell({ children, role, setRole, search, setSearch }: ShellProps) {
-  const { user } = useAuth();
-  const [location] = useLocation();
+  const { user, login, logout } = useAuth();
+  const [location, setLocation] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setProfileOpen(false);
+    setMobileOpen(false);
+    await logout();
+    setLocation('/login');
+  };
+
+  const handleSwitchRole = (newRole: Role) => {
+    const roleEmailMap: Record<Role, { email: string; name: string }> = {
+      Admin: { email: 'admin@securedocs.gov', name: 'Admin User' },
+      Officer: { email: 'raj.patel@securedocs.gov', name: 'Officer Raj Patel' },
+      'Legal Reviewer': { email: 'mehta@securedocs.gov', name: 'Adv. Mehta' },
+      Clerk: { email: 'clerk@securedocs.gov', name: 'Clerk Sharma' },
+      Auditor: { email: 'auditor@securedocs.gov', name: 'Auditor Verma' },
+    };
+    const target = roleEmailMap[newRole] || { email: 'admin@securedocs.gov', name: `${newRole} User` };
+    login(`demo-jwt-${newRole.toLowerCase().replace(/\s+/g, '-')}`, {
+      id: `usr-${newRole.toLowerCase().replace(/\s+/g, '-')}`,
+      name: target.name,
+      email: target.email,
+      role: newRole as any,
+      department: newRole === 'Admin' ? 'Administration' : 'Investigation',
+    });
+    setProfileOpen(false);
+  };
 
   const notificationsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -196,7 +222,7 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
               </div>
             </Link>
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('logout'))}
+              onClick={handleLogout}
               className="p-2 text-sidebar-foreground/60 hover:text-white rounded-lg hover:bg-sidebar-accent shrink-0 transition-colors"
               title="Log out"
             >
@@ -274,16 +300,35 @@ export function SecureDocsShell({ children, role, setRole, search, setSearch }: 
                       <UserRound size={14} className="text-muted-foreground" />
                       <span>My Profile</span>
                     </Link>
-                    <button 
-                      onClick={() => { 
-                        setProfileOpen(false); 
-                        window.dispatchEvent(new CustomEvent('logout')); 
-                      }} 
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-destructive hover:bg-destructive/10"
-                    >
-                      <LogOut size={14} />
-                      <span>Log Out</span>
-                    </button>
+
+                    <div className="border-t border-border my-1 pt-1.5">
+                      <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Switch Role
+                      </div>
+                      {(['Admin', 'Officer', 'Legal Reviewer', 'Auditor', 'Clerk'] as Role[]).map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => handleSwitchRole(r)}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                            role === r ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          <span>{r}</span>
+                          {role === r && <Check size={13} className="text-primary" />}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-border pt-1">
+                      <button 
+                        onClick={handleLogout} 
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-destructive hover:bg-destructive/10"
+                      >
+                        <LogOut size={14} />
+                        <span>Log Out</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

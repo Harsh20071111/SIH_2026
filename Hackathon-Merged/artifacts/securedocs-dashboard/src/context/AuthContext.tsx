@@ -37,8 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
 
     const handleLogoutEvent = async () => {
-      if (savedToken) {
-        await authService.logout(savedToken);
+      const currentToken = localStorage.getItem('securedocs_token');
+      if (currentToken) {
+        await authService.logout(currentToken);
       }
       setToken(null);
       setUser(null);
@@ -58,8 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    if (token) {
-      await authService.logout(token);
+    const currentToken = token || localStorage.getItem('securedocs_token');
+    if (currentToken) {
+      await authService.logout(currentToken);
     }
     setToken(null);
     setUser(null);
