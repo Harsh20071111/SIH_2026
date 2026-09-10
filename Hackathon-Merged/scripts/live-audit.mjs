@@ -2,6 +2,8 @@
 // Works with MongoDB Atlas or local MongoDB
 import path from "path";
 import fs from "fs";
+import dns from "dns";
+try { dns.setServers(["8.8.8.8", "1.1.1.1"]); } catch (_) {}
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
 
@@ -38,6 +40,7 @@ const RED = "\x1b[31m";
 const YELLOW = "\x1b[33m";
 const BLUE = "\x1b[34m";
 const CYAN = "\x1b[36m";
+const MAGENTA = "\x1b[35m";
 const GRAY = "\x1b[90m";
 
 function formatLog(log) {
@@ -49,7 +52,7 @@ function formatLog(log) {
   if (act.includes("LOGIN_SUCCESS") || act.includes("SUCCESS")) {
     tag = `[LOGIN SUCCESS]`;
     color = GREEN;
-  } else if (act.includes("FAILED") || act.includes("DENIED") || act.includes("ALERT")) {
+  } else if (act.includes("FAILED") || act.includes("DENIED") || act.includes("ALERT") || act.includes("BRUTE_FORCE")) {
     tag = `[ALERT / FAIL] `;
     color = RED;
   } else if (act.includes("LOGOUT")) {
@@ -60,7 +63,7 @@ function formatLog(log) {
     color = BLUE;
   } else if (act.includes("UPLOAD") || act.includes("CREATE")) {
     tag = `[CREATE/UPLOAD]`;
-    color = CYAN;
+    color = MAGENTA;
   }
 
   const user = log.userName || log.userId || "System";
@@ -68,8 +71,9 @@ function formatLog(log) {
   const ip = log.ipAddress ? ` | IP: ${log.ipAddress}` : "";
   const extra = log.documentId ? ` | Doc: ${log.documentId}` : (log.caseId ? ` | Case: ${log.caseId}` : "");
   const res = log.result ? ` | Result: ${log.result}` : "";
+  const hashInfo = log.eventHash ? `\n    ${GRAY}↳ Chain Hash: ${log.eventHash.slice(0, 8)}...${log.eventHash.slice(-8)} (Prev: ${log.previousHash ? log.previousHash.slice(0, 8) + "..." : "genesis"})${RESET}` : "";
 
-  return `${GRAY}[${time}]${RESET} ${BOLD}${color}${tag}${RESET} ${BOLD}${user}${RESET} ${role}${extra}${ip}${res}`;
+  return `${GRAY}[${time}]${RESET} ${BOLD}${color}${tag}${RESET} ${BOLD}${user}${RESET} ${role}${extra}${ip}${res}${hashInfo}`;
 }
 
 console.log(`\n${BOLD}${CYAN}==============================================================${RESET}`);
@@ -96,6 +100,9 @@ async function run() {
     console.log(`${GRAY}--- Watching for new live events... ---${RESET}\n`);
   }
 
+  const securityCollection = mongoose.connection.db.collection("securityevents");
+  let lastSecTime = new Date();
+
   setInterval(async () => {
     try {
       const newLogs = await auditCollection
@@ -107,6 +114,19 @@ async function run() {
         console.log(formatLog(l));
         const t = new Date(l.timestamp);
         if (t > lastTime) lastTime = t;
+      }
+
+      const newSec = await securityCollection
+        .find({ timestamp: { $gt: lastSecTime } })
+        .sort({ timestamp: 1 })
+        .toArray();
+
+      for (const s of newSec) {
+        const time = new Date(s.timestamp).toLocaleTimeString();
+        console.log(`\n${RED}${BOLD}🚨 [SECURITY EVENT TRIGGERED]${RESET} ${BOLD}${s.type}${RESET} (Risk: ${s.riskScore}/100 - ${s.riskLevel})`);
+        console.log(`   Action: ${s.action} | User: ${s.userName || "Unknown"} | Rules: ${(s.triggeredRules || []).join(", ")}\n`);
+        const t = new Date(s.timestamp);
+        if (t > lastSecTime) lastSecTime = t;
       }
     } catch (e) {
       // ignore transient poll error

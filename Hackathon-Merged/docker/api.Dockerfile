@@ -14,6 +14,8 @@ COPY tsconfig.base.json tsconfig.json ./
 
 # Copy only package.json files for each workspace package (for caching)
 COPY artifacts/api-server/package.json artifacts/api-server/
+COPY artifacts/securedocs-dashboard/package.json artifacts/securedocs-dashboard/
+COPY artifacts/mockup-sandbox/package.json artifacts/mockup-sandbox/
 COPY scripts/package.json scripts/
 
 # Install all dependencies (including devDeps for build)
@@ -38,10 +40,10 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY tsconfig.base.json tsconfig.json ./
 
-# Copy api-server package.json
+# Copy all workspace package.json files
 COPY artifacts/api-server/package.json artifacts/api-server/
-
-# Copy scripts package.json (workspace reference)
+COPY artifacts/securedocs-dashboard/package.json artifacts/securedocs-dashboard/
+COPY artifacts/mockup-sandbox/package.json artifacts/mockup-sandbox/
 COPY scripts/package.json scripts/
 
 # Install production dependencies only

@@ -36,7 +36,8 @@ export type AuditAction =
   | "REVIEW_SUBMITTED"
   | "REVIEW_APPROVED"
   | "REVIEW_REJECTED"
-  | "REVIEW_FLAGGED";
+  | "REVIEW_FLAGGED"
+  | "UNAUTHORIZED_ACCESS";
 
 export interface AuditEventInput {
   action: AuditAction;
@@ -87,9 +88,12 @@ export async function createAuditEvent(
     const eventData = JSON.stringify({
       action: input.action,
       userId: input.userId,
+      userName: input.userName,
       caseId: input.caseId,
       documentId: input.documentId,
       result: input.result,
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
       timestamp: new Date().toISOString(),
       previousHash,
     });

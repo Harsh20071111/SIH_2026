@@ -218,17 +218,35 @@ router.post("/auth/login", async (req: Request, res: Response) => {
           userAgent: req.headers["user-agent"] || "",
           metadata: { reason: "Invalid credentials" },
         });
-      } catch (_) {}
 
-      try {
-        await createSecurityEvent({
-          type: "LOGIN_FAILED",
-          action: "Failed login attempt",
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const { AuditLog } = await import("../models/AuditLog");
+        const failedCount = await AuditLog.countDocuments({
+          action: "LOGIN_FAILED",
           userName: email,
-          ipAddress: getClientIp(req),
-          userAgent: req.headers["user-agent"] || "",
+          timestamp: { $gte: fifteenMinsAgo },
         });
-      } catch (_) {}
+
+        if (failedCount >= 5) {
+          await createSecurityEvent({
+            type: "BRUTE_FORCE_ATTACK",
+            action: `${failedCount} consecutive failed login attempts detected`,
+            userName: email,
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] || "",
+          });
+        } else {
+          await createSecurityEvent({
+            type: "LOGIN_FAILED",
+            action: "Failed login attempt",
+            userName: email,
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] || "",
+          });
+        }
+      } catch (err) {
+        logger.error({ err }, "Error recording login failure events");
+      }
 
       res.status(401).json({
         error: "Invalid credentials. Please check your email and password.",
@@ -267,18 +285,37 @@ router.post("/auth/login", async (req: Request, res: Response) => {
           userAgent: req.headers["user-agent"] || "",
           metadata: { reason: "Invalid password" },
         });
-      } catch (_) {}
 
-      try {
-        await createSecurityEvent({
-          type: "LOGIN_FAILED",
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const { AuditLog } = await import("../models/AuditLog");
+        const failedCount = await AuditLog.countDocuments({
+          action: "LOGIN_FAILED",
           userId: user._id.toString(),
-          userName: user.name,
-          action: "Failed login attempt — invalid password",
-          ipAddress: getClientIp(req),
-          userAgent: req.headers["user-agent"] || "",
+          timestamp: { $gte: fifteenMinsAgo },
         });
-      } catch (_) {}
+
+        if (failedCount >= 5) {
+          await createSecurityEvent({
+            type: "BRUTE_FORCE_ATTACK",
+            userId: user._id.toString(),
+            userName: user.name,
+            action: `${failedCount} consecutive failed login attempts detected`,
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] || "",
+          });
+        } else {
+          await createSecurityEvent({
+            type: "LOGIN_FAILED",
+            userId: user._id.toString(),
+            userName: user.name,
+            action: "Failed login attempt — invalid password",
+            ipAddress: getClientIp(req),
+            userAgent: req.headers["user-agent"] || "",
+          });
+        }
+      } catch (err) {
+        logger.error({ err }, "Error recording login failure events");
+      }
 
       res.status(401).json({
         error: "Invalid credentials. Please check your email and password.",

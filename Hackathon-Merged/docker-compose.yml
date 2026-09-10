@@ -68,8 +68,10 @@ services:
     environment:
       NODE_ENV: production
       PORT: "5001"
-      MONGODB_URI: mongodb://mongodb:27017/securedocs
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/securedocs}
       JWT_SECRET: ${JWT_SECRET:-securedocs-dev-secret-change-in-production}
+    volumes:
+      - uploads_data:/app/artifacts/api-server/uploads
     depends_on:
       mongodb:
         condition: service_healthy
@@ -90,4 +92,6 @@ services:
 
 volumes:
   mongo_data:
+    driver: local
+  uploads_data:
     driver: local

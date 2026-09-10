@@ -13,7 +13,9 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY tsconfig.base.json tsconfig.json ./
 
 # Copy package.json files for workspace packages
+COPY artifacts/api-server/package.json artifacts/api-server/
 COPY artifacts/securedocs-dashboard/package.json artifacts/securedocs-dashboard/
+COPY artifacts/mockup-sandbox/package.json artifacts/mockup-sandbox/
 COPY scripts/package.json scripts/
 
 # Install all dependencies

@@ -37,6 +37,16 @@ interface RiskRule {
  */
 const riskRules: RiskRule[] = [
   {
+    name: "Brute force attack detected",
+    weight: 50,
+    check: (input) => input.type === "BRUTE_FORCE_ATTACK",
+  },
+  {
+    name: "Access with expired token",
+    weight: 20,
+    check: (input) => input.type === "EXPIRED_TOKEN_ACCESS",
+  },
+  {
     name: "Failed login attempt",
     weight: 15,
     check: (input) => input.type === "LOGIN_FAILED",

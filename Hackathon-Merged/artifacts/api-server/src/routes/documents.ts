@@ -8,6 +8,7 @@ import { requireAuth } from "../middlewares/auth";
 import { createAuditEvent } from "../lib/audit";
 import { getClientIp } from "../lib/ip";
 import { uploadToFirebase, downloadFromFirebase, getSignedUrl } from "../lib/firebase";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -161,10 +162,10 @@ router.post(
         status: "Pending Review",
         integrity: "Verified",
         confidentiality: confidentiality || "Confidential",
-        uploadedBy: req.user!.name,
+        uploadedBy: req.user?.name || req.user?.email || "Officer",
         uploadDate: new Date(),
         lastModified: new Date(),
-        lastAccessedBy: req.user!.name,
+        lastAccessedBy: req.user?.name || req.user?.email || "Officer",
         lastAccessed: new Date(),
       });
 
@@ -174,7 +175,7 @@ router.post(
         version: 1,
         hash: fileHash,
         firebaseStoragePath: firebasePath,
-        uploadedBy: req.user!.name,
+        uploadedBy: req.user?.name || req.user?.email || "Officer",
         changeDescription: "Initial upload",
         size: req.file.size,
       });
@@ -186,9 +187,9 @@ router.post(
       try {
         await createAuditEvent({
           action: "DOCUMENT_UPLOADED",
-          userId: req.user!.userId,
-          userName: req.user!.name,
-          userRole: req.user!.role,
+          userId: req.user?.userId || "",
+          userName: req.user?.name || req.user?.email || "Officer",
+          userRole: req.user?.role || "Officer",
           caseId,
           documentId: docId,
           result: "Success",
@@ -203,8 +204,9 @@ router.post(
       } catch (_) {}
 
       res.status(201).json(doc);
-    } catch (err) {
-      res.status(500).json({ error: "Failed to upload document." });
+    } catch (err: any) {
+      logger.error({ err }, "Failed to upload document");
+      res.status(500).json({ error: err?.message || "Failed to upload document." });
     }
   }
 );

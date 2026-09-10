@@ -954,7 +954,8 @@ export default function AllDocuments() {
       setDocs(Array.isArray(docsData) ? docsData : []);
       if (statsData) setStats(statsData);
     } catch (e) {
-      setToast('Upload failed.');
+      console.error('Upload failed:', e);
+      setToast(e?.message || 'Upload failed. Please check server logs.');
     }
   };
 
