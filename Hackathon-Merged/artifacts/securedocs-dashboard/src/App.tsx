@@ -28,6 +28,7 @@ import Profile from '@/pages/profile';
 import { SecureDocsShell } from '@/components/securedocs-shell';
 import type { Role } from '@/lib/mock-data';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { SecurityProvider } from '@/context/SecurityContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Login from '@/pages/login';
 import ForgotPassword from '@/pages/forgot-password';
@@ -89,11 +90,84 @@ function AuthenticatedApp() {
   );
 }
 
+function PublicAuditChainPage() {
+  const [search, setSearch] = useState('');
+  const role: Role = 'Auditor';
+  const setRole = () => {};
+  return (
+    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
+      <AuditChainVerification />
+    </SecureDocsShell>
+  );
+}
+
+function PublicCompliancePage() {
+  const [search, setSearch] = useState('');
+  const role: Role = 'Auditor';
+  const setRole = () => {};
+  return (
+    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
+      <ComplianceDashboard />
+    </SecureDocsShell>
+  );
+}
+
+function PublicReportsPage() {
+  const [search, setSearch] = useState('');
+  const role: Role = 'Auditor';
+  const setRole = () => {};
+  return (
+    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
+      <Reports />
+    </SecureDocsShell>
+  );
+}
+
+function PublicIntegrityReportPage({ params }: { params?: { id?: string } }) {
+  const [search, setSearch] = useState('');
+  const role: Role = 'Auditor';
+  const setRole = () => {};
+  return (
+    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
+      <OneClickIntegrityReport id={params?.id || 'C-1024'} />
+    </SecureDocsShell>
+  );
+}
+
+function PublicAccessDeniedPage() {
+  const [search, setSearch] = useState('');
+  const role: Role = 'Officer';
+  const setRole = () => {};
+  return (
+    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
+      <AccessDenied />
+    </SecureDocsShell>
+  );
+}
+
+function PublicDocumentReviewPage({ params }: { params?: { id?: string } }) {
+  const [search, setSearch] = useState('');
+  const role: Role = 'Legal Reviewer';
+  const setRole = () => {};
+  return (
+    <SecureDocsShell role={role} setRole={setRole} search={search} setSearch={setSearch}>
+      <DocumentReview id={params?.id || 'C-1024'} />
+    </SecureDocsShell>
+  );
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/audit-logs/verify" component={PublicAuditChainPage} />
+      <Route path="/compliance" component={PublicCompliancePage} />
+      <Route path="/reports/integrity/:id" component={({ params }) => <PublicIntegrityReportPage params={params} />} />
+      <Route path="/reports/integrity" component={() => <PublicIntegrityReportPage params={{ id: 'C-1024' }} />} />
+      <Route path="/reports" component={PublicReportsPage} />
+      <Route path="/403" component={PublicAccessDeniedPage} />
+      <Route path="/reviews/:id" component={({ params }) => <PublicDocumentReviewPage params={params} />} />
       <Route>
         <ProtectedRoute>
           <AuthenticatedApp />
@@ -113,11 +187,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <RoutedErrorBoundary>
-              <Router />
-            </RoutedErrorBoundary>
-          </WouterRouter>
+          <SecurityProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <RoutedErrorBoundary>
+                <Router />
+              </RoutedErrorBoundary>
+            </WouterRouter>
+          </SecurityProvider>
         </AuthProvider>
         <Toaster />
       </TooltipProvider>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
+import { generateAndDownloadFile, getMockPdfContent, getMockZipContent } from '@/lib/exportUtils';
 import {
   ShieldCheck, ShieldAlert, Download, Printer, Share2, RefreshCw,
   FileText, CheckCircle2, AlertTriangle, Clock, Hash, Lock,
@@ -70,6 +71,46 @@ export default function OneClickIntegrityReport({ id = 'C-1024' }: Props) {
   const originalHash = "A7F32B9D84F5E7A1C20D45E6789ABCDEF0123456789ABCDEF0123456789ABCDEF";
   const currentHash = "A7F32B9D84F5E7A1C20D45E6789ABCDEF0123456789ABCDEF0123456789ABCDEF";
   const verificationId = "SEC-VER-C1024-88492-2026";
+
+  const handleDownloadPDF = () => {
+    setIsGenerating(true);
+    handleAction("Downloading Official PDF", "Packaging signed PDF report with cryptographic seals...");
+
+    try {
+      const dateStr = new Date().toLocaleString('en-IN').replace(/[^\x00-\x7F]/g, " ");
+      const content = getMockPdfContent(
+        `SECURE DOCS INTEGRITY REPORT - ${id}`,
+        `Verification ID: SEC-VER-C1024-88492-2026 | Timestamp: ${dateStr}`
+      );
+      
+      generateAndDownloadFile(
+        `integrity-report-${id}.pdf`, 
+        content, 
+        'application/pdf',
+        () => {
+          toast({
+            title: "Download Complete",
+            description: `PDF report for ${id} has been successfully downloaded.`,
+          });
+        },
+        () => {
+          toast({
+            title: "Download Failed",
+            description: "There was an error generating the PDF.",
+            variant: "destructive"
+          });
+        }
+      );
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating the PDF.",
+        variant: "destructive"
+      });
+    } finally {
+      setTimeout(() => setIsGenerating(false), 500);
+    }
+  };
 
   return (
     <div className="min-h-screen space-y-7 bg-[#F8FAFC] pb-14 font-sans text-[#111827] antialiased print:bg-white print:p-0">
@@ -651,13 +692,14 @@ export default function OneClickIntegrityReport({ id = 'C-1024' }: Props) {
           
           {/* Download PDF */}
           <button
-            onClick={() => handleAction("Downloading Official PDF", "Packaging signed PDF report with cryptographic seals...")}
-            className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-[#F8FAFC] p-4 text-center transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-sm"
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-[#F8FAFC] p-4 text-center transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="grid size-11 place-items-center rounded-xl bg-[#2563EB]/10 text-[#2563EB] group-hover:bg-[#2563EB] group-hover:text-white transition">
-              <Download size={20} />
+            <div className={`grid size-11 place-items-center rounded-xl transition ${isGenerating ? 'bg-[#2563EB] text-white animate-pulse' : 'bg-[#2563EB]/10 text-[#2563EB] group-hover:bg-[#2563EB] group-hover:text-white'}`}>
+              <Download size={20} className={isGenerating ? 'animate-bounce' : ''} />
             </div>
-            <div className="mt-3 font-bold text-xs text-[#111827]">Download PDF</div>
+            <div className="mt-3 font-bold text-xs text-[#111827]">{isGenerating ? 'Generating...' : 'Download PDF'}</div>
             <span className="mt-1 text-[10px] text-[#64748B]">Signed certificate file</span>
           </button>
 
@@ -675,7 +717,15 @@ export default function OneClickIntegrityReport({ id = 'C-1024' }: Props) {
 
           {/* Export Evidence */}
           <button
-            onClick={() => handleAction("Exporting Evidence Dossier", "Exporting raw cryptographic hash receipts and chain proofs...")}
+            onClick={() => {
+              handleAction("Exporting Evidence Dossier", "Exporting raw cryptographic hash receipts and chain proofs...");
+              generateAndDownloadFile(
+                `evidence-dossier-${id}.zip`,
+                getMockZipContent(),
+                'application/zip',
+                () => toast({ title: 'Export Complete', description: 'Evidence dossier downloaded.' })
+              );
+            }}
             className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-[#F8FAFC] p-4 text-center transition hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-white hover:shadow-sm"
           >
             <div className="grid size-11 place-items-center rounded-xl bg-[#3B82F6]/10 text-[#2563EB] group-hover:bg-[#2563EB] group-hover:text-white transition">

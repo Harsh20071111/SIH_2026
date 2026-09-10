@@ -5,31 +5,22 @@ import { Badge } from '@/components/ui/badge';
 import { FileWarning, CheckCircle, Search, ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSecurity } from '@/context/SecurityContext';
 
 export default function SecurityDashboard() {
-  const [events, setEvents] = useState<any[]>([]);
+  const { events, updateEventStatus, getDashboardStats } = useSecurity();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchSecurity() {
-      if (user?.role === 'Admin' || user?.role === 'Auditor') {
-        try {
-          const res = await api.get<any>('/security/events');
-          setEvents(res.data || []);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      setLoading(false);
-    }
-    fetchSecurity();
-  }, [user]);
+    // Simulate loading for better UX
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // DB stores riskLevel as uppercase: HIGH, CRITICAL, MEDIUM, LOW
   const filteredEvents = useMemo(() => {
@@ -136,7 +127,8 @@ export default function SecurityDashboard() {
               />
             </div>
           </div>
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Timestamp</TableHead>
@@ -171,15 +163,22 @@ export default function SecurityDashboard() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleInvestigate(event)}>
-                        Investigate
-                      </Button>
+                      {event.status === 'Monitoring' ? (
+                        <Button variant="ghost" size="sm" onClick={() => updateEventStatus(event._id, 'Resolved')}>
+                          Mark Resolved
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => updateEventStatus(event._id, 'Monitoring')}>
+                          Re-open
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

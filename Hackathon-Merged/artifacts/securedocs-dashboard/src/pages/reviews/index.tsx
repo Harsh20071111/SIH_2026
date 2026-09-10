@@ -1,60 +1,142 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import styles from './reviews.module.css';
-import { mockReviews, type ReviewData, type ReviewStatus, type ReviewPriority } from '@/lib/reviews-data';
-import ReviewDetailsModal from './ReviewDetailsModal';
 import { useToast } from '@/hooks/use-toast';
-import { api } from '@/services/api';
 import { 
   Search, ChevronDown, Clock, AlertTriangle, 
-  Calendar, CheckCircle, Download, ChevronLeft, ChevronRight 
+  Calendar, CheckCircle, Download, ChevronLeft, ChevronRight, Eye, FileText, CheckCircle2
 } from 'lucide-react';
 import type { Role } from '@/lib/mock-data';
+import { documentService } from '@/services/documentService';
+// @ts-ignore
+import { StatusBadge, Modal } from '@/components/SecureDocsComponents';
 
-export default function Reviews({ role }: { role: Role }) {
+function PreviewModal({ document, onClose, onDetails }: any) {
+  const formatDateTime = (date: any) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(date || Date.now()));
+  
+  return (
+    <Modal title={document.documentName} eyebrow={`Document preview · ${document.id}`} onClose={onClose} width="max-w-3xl" testId="modal-preview-document">
+      <div className="grid gap-5 p-6 md:grid-cols-[1fr_250px]">
+        <div className="flex min-h-[355px] items-center justify-center rounded-lg border border-slate-200 bg-[#f2f5f7] p-5">
+          <div className="flex h-[285px] w-full max-w-[470px] flex-col rounded-sm border border-slate-200 bg-white px-9 py-7 shadow-sm">
+            <div className="mb-5 flex items-center justify-between border-b border-slate-200 pb-4">
+              <div className="h-3 w-32 rounded bg-slate-200" />
+              <div className="h-5 w-5 rounded bg-cyan-100" />
+            </div>
+            <div className="space-y-3">
+              <div className="h-2 w-5/6 rounded bg-slate-100" />
+              <div className="h-2 w-full rounded bg-slate-100" />
+              <div className="h-2 w-4/5 rounded bg-slate-100" />
+              <div className="mt-6 h-16 w-full rounded bg-slate-50" />
+              <div className="h-2 w-3/4 rounded bg-slate-100" />
+              <div className="h-2 w-full rounded bg-slate-100" />
+            </div>
+            <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3">
+              <span className="font-mono text-[8px] text-slate-400">CONTROLLED COPY · {document.hash || '4cf7b1e2c9a0'}</span>
+              <span className="text-[9px] font-bold text-slate-400">PAGE 1 / 4</span>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[.14em] text-slate-500">Classification</div>
+            <div className="mt-2"><StatusBadge value={document.confidentiality} kind="confidentiality" /></div>
+          </div>
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[.14em] text-slate-500">Integrity state</div>
+            <div className="mt-2 flex items-center gap-2 text-xs font-bold text-emerald-700">
+              <CheckCircle2 size={15} /> {document.integrity}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[.14em] text-slate-500">Last accessed</div>
+            <div className="mt-1 text-xs font-semibold text-slate-700">{formatDateTime(document.lastAccessed)}</div>
+          </div>
+          <button type="button" onClick={() => onDetails(document)} data-testid={`button-preview-details-${document.id}`} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md border border-slate-300 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+            Open full details <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+export default function ReviewQueue({ role }: { role: Role }) {
   const { toast } = useToast();
-  const [reviews, setReviews] = useState<ReviewData[]>(mockReviews);
+  const [, setLocation] = useLocation();
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [stats, setStats] = useState({ totalDocuments: 0, pendingReview: 0, integrityIssues: 0, restrictedDocuments: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Filters & State
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ReviewStatus | 'All'>('All');
-  const [priorityFilter, setPriorityFilter] = useState<ReviewPriority | 'All'>('All');
-  const [reviewerFilter, setReviewerFilter] = useState<string>('All');
-  const [sortField, setSortField] = useState<keyof ReviewData>('submittedDate');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState('All');
+  
+  const [sortField, setSortField] = useState('uploadDate');
   const [sortAsc, setSortAsc] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedReview, setSelectedReview] = useState<ReviewData | null>(null);
+  const [selectedPreviewDoc, setSelectedPreviewDoc] = useState<any | null>(null);
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 7;
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [docsData, statsData] = await Promise.all([
+          documentService.getDocuments(),
+          documentService.getDocumentStats()
+        ]);
+        if (isMounted) {
+          setDocuments(docsData);
+          setStats(statsData);
+        }
+      } catch (err) {
+        console.error("Failed to load documents", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    fetchData();
+    return () => { isMounted = false; };
+  }, []);
 
   const handleResetFilters = () => {
     setSearch('');
     setStatusFilter('All');
-    setPriorityFilter('All');
-    setReviewerFilter('All');
+    setTypeFilter('All');
     setCurrentPage(1);
   };
 
-  const filteredReviews = useMemo(() => {
-    return reviews.filter(r => {
-      const matchSearch = r.caseId.toLowerCase().includes(search.toLowerCase()) ||
-                          r.document.toLowerCase().includes(search.toLowerCase()) ||
-                          r.submittedBy.toLowerCase().includes(search.toLowerCase()) ||
-                          r.reviewer.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === 'All' || r.status === statusFilter;
-      const matchPriority = priorityFilter === 'All' || r.priority === priorityFilter;
-      const matchReviewer = reviewerFilter === 'All' || r.reviewer === reviewerFilter;
-      return matchSearch && matchStatus && matchPriority && matchReviewer;
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc => {
+      const matchSearch = doc.caseId?.toLowerCase().includes(search.toLowerCase()) ||
+                          doc.documentName?.toLowerCase().includes(search.toLowerCase()) ||
+                          doc.uploadedBy?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = statusFilter === 'All' || doc.status === statusFilter;
+      const matchType = typeFilter === 'All' || doc.documentType === typeFilter;
+      return matchSearch && matchStatus && matchType;
     }).sort((a, b) => {
-      const fieldA = a[sortField];
-      const fieldB = b[sortField];
+      let fieldA = a[sortField];
+      let fieldB = b[sortField];
+      
+      if (sortField === 'uploadDate') {
+        fieldA = new Date(fieldA).getTime();
+        fieldB = new Date(fieldB).getTime();
+      }
+
       if (fieldA < fieldB) return sortAsc ? -1 : 1;
       if (fieldA > fieldB) return sortAsc ? 1 : -1;
       return 0;
     });
-  }, [reviews, search, statusFilter, priorityFilter, reviewerFilter, sortField, sortAsc]);
+  }, [documents, search, statusFilter, typeFilter, sortField, sortAsc]);
 
-  const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
-  const currentReviews = filteredReviews.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / itemsPerPage));
+  const currentDocuments = filteredDocuments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleSort = (field: keyof ReviewData) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -63,29 +145,14 @@ export default function Reviews({ role }: { role: Role }) {
     }
   };
 
-  const getBadgeClass = (status: ReviewStatus) => {
-    switch (status) {
-      case 'Pending': return styles.badgePending;
-      case 'In Review': return styles.badgeInReview;
-      case 'Approved': return styles.badgeApproved;
-      case 'Rejected': return styles.badgeRejected;
-      case 'Changes Requested': return styles.badgeChanges;
-      default: return '';
-    }
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`));
   };
 
-  const getPriorityClass = (priority: ReviewPriority) => {
-    switch (priority) {
-      case 'High': return styles.priorityHigh;
-      case 'Medium': return styles.priorityMedium;
-      case 'Low': return styles.priorityLow;
-      default: return '';
-    }
-  };
-
-  const getActionButtonText = (status: ReviewStatus) => {
+  const getActionButtonText = (status: string) => {
     switch (status) {
-      case 'Pending': return 'Review';
+      case 'Pending Review': return 'Review';
       case 'In Review': return 'Continue';
       case 'Approved': return 'View';
       case 'Rejected': return 'View';
@@ -94,48 +161,9 @@ export default function Reviews({ role }: { role: Role }) {
     }
   };
 
-  const handleAction = async (id: string, action: 'Approve' | 'Reject' | 'Request Changes', comments: string) => {
-    // Map frontend action names to the API status values
-    const statusMap: Record<string, string> = {
-      'Approve': 'Approved',
-      'Reject': 'Rejected',
-      'Request Changes': 'Flagged',
-    };
-    const newStatus = statusMap[action];
-
-    // Optimistically update local state so UI feels responsive
-    setReviews(prev => prev.map(r => {
-      if (r.id === id) {
-        let newLocalStatus: ReviewStatus = r.status;
-        if (action === 'Approve') newLocalStatus = 'Approved';
-        if (action === 'Reject') newLocalStatus = 'Rejected';
-        if (action === 'Request Changes') newLocalStatus = 'Changes Requested';
-        return { ...r, status: newLocalStatus };
-      }
-      return r;
-    }));
-
-    // Persist to the API
-    try {
-      await api.patch(`/reviews/${id}`, { status: newStatus, comment: comments });
-    } catch (err) {
-      console.error('Failed to update review:', err);
-      // Non-critical for the hackathon — local state still reflects the change
-    }
-
-    toast({
-      title: 'Success',
-      description: action === 'Approve' ? 'Document approved successfully.' :
-                   action === 'Reject' ? 'Document rejected.' : 'Changes requested from document owner.',
-      variant: action === 'Reject' ? 'destructive' : 'default',
-    });
-
-    setSelectedReview(null);
-  };
-
-  // Stats
-  const pendingCount = reviews.filter(r => r.status === 'Pending').length;
-  const highPriorityCount = reviews.filter(r => r.priority === 'High' && r.status !== 'Approved').length;
+  // Extract unique types and statuses for filters
+  const uniqueTypes = useMemo(() => Array.from(new Set(documents.map(d => d.documentType))).filter(Boolean), [documents]);
+  const uniqueStatuses = useMemo(() => Array.from(new Set(documents.map(d => d.status))).filter(Boolean), [documents]);
 
   return (
     <div className={styles.reviewQueueContainer}>
@@ -159,32 +187,32 @@ export default function Reviews({ role }: { role: Role }) {
             <Clock size={16} style={{ color: 'var(--color-warning)' }} />
             <h3 className={styles.cardTitle}>Pending Reviews</h3>
           </div>
-          <p className={styles.cardNumber}>{pendingCount}</p>
+          <p className={styles.cardNumber}>{stats.pendingReview || 0}</p>
           <p className={styles.cardDesc}>Awaiting review</p>
         </div>
         <div className={styles.summaryCard}>
           <div className={styles.cardHeader}>
             <AlertTriangle size={16} style={{ color: 'var(--color-danger)' }} />
-            <h3 className={styles.cardTitle}>High Priority</h3>
+            <h3 className={styles.cardTitle}>Integrity Issues</h3>
           </div>
-          <p className={styles.cardNumber}>0{highPriorityCount}</p>
+          <p className={styles.cardNumber}>{stats.integrityIssues || 0}</p>
           <p className={styles.cardDesc}>Requires attention</p>
         </div>
         <div className={styles.summaryCard}>
           <div className={styles.cardHeader}>
             <Calendar size={16} style={{ color: 'var(--color-primary)' }} />
-            <h3 className={styles.cardTitle}>Due Today</h3>
+            <h3 className={styles.cardTitle}>Total Uploaded</h3>
           </div>
-          <p className={styles.cardNumber}>12</p>
-          <p className={styles.cardDesc}>Reviews due today</p>
+          <p className={styles.cardNumber}>{stats.totalDocuments || 0}</p>
+          <p className={styles.cardDesc}>Documents in repository</p>
         </div>
         <div className={styles.summaryCard}>
           <div className={styles.cardHeader}>
             <CheckCircle size={16} style={{ color: 'var(--color-success)' }} />
-            <h3 className={styles.cardTitle}>Completed Today</h3>
+            <h3 className={styles.cardTitle}>Restricted</h3>
           </div>
-          <p className={styles.cardNumber}>17</p>
-          <p className={styles.cardDesc}>Successfully completed</p>
+          <p className={styles.cardNumber}>{stats.restrictedDocuments || 0}</p>
+          <p className={styles.cardDesc}>Highly confidential</p>
         </div>
       </div>
 
@@ -194,40 +222,31 @@ export default function Reviews({ role }: { role: Role }) {
           <Search />
           <input 
             type="text" 
-            placeholder="Search Case ID, Document..." 
+            placeholder="Search Case ID, Document, User..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className={styles.filterSelects}>
           <div className={styles.selectWrapper}>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="All">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="In Review">In Review</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Changes Requested">Changes Requested</option>
+              {uniqueStatuses.map(status => (
+                <option key={status as string} value={status as string}>{status as string}</option>
+              ))}
             </select>
             <ChevronDown />
           </div>
           <div className={styles.selectWrapper}>
-            <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as any)}>
-              <option value="All">All Priorities</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="All">All Types</option>
+              {uniqueTypes.map(type => (
+                <option key={type as string} value={type as string}>{type as string}</option>
+              ))}
             </select>
             <ChevronDown />
           </div>
-          <div className={styles.selectWrapper}>
-            <select value={reviewerFilter} onChange={(e) => setReviewerFilter(e.target.value)}>
-              <option value="All">All Reviewers</option>
-              <option value="Reviewer B">Reviewer B</option>
-              <option value="Reviewer C">Reviewer C</option>
-            </select>
-            <ChevronDown />
-          </div>
+          
           <button className={styles.primaryButton} onClick={() => {}}>Search</button>
           <button className={styles.secondaryButton} onClick={handleResetFilters}>Reset Filters</button>
         </div>
@@ -235,66 +254,84 @@ export default function Reviews({ role }: { role: Role }) {
 
       {/* Table */}
       <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th onClick={() => handleSort('caseId')}>Case ID {sortField === 'caseId' && (sortAsc ? '↑' : '↓')}</th>
-              <th onClick={() => handleSort('document')}>Document {sortField === 'document' && (sortAsc ? '↑' : '↓')}</th>
-              <th>Submitted By</th>
-              <th>Reviewer</th>
-              <th>Version</th>
-              <th onClick={() => handleSort('priority')}>Priority {sortField === 'priority' && (sortAsc ? '↑' : '↓')}</th>
-              <th onClick={() => handleSort('submittedDate')}>Submitted Date {sortField === 'submittedDate' && (sortAsc ? '↑' : '↓')}</th>
-              <th onClick={() => handleSort('status')}>Status {sortField === 'status' && (sortAsc ? '↑' : '↓')}</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentReviews.map(r => (
-              <tr key={r.id}>
-                <td>{r.caseId}</td>
-                <td style={{ fontWeight: 500 }}>{r.document}</td>
-                <td>{r.submittedBy}</td>
-                <td>{r.reviewer}</td>
-                <td>{r.version}</td>
-                <td className={getPriorityClass(r.priority)}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor' }}></div>
-                    {r.priority}
-                  </span>
-                </td>
-                <td>{r.submittedDate}</td>
-                <td>
-                  <span className={`${styles.badge} ${getBadgeClass(r.status)}`}>
-                    <div className={styles.badgeDot}></div>
-                    {r.status}
-                  </span>
-                </td>
-                <td>
-                  <button 
-                    className={styles.primaryButton} 
-                    style={{ padding: '0.25rem 0.75rem' }}
-                    onClick={() => setSelectedReview(r)}
-                  >
-                    {getActionButtonText(r.status)}
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {currentReviews.length === 0 && (
+        {isLoading ? (
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>Loading documents...</div>
+        ) : (
+          <table className={styles.table}>
+            <thead>
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '2rem' }}>
-                  No reviews found matching your criteria.
-                </td>
+                <th onClick={() => handleSort('documentName')}>Document Name {sortField === 'documentName' && (sortAsc ? '↑' : '↓')}</th>
+                <th onClick={() => handleSort('caseId')}>Case ID {sortField === 'caseId' && (sortAsc ? '↑' : '↓')}</th>
+                <th onClick={() => handleSort('documentType')}>Type {sortField === 'documentType' && (sortAsc ? '↑' : '↓')}</th>
+                <th>Uploaded By</th>
+                <th onClick={() => handleSort('uploadDate')}>Upload Date {sortField === 'uploadDate' && (sortAsc ? '↑' : '↓')}</th>
+                <th>Version</th>
+                <th onClick={() => handleSort('status')}>Status {sortField === 'status' && (sortAsc ? '↑' : '↓')}</th>
+                <th>Integrity</th>
+                <th>Confidentiality</th>
+                <th>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {currentDocuments.map(doc => (
+                <tr key={doc.id}>
+                  <td style={{ fontWeight: 600 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FileText size={14} style={{ color: '#2563EB' }} />
+                      {doc.documentName}
+                    </div>
+                  </td>
+                  <td><span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#64748B' }}>{doc.caseId}</span></td>
+                  <td>{doc.documentType}</td>
+                  <td>{doc.uploadedBy}</td>
+                  <td>{formatDate(doc.uploadDate)}</td>
+                  <td>v{doc.version}</td>
+                  <td>
+                    <StatusBadge value={doc.status} />
+                  </td>
+                  <td>
+                    <StatusBadge value={doc.integrity} kind="integrity" />
+                  </td>
+                  <td>
+                    <StatusBadge value={doc.confidentiality} kind="confidentiality" />
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button 
+                        className={styles.secondaryButton} 
+                        style={{ padding: '0.25rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                        onClick={() => setSelectedPreviewDoc(doc)}
+                        title="View Document"
+                      >
+                        <Eye size={14} /> View
+                      </button>
+                      <button 
+                        className={styles.primaryButton} 
+                        style={{ padding: '0.25rem 0.5rem' }}
+                        onClick={() => setLocation(`/reviews/${doc.id}`)}
+                        title="Review Document"
+                      >
+                        {getActionButtonText(doc.status)}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {currentDocuments.length === 0 && (
+                <tr>
+                  <td colSpan={10} style={{ textAlign: 'center', color: 'var(--color-text-secondary)', padding: '2rem' }}>
+                    No documents found in the repository matching your criteria.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
 
         {/* Pagination */}
         <div className={styles.pagination}>
           <div className={styles.paginationText}>
-            Showing {filteredReviews.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredReviews.length)} of {filteredReviews.length} reviews
+            Showing {filteredDocuments.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredDocuments.length)} of {filteredDocuments.length} documents
           </div>
           <div className={styles.paginationControls}>
             <button 
@@ -324,12 +361,14 @@ export default function Reviews({ role }: { role: Role }) {
         </div>
       </div>
 
-      {selectedReview && (
-        <ReviewDetailsModal
-          review={selectedReview}
-          role={role}
-          onClose={() => setSelectedReview(null)}
-          onAction={handleAction}
+      {selectedPreviewDoc && (
+        <PreviewModal
+          document={selectedPreviewDoc}
+          onClose={() => setSelectedPreviewDoc(null)}
+          onDetails={(doc: any) => {
+             setSelectedPreviewDoc(null);
+             setLocation(`/reviews/${doc.id}`);
+          }}
         />
       )}
     </div>
