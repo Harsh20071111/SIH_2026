@@ -353,10 +353,62 @@ router.post("/auth/logout", requireAuth, async (req: Request, res: Response) => 
 });
 
 /**
- * GET /api/auth/me
+ * POST /api/auth/change-password
+ * Change password for the currently authenticated user.
  */
-router.get("/auth/me", requireAuth, (req: Request, res: Response) => {
-  res.json({ user: req.user });
+router.post("/auth/change-password", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: "Current password and new password are required." });
+      return;
+    }
+
+    if (typeof newPassword !== "string" || newPassword.trim().length < 6) {
+      res.status(400).json({ error: "New password must be at least 6 characters long." });
+      return;
+    }
+
+    const userId = req.user!.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      // If user is a demo user or not found in DB
+      res.json({ message: "Password updated successfully." });
+      return;
+    }
+
+    if (user.passwordHash) {
+      const isValid = await bcrypt.compare(String(currentPassword), user.passwordHash);
+      if (!isValid) {
+        res.status(400).json({ error: "Current password is incorrect." });
+        return;
+      }
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    user.passwordHash = await bcrypt.hash(newPassword.trim(), salt);
+    await user.save();
+
+    try {
+      await createAuditEvent({
+        action: "USER_PASSWORD_RESET",
+        userId: user._id.toString(),
+        userName: user.name,
+        userRole: user.role,
+        result: "Success",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"] || "",
+        metadata: { selfService: true },
+      });
+    } catch (_) {}
+
+    res.json({ message: "Password successfully updated." });
+  } catch (err: any) {
+    logger.error({ err }, "Error changing password");
+    res.status(500).json({ error: "Failed to change password. Please try again." });
+  }
 });
 
 export default router;

@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { User, Shield, Key, Clock, MonitorSmartphone, MapPin, Activity, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
+import { api } from '@/services/api';
+
 export default function Profile() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -31,6 +33,10 @@ export default function Profile() {
   
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -46,22 +52,69 @@ export default function Profile() {
     });
   };
 
-  const resetPasswordVisibility = () => {
+  const resetPasswordForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
     setShowCurrentPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsChangePasswordOpen(false);
-    resetPasswordVisibility();
-    toast({
-      title: "Password updated successfully.",
-      description: "Your account password has been changed.",
-      variant: "default",
-      className: "bg-green-50 border-green-200 text-green-900",
-    });
+
+    if (!currentPassword.trim()) {
+      toast({
+        title: "Current password required",
+        description: "Please enter your current password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "New password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords do not match",
+        description: "New password and confirm password do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingPassword(true);
+    try {
+      await api.post('/auth/change-password', {
+        currentPassword: currentPassword.trim(),
+        newPassword: newPassword.trim(),
+      });
+
+      setIsChangePasswordOpen(false);
+      resetPasswordForm();
+      toast({
+        title: "Password updated successfully.",
+        description: "Your account password has been changed.",
+        variant: "default",
+        className: "bg-green-50 border-green-200 text-green-900",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Password update failed",
+        description: err.message || "Failed to update password. Please verify your current password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingPassword(false);
+    }
   };
 
   return (
@@ -131,11 +184,13 @@ export default function Profile() {
               open={isChangePasswordOpen} 
               onOpenChange={(open) => {
                 setIsChangePasswordOpen(open);
-                if (!open) resetPasswordVisibility();
+                if (!open) {
+                  resetPasswordForm();
+                }
               }}
             >
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">Change Password</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => resetPasswordForm()}>Change Password</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -144,16 +199,21 @@ export default function Profile() {
                     Enter your current password and a new secure password.
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleUpdatePassword}>
+                <form onSubmit={handleUpdatePassword} autoComplete="off">
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="current" className="text-right">Current</Label>
                       <div className="col-span-3 relative">
                         <Input 
-                          id="current" 
+                          id="current"
+                          name="current-password"
                           type={showCurrentPassword ? 'text' : 'password'} 
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          autoComplete="off"
                           required 
                           className="pr-10" 
+                          placeholder="••••••••••••"
                         />
                         <button 
                           type="button"
@@ -169,10 +229,15 @@ export default function Profile() {
                       <Label htmlFor="new" className="text-right">New</Label>
                       <div className="col-span-3 relative">
                         <Input 
-                          id="new" 
+                          id="new"
+                          name="new-password"
                           type={showNewPassword ? 'text' : 'password'} 
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          autoComplete="new-password"
                           required 
                           className="pr-10" 
+                          placeholder="••••••••••••"
                         />
                         <button 
                           type="button"
@@ -188,10 +253,15 @@ export default function Profile() {
                       <Label htmlFor="confirm" className="text-right">Confirm</Label>
                       <div className="col-span-3 relative">
                         <Input 
-                          id="confirm" 
+                          id="confirm"
+                          name="confirm-new-password"
                           type={showConfirmPassword ? 'text' : 'password'} 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          autoComplete="new-password"
                           required 
                           className="pr-10" 
+                          placeholder="••••••••••••"
                         />
                         <button 
                           type="button"
@@ -210,12 +280,14 @@ export default function Profile() {
                       variant="outline" 
                       onClick={() => {
                         setIsChangePasswordOpen(false);
-                        resetPasswordVisibility();
+                        resetPasswordForm();
                       }}
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Update Password</Button>
+                    <Button type="submit" disabled={isSubmittingPassword} className="bg-blue-600 hover:bg-blue-700">
+                      {isSubmittingPassword ? "Updating..." : "Update Password"}
+                    </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -294,7 +366,10 @@ export default function Profile() {
                 <Key className="h-5 w-5 text-slate-500" />
                 ACCOUNT SECURITY
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setIsChangePasswordOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => {
+                resetPasswordForm();
+                setIsChangePasswordOpen(true);
+              }}>
                 Change Password
               </Button>
             </CardHeader>
